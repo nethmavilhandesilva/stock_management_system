@@ -78,12 +78,16 @@ Route::post('/reports/salesadjustment/filter', [ReportController::class, 'salesA
 //Reports
 Route::post('/report/download/{reportType}/{format}', [ReportController::class, 'downloadReport'])->name('report.download');
 //customer loans
-Route::resource('customers-loans', CustomersLoanController::class);
+
 // Example route in web.php
 Route::get('/customers/{id}/loans-total', [CustomersLoanController::class, 'getTotalLoanAmount']);
 Route::post('/get-loan-amount', [SalesEntryController::class, 'getLoanAmount'])->name('get.loan.amount');
 Route::get('/sales/codes', [SalesEntryController::class, 'listCodes'])->name('sales.codes');
 Route::get('/sales/code/{code}', [SalesEntryController::class, 'showByCode'])->name('sales.byCode');
 
+
 Route::post('/loan-report/results', [CustomersLoanController::class, 'loanReportResults'])->name('loan.report.results');
+Route::get('/customers-loans/report', [CustomersLoanController::class, 'loanReport'])->name('customers-loans.report');
+Route::resource('customers-loans', CustomersLoanController::class)->except(['show']);
+
 require __DIR__.'/auth.php';

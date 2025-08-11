@@ -224,5 +224,13 @@ public function getTotalLoanAmount($customerId)
 
     return view('dashboard.reports.loan-results', compact('loans'));
 }
+public function loanReport()
+{
+    $loans = CustomersLoan::select('description', 'amount', 'customer_short_name')->get();
+
+    // Pass data to a view or return JSON for AJAX
+    return view('dashboard.reports.loan-report', compact('loans'));
+}
+
 
 }

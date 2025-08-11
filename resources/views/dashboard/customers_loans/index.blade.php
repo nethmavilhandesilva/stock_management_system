@@ -165,6 +165,7 @@
                     </div>
                 </div>
             </form>
+ 
 
             <h4>Loan Records</h4>
             <div class="table-responsive">
@@ -203,6 +204,13 @@
                         @endforelse
                     </tbody>
                 </table>
+                             <!-- Add the button below the form, right aligned -->
+  <div class="mt-3 text-end">
+    <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark">
+        ණය වාර්තාව
+    </a>
+</div>
+
             </div>
 
         </div>
@@ -257,31 +265,38 @@
         }
 
         function toggleLoanTypeDependentFields() {
-            const loanType = $('input[name="loan_type"]:checked').val();
-            const isTodayLoan = loanType === 'today';
-            const settlingWay = $('input[name="settling_way"]:checked').val();
-            const isCheque = settlingWay === 'cheque';
+    const loanType = $('input[name="loan_type"]:checked').val();
+    const settlingWay = $('input[name="settling_way"]:checked').val();
 
-            if (isTodayLoan) {
-                $('#settlingWaySection').addClass('d-none');
-                $('#settlingWaySection input').prop('disabled', true);
-            } else {
-                $('#settlingWaySection').removeClass('d-none');
-                $('#settlingWaySection input').prop('disabled', false);
-            }
+    // Hide settling way section if loanType is 'today'
+    if (loanType === 'today') {
+        $('#settlingWaySection').addClass('d-none');
+        $('#settlingWaySection input').prop('disabled', true);
 
-            if (isCheque) {
-                $('#chequeFields').removeClass('d-none');
-                $('#chequeFields input').prop('disabled', false);
-                $('input[name="bill_no"]').prop('disabled', true);
-            } else {
-                $('#chequeFields').addClass('d-none');
-                $('#chequeFields input').prop('disabled', true);
-                $('input[name="bill_no"]').prop('disabled', false);
-            }
+        // Hide cheque fields if loanType is 'today'
+        $('#chequeFields').addClass('d-none');
+        $('#chequeFields input').prop('disabled', true);
 
-            updateDescription();
+        // Also disable bill_no if you want, or enable - adjust as needed
+        $('input[name="bill_no"]').prop('disabled', false);
+
+    } else {
+        $('#settlingWaySection').removeClass('d-none');
+        $('#settlingWaySection input').prop('disabled', false);
+
+        if (settlingWay === 'cheque') {
+            $('#chequeFields').removeClass('d-none');
+            $('#chequeFields input').prop('disabled', false);
+            $('input[name="bill_no"]').prop('disabled', true);
+        } else {
+            $('#chequeFields').addClass('d-none');
+            $('#chequeFields input').prop('disabled', true);
+            $('input[name="bill_no"]').prop('disabled', false);
         }
+    }
+
+    updateDescription();
+}
 
         $(document).ready(function() {
             $('#customer_id, #filter_customer').select2({

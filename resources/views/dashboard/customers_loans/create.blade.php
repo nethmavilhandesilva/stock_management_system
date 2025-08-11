@@ -75,6 +75,14 @@
         <button type="submit" class="btn btn-primary">Add Loan</button>
     </form>
 
+    <!-- Add the button below the form, right aligned -->
+  <div class="mt-3 text-end">
+    <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark">
+        ණය වාර්තාව
+    </a>
+</div>
+
+
     <div class="mt-5">
         <a href="{{ route('customers-loans.index') }}" class="btn btn-secondary">View All Loans</a>
     </div>

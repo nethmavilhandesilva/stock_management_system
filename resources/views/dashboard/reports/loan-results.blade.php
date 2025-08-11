@@ -99,42 +99,63 @@
                     No loan records found for the selected filters.
                 </div>
             @else
-                <table class="table table-bordered table-striped table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>බිල් අංකය</th>
-                            <th>දිනය</th>
-                            <th>විස්තරය</th>
-                            <th>එකතුව</th>
-                            <th>චෙක්පත්</th>
-                            <th>බැංකුව</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php $totalAmount = 0; @endphp
-                        @foreach ($loans as $loan)
-                            @php $totalAmount += $loan->amount; @endphp
+               <table class="table table-bordered table-striped table-hover mb-0">
+                        <thead>
                             <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $loan->bill_no }}</td>
-                                <td>{{ $loan->created_at->format('Y-m-d') }}</td>
-                                <td>{{ $loan->description }}</td>
-                                <td>{{ number_format($loan->amount, 2) }}</td>
-                                <td>{{ $loan->cheque_no }}</td>
-                                <td>{{ $loan->bank }}</td>
+                                <th rowspan="2">බිල් අංකය</th>
+                                <th rowspan="2">දිනය</th>
+                                <th rowspan="2">විස්තරය</th>
+                                <th rowspan="2">චෙක්පත්</th>
+                                <th rowspan="2">බැංකුව</th>
+                                <th colspan="2">එකතුව</th>
                             </tr>
-                        @endforeach
-                        <tr style="font-weight: bold; background-color: #dff0d8; color: black;">
-                            <td colspan="4" class="text-end">එකතුව:</td>
-                            <td>{{ number_format($totalAmount, 2) }}</td>
-                            <td colspan="2"></td>
-                        </tr>
-                    </tbody>
-                </table>
+                            <tr>
+                                <th>ලබීම්</th> {{-- Received --}}
+                                <th>දීම්</th> {{-- Paid Out --}}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php 
+                                $receivedTotal = 0; 
+                                $paidTotal = 0;
+                            @endphp
+                            @foreach ($loans as $loan)
+                                @php
+                                    if ($loan->description === 'වෙළෙන්දාගේ ලාද පරණ නය') {
+                                        $receivedTotal += $loan->amount;
+                                        $receivedAmount = number_format($loan->amount, 2);
+                                        $paidAmount = '';
+                                    } elseif ($loan->description === 'වෙළෙන්දාගේ අද දින නය ගැනීම') {
+                                        $paidTotal += $loan->amount;
+                                        $receivedAmount = '';
+                                        $paidAmount = number_format($loan->amount, 2);
+                                    } else {
+                                        $receivedAmount = '';
+                                        $paidAmount = '';
+                                    }
+                                @endphp
+                                <tr>
+                                    <td>{{ $loan->bill_no }}</td>
+                                    <td>{{ $loan->created_at->format('Y-m-d') }}</td>
+                                    <td>{{ $loan->description }}</td>
+                                
+                                    <td>{{ $loan->cheque_no }}</td>
+                                    <td>{{ $loan->bank }}</td>
+                                    <td>{{ $receivedAmount }}</td>
+                                    <td>{{ $paidAmount }}</td>
+                                </tr>
+                            @endforeach
+                            <tr style="font-weight: bold; background-color: #dff0d8; color: black;">
+                                <td colspan="5" class="text-end">එකතුව:</td>
+                                <td>{{ number_format($receivedTotal, 2) }}</td>
+                                <td>{{ number_format($paidTotal, 2) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
             @endif
+          
         </div>
     </div>
-
+  
 </div>
 @endsection
