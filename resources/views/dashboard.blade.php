@@ -465,7 +465,7 @@
             display: grid;
             /* Adjusted column widths and added more space to move columns to the right */
             grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
-            gap: 20px;
+            gap: 0.5px !important;
             /* Increased the gap between columns for more space */
             background-color: white !important;
             /* white bg */
@@ -483,11 +483,11 @@
             display: grid;
             /* Use the same column widths as the header for perfect alignment */
             grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
-            gap: 15px;
+            gap: 5px;
             /* Increased the gap between columns for more space */
-            background-color: black;
+            background-color: yellow;
             /* black bg */
-            color: white;
+            color: black;
             /* white text */
             padding: 8px 12px;
             white-space: nowrap;
@@ -586,481 +586,503 @@
             font-weight: bold !important;
             /* text-align: center !important; -- This is now handled by .grn-column where appropriate for individual cells */
         }
+        .custom-middle-block {
+  width: 41%; /* Adjust the percentage as needed */
+  max-width: none; /* Override the default max-width */
+}
+    </style>
+    <style>
+        @media print {
+  @page {
+    size: 70mm auto;  /* Width 70mm, height auto */
+    margin: 0;        /* Remove default margins */
+  }
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  .receipt-container {
+    width: 70mm;
+    margin: 0 auto;
+    padding: 0;
+    font-family: monospace, Arial, sans-serif; /* Use monospace for receipts */
+    font-size: 12px; /* Adjust font size as needed */
+  }
+}
+
     </style>
    
 
 
-   <div class="container-fluid" style="margin-top: 10px;">
+<div class="container-fluid" style="margin-top: 10px;">
 
-          <div style="font-weight: bold; font-size: 16px; color: red; white-space: nowrap; text-align: right;">
-    @php
-        $lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
-        $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
-    @endphp
+    <div style="font-weight: bold; font-size: 16px; color: red; white-space: nowrap; text-align: right;">
+@php
+    $lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
+    $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
+@endphp
 
-    {{ $nextDay }}
+{{ $nextDay }}
 </div>
-        <div class="row justify-content-center">
-            {{-- Container for the two stacked Printed Sales Records columns --}}
-            <div class="col-md-2">
-                {{-- ORIGINAL SECTION: Printed Sales Records (bill_printed = 'Y') - Top Left Column --}}
-                <div class="card shadow-sm border-0 rounded-3" style="height: 250px;">
-                    {{-- Fixed total height --}}
-                    <div class="p-3"
-                        style="background-color: #004d00; border-top-left-radius: .3rem; border-top-right-radius: .3rem;">
-                        <h6 class="mb-2 text-center text-white">
-                            මුද්‍රිත විකුණුම් වාර්තා
-                        </h6>
-                        {{-- 🔍 Search Bar --}}
-                        <input type="text" id="searchPrintedSales" class="form-control form-control-sm mb-2"
-                            placeholder="Search by Bill No or Customer Code...">
-                    </div>
-
-                    {{-- Scrollable list area --}}
-                    <div style="flex: 1; overflow-y: auto; padding: 0.5rem; background: #5ed772ff;">
-                        @if ($salesPrinted->count())
-                            <div class="printed-sales-list">
-                                <ul id="printedSalesList" style="list-style: none; padding-left: 0; margin: 0;">
-                                    {{-- Outer loop: CUSTOMER GROUP --}}
-                                    @foreach ($salesPrinted->sortByDesc(fn($sales) => $sales->first()->created_at) as $customerCode => $salesForCustomer)
-                                        @php
-                                            $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
-                                        @endphp
-                                        <li data-customer-code="{{ $customerCode }}">
-                                            <div class="customer-group-header">
-                                                {{-- Customer header content here (optional) --}}
-                                            </div>
-                                            <ul>
-                                                {{-- Inner loop: BILL GROUP --}}
-                                                @foreach ($salesForCustomer->groupBy('bill_no')->sortByDesc(fn($sales) => $sales->first()->created_at) as $billNo => $salesForBill)
-                                                    @php
-                                                        $totalBillAmount = $salesForBill->sum('total');
-                                                    @endphp
-                                                    <li>
-                                                        <div class="customer-header bill-clickable"
-                                                            data-customer-code="{{ $customerCode }}"
-                                                            data-customer-name="{{ $customerName }}" data-bill-no="{{ $billNo ?? '' }}"
-                                                            data-bill-type="printed"
-                                                            style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
-                                                            <span style="flex: 1;">
-                                                                {{ strtoupper($customerCode ?? 'N/A') }} - Rs.
-                                                                {{ number_format($totalBillAmount, 2) }}
-                                                            </span>
-                                                            <i class="material-icons arrow-icon"
-                                                                style="font-size: 14px;">keyboard_arrow_right</i>
-                                                        </div>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @else
-                            <div class="alert alert-info text-center">No printed sales records found.</div>
-                        @endif
-                    </div>
-                </div>
-                <form action="{{ route('clear.data') }}" method="POST"
-                    onsubmit="return confirm('Are you sure you want to delete all data?');">
-                    @csrf
-
-                    {{-- This is the new input field for the password --}}
-                    <input type="text" id="verificationField" class="form-control form-control-sm mt-3"
-                        placeholder="Enter 'nethma123' to enable">
-
-                    {{-- The button is initially disabled --}}
-                    <button type="submit" id="deleteAllButton" class="btn btn-danger mt-3" disabled>
-                        🗑️ Delete All Sales & GRN Entries
-                    </button>
-                </form>
+<div class="row justify-content-center">
+    {{-- Container for the two stacked Printed Sales Records columns --}}
+    <div class="col-md-3">
+        {{-- ORIGINAL SECTION: Printed Sales Records (bill_printed = 'Y') - Top Left Column --}}
+        <div class="card shadow-sm border-0 rounded-3" style="height: 250px;">
+            {{-- Fixed total height --}}
+            <div class="p-3"
+                style="background-color: #004d00; border-top-left-radius: .3rem; border-top-right-radius: .3rem;">
+                <h6 class="mb-2 text-center text-white">
+                    මුද්‍රිත විකුණුම් වාර්තා
+                </h6>
+                {{-- 🔍 Search Bar --}}
+                <input type="text" id="searchPrintedSales" class="form-control form-control-sm mb-2"
+                    placeholder="Search by Bill No or Customer Code...">
             </div>
 
-
-
-            {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
-            <div class="col-md-8">
-                <div class="card shadow-sm border-0 rounded-3 p-4">
-
-
-                    @if ($errors->any())
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <strong>Whoops!</strong> There were some problems with your input.
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-
-                    @if (session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <strong>Success!</strong> {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-
-                    @if (session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <strong>Error!</strong> {{ session('error') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-
-                    <form method="POST" action="{{ route('grn.store') }}" id="salesEntryForm">
-                        @csrf
-
-                        {{-- NEW TOP ROW: Select Customer Dropdown --}}
-
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <div id="billNoDisplay"
-                                style="color: black; font-weight: bold; font-size: 0.9rem; white-space: nowrap;">
-                                {{-- Bill No will be displayed here --}}
-                            </div>
-
-                            <h5 style="font-size: 1.5rem; color: red; margin: 0; white-space: nowrap;">
-                                <strong>Total Sales Value:</strong> Rs. <span
-                                    id="mainTotalSalesValue">{{ number_format($totalSum, 2) }}</span>
-                            </h5>
-                            <div class="fixed bottom-4 right-400 flex gap-2" style="margin-right: -7500px" ;>
-                                <button id="f1Button"
-                                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors duration-200 shadow-sm">
-                                    Print
-                                </button>
-                                <button id="f5Button"
-                                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors duration-200 shadow-sm">
-                                    Hold
-                                </button>
-                            </div>
-
-                        </div>
-
-
-
-                        <div class="row justify-content-end" style="margin-top: -15px;">
-                            <div class="row g-2 align-items-center">
-                                {{-- Customer Code Input --}}
-                                <div class="col-md-3">
-                                    <input type="text" name="customer_code" id="new_customer_code"
-                                        class="form-control text-uppercase @error('customer_code') is-invalid @enderror"
-                                        value="{{ old('customer_code') }}" placeholder="පාරිභෝගික කේතය"
-                                        style="height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black;"
-                                        required>
-                                    @error('customer_code')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                {{-- Customer Select --}}
-                                <div class="col-md-6">
-                                    <select name="customer_code_select" id="customer_code_select"
-                                        class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror"
-                                        style="height: 34px; font-size: 14px; padding: 6px 12px; line-height: 1.5;">
-                                        <option value="" disabled selected style="color: #999;">-- පාරිභෝගිකයා තෝරන්න --
-                                        </option>
-                                        @foreach ($customers as $customer)
-                                            <option value="{{ $customer->short_name }}"
-                                                data-customer-code="{{ $customer->short_name }}"
-                                                data-customer-name="{{ $customer->name }}" {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
-                                                {{ $customer->name }} ({{ $customer->short_name }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('customer_code')
-                                        <div class="invalid-feedback" style="font-size: 11px;">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-
-
-                                {{-- Loan Amount Display --}}
-                                <div class="col-md-3">
-                                    <div class="form-control"
-                                        style="height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black; background-color: #f0f0f0;">
-                                        <span id="loan_amount_display">0.00</span>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-
-                        {{-- GRN Section --}}
-                        <div class="row mt-2">
-                            <div class="col-md-12">
-                                <input type="text" id="grn_display" class="form-control" placeholder="Select GRN Entry..."
-                                    readonly
-                                    style="height: 45px; font-size: 16px; padding: 8px 16px; display: none; text-align: center !important; border: 1px solid black; color: black;">
-                                <select id="grn_select" class="form-select select2"
-                                    style="height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black; color: black;">
-                                    <option value="">-- Select GRN Entry --</option>
-                                    @foreach ($entries as $entry)
-                                        <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
-                                            data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
-                                            data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
-                                            data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
-                                            data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
-                                            data-txn-date="{{ $entry->txn_date }}"
-                                            data-original-weight="{{ $entry->original_weight }}"
-                                            data-original-packs="{{ $entry->original_packs }}">
-                                            {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
-                                            {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
-                                            {{ $entry->txn_date }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        {{-- Hidden fields for customer and GRN --}}
-                        <input type="hidden" name="customer_name" id="customer_name_hidden"
-                            value="{{ old('customer_name') }}">
-                        <input type="hidden" name="grn_entry_code" id="grn_entry_code" value="">
-
-                        {{-- Supplier Section (Hidden) --}}
-                        <div class="row g-1 form-row mt-2">
-                            <div class="col-md-3 mb-1 d-none">
-                                <select name="supplier_code_display" id="supplier_code_display"
-                                    class="form-select @error('supplier_code') is-invalid @enderror" disabled
-                                    style="border: 1px solid black; color: black;">
-                                    <option value="" disabled selected>සැපයුම්කරු (Supplier)</option>
-                                    @php $currentSupplierCode = old('supplier_code', $sale->supplier_code ?? ''); @endphp
-                                    @foreach ($suppliers as $supplier)
-                                        <option value="{{ $supplier->code }}" {{ $currentSupplierCode == $supplier->code ? 'selected' : '' }}>
-                                            {{ $supplier->name }} ({{ $supplier->code }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <input type="hidden" name="supplier_code" id="supplier_code"
-                                    value="{{ $currentSupplierCode }}">
-                                @error('supplier_code')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-3 mb-1 d-none">
-                                <input type="hidden" name="item_code" value="{{ old('item_code') }}">
-                                <select id="item_select" class="form-select @error('item_code') is-invalid @enderror"
-                                    disabled style="border: 1px solid black; color: black;">
-                                    <option value="" disabled selected>අයිතමය තෝරන්න (Select Item)</option>
-                                    @foreach ($items as $item)
-                                        <option value="{{ $item->item_code }}" data-code="{{ $item->code }}"
-                                            data-item-code="{{ $item->item_code }}" data-item-name="{{ $item->item_name }}" {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
-                                            ({{ $item->item_code }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('item_code')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        {{-- Item Details Section --}}
-                        <div class="d-flex flex-wrap gap-2 align-items-start mt-2">
-
-                            <!-- Item Name -->
-                            <div style="flex: 1 1 100px;">
-                                <input type="text" id="item_name_display_from_grn" class="form-control" readonly
-                                    placeholder="අයිතමයේ නම (Item Name)"
-                                    style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
-                            </div>
-
-                            <!-- Weight -->
-                            <div style="flex: 1 1 120px;">
-                                <input type="number" name="weight" id="weight" step="0.01"
-                                    class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
-                                    placeholder="බර (kg)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                                <small id="remaining_weight_display" class="form-text text-danger fw-bold"
-                                    style="font-size: 0.85rem;">
-                                    Remaining: 0.00 kg
-                                </small>
-                            </div>
-
-                            <!-- Price per KG -->
-                            <div style="flex: 1 1 120px;">
-                                <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-                                    class="form-control @error('price_per_kg') is-invalid @enderror"
-                                    value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                            </div>
-
-                            <!-- Packs -->
-                            <div style="flex: 1 1 120px;">
-                                <input type="number" name="packs" id="packs"
-                                    class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
-                                    placeholder="ඇසුරුම් (Packs)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                                <small id="remaining_packs_display" class="form-text text-danger fw-bold"
-                                    style="font-size: 0.85rem;">
-                                    Remaining Packs: 0
-                                </small>
-                            </div>
-
-                            <!-- Total -->
-                            <div style="flex: 1 1 100px;">
-                                <input type="number" name="total" id="total" readonly
-                                    class="form-control bg-light @error('total') is-invalid @enderror"
-                                    value="{{ old('total') }}" placeholder="සමස්ත (Total)"
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
-                            </div>
-                        </div>
-
-                        <!-- Hidden Fields -->
-                        <input type="hidden" name="code" id="code" value="{{ old('code') }}">
-                        <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
-                        <input type="hidden" name="original_weight" id="original_weight_input">
-                        <input type="hidden" name="original_packs" id="original_packs_input">
-
-
-
-                        {{-- Action Buttons --}}
-                        <div class="d-grid gap-2 d-md-flex justify-content-center mt-4">
-                            <input type="hidden" name="sale_id" id="sale_id">
-                            <button type="submit" class="btn btn-primary btn-sm shadow-sm d-none" id="addSalesEntryBtn">
-                                <i class="material-icons me-2">add_circle_outline</i>Add Sales Entry
-                            </button>
-                            <button type="button" class="btn btn-success btn-sm shadow-sm" id="updateSalesEntryBtn"
-                                style="display:none;">
-                                <i class="material-icons me-2">edit</i>Update Sales Entry
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm shadow-sm" id="deleteSalesEntryBtn"
-                                style="display:none;">
-                                <i class="material-icons me-2">delete</i>Delete Sales Entry
-                            </button>
-                            <button type="button" class="btn btn-secondary btn-sm shadow-sm" id="cancelEntryBtn"
-                                style="display:none;">
-                                <i class="material-icons me-2">cancel</i>Cancel / New Entry
-                            </button>
-                        </div>
-                    </form>
-
-
-
-                    {{-- Main Sales Table - ALWAYS RENDERED --}}
-                    <div class="mt-0">
-
-
-                        <div class="table-responsive">
-
-                            <style>
-                                #mainSalesTableBody tr,
-                                #mainSalesTableBody td {
-                                    background-color: black !important;
-                                    color: white !important;
-                                }
-                            </style>
-                            <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
-                                style="font-size: 0.85rem; margin-top: -10px;">
-
-                                <thead style="background-color: white; color: black;">
-                                    <tr>
-                                        <th scope="col">කේතය</th>
-
-                                        <th scope="col">අයිතමය</th>
-                                        <th scope="col">බර (kg)</th>
-                                        <th scope="col">මිල</th>
-                                        <th scope="col">සමස්ත</th>
-                                        <th scope="col">මලු</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="mainSalesTableBody">
-                                    {{-- This tbody will be dynamically populated by JavaScript. --}}
-                                    {{-- IMPORTANT: Ensure your JavaScript populating this table adds 'data-sale-id',
-                                    'data-customer-code', and 'data-customer-name' attributes to each <tr> --}}
-                                        {{-- Example:
-                                    <tr data-sale-id="123" data-customer-code="CUST001" data-customer-name="John Doe">...
-                                    </tr> --}}
-                                </tbody>
-                            </table>
-                            <h5 style="font-size: 1.5rem; color: red; margin: 0; white-space: nowrap; text-align: right;">
-                                <strong>Total Sales Value:</strong> Rs.
-                                <span id="mainTotalSalesValueBottom">{{ number_format($totalSum, 2) }}</span>
-                            </h5>
-                            <div id="itemSummary"></div>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
-            <div class="col-md-2"> {{-- You can change to col-md-2 if needed for smaller width --}}
-                <div class="card shadow-sm border-0 rounded-3" style="height: 250px;"> {{-- Fixed total height --}}
-                    <div class="p-3"
-                        style="background-color: #004d00; border-top-left-radius: .3rem; border-top-right-radius: .3rem;">
-                        <h6 class="mb-2 text-center text-white">
-                            මුද්‍රණය නොකළ විකුණුම් වාර්තා
-                        </h6>
-                        {{-- 🔍 Search Bar --}}
-                        <input type="text" id="searchUnprintedCustomerCode" class="form-control form-control-sm mb-2"
-                            placeholder="Search by customer code...">
-                    </div>
-
-                    {{-- Scrollable list area --}}
-                    <div style="flex: 1; overflow-y: auto; padding: 0.5rem; background: #5ed772ff;">
-                        @if ($salesNotPrinted->count())
-                            <ul id="unprintedSalesList" style="list-style: none; padding-left: 0; margin: 0;">
+            {{-- Scrollable list area --}}
+            <div style="flex: 1; overflow-y: auto; padding: 0.5rem; background: #5ed772ff;">
+                @if ($salesPrinted->count())
+                    <div class="printed-sales-list">
+                        <ul id="printedSalesList" style="list-style: none; padding-left: 0; margin: 0;">
+                            {{-- Outer loop: CUSTOMER GROUP --}}
+                            @foreach ($salesPrinted->sortByDesc(fn($sales) => $sales->first()->created_at) as $customerCode => $salesForCustomer)
                                 @php
-                                    $sortedSalesNotPrinted = $salesNotPrinted->sortByDesc(function ($salesForCustomer) {
-                                        return $salesForCustomer->max('created_at');
-                                    });
+                                    $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
                                 @endphp
+                                <li data-customer-code="{{ $customerCode }}">
+                                    <div class="customer-group-header">
+                                        {{-- Customer header content here (optional) --}}
+                                    </div>
+                                    <ul>
+                                        {{-- Inner loop: BILL GROUP --}}
+                                        @foreach ($salesForCustomer->groupBy('bill_no')->sortByDesc(fn($sales) => $sales->first()->created_at) as $billNo => $salesForBill)
+                                            @php
+                                                $totalBillAmount = $salesForBill->sum('total');
+                                            @endphp
+                                            <li>
+                                                <div class="customer-header bill-clickable"
+                                                    data-customer-code="{{ $customerCode }}"
+                                                    data-customer-name="{{ $customerName }}" data-bill-no="{{ $billNo ?? '' }}"
+                                                    data-bill-type="printed"
+                                                    style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9;">
+                                                    <span style="flex: 1;">
+                                                        {{ strtoupper($customerCode ?? 'N/A') }} - Rs.
+                                                        {{ number_format($totalBillAmount, 2) }}
+                                                    </span>
+                                                    <i class="material-icons arrow-icon"
+                                                        style="font-size: 14px;">keyboard_arrow_right</i>
+                                                </div>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @else
+                    <div class="alert alert-info text-center">No printed sales records found.</div>
+                @endif
+            </div>
+        </div>
+        <form action="{{ route('clear.data') }}" method="POST"
+            onsubmit="return confirm('Are you sure you want to delete all data?');">
+            @csrf
 
-                                @foreach ($sortedSalesNotPrinted as $customerCode => $salesForCustomer)
-                                    @php
-                                        $firstSaleForCustomer = $salesForCustomer->first();
-                                        $customerName = $firstSaleForCustomer->customer_name;
-                                        $totalCustomerSalesAmount = $salesForCustomer->sum('total');
-                                    @endphp
+            {{-- This is the new input field for the password --}}
+            <input type="text" id="verificationField" class="form-control form-control-sm mt-3"
+                placeholder="Enter 'nethma123' to enable">
 
-                                    <li data-customer-code="{{ $customerCode }}">
-                                        <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
-                                            data-customer-name="{{ $customerName }}" data-bill-no="" data-bill-type="unprinted"
-                                            style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9; cursor: pointer;">
-                                            <span style="flex: 1;">
-                                                ({{ strtoupper($customerCode) }}) -
-                                                Rs.{{ number_format($totalCustomerSalesAmount, 2) }}
-                                            </span>
-                                            <i class="material-icons arrow-icon" style="font-size: 14px;">keyboard_arrow_right</i>
-                                        </div>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @else
-                            <div class="alert alert-info text-center m-2">
-                                No unprinted sales records found.
-                            </div>
-                        @endif
+            {{-- The button is initially disabled --}}
+            <button type="submit" id="deleteAllButton" class="btn btn-danger mt-3" disabled>
+                🗑️ Delete All Sales & GRN Entries
+            </button>
+        </form>
+    </div>
+
+
+
+    {{-- EXISTING CONTENT: Main Sales Entry and All Sales Table --}}
+<div class="col-md-6">  {{-- Updated from col-md-5 --}}
+        <div class="card shadow-sm border-0 rounded-3 p-2">
+
+
+            @if ($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Whoops!</strong> There were some problems with your input.
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <strong>Success!</strong> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Error!</strong> {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('grn.store') }}" id="salesEntryForm">
+                @csrf
+
+                {{-- NEW TOP ROW: Select Customer Dropdown --}}
+
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div id="billNoDisplay"
+                        style="color: black; font-weight: bold; font-size: 0.9rem; white-space: nowrap;">
+                        {{-- Bill No will be displayed here --}}
+                    </div>
+
+                    <h5 style="font-size: 1.5rem; color: red; margin: 0; white-space: nowrap;">
+                        <strong>Total Sales Value:</strong> Rs. <span
+                            id="mainTotalSalesValue">{{ number_format($totalSum, 2) }}</span>
+                    </h5>
+                    <div class="fixed bottom-4 right-400 flex gap-2" style="margin-right: -7500px" ;>
+                        <button id="f1Button"
+                            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors duration-200 shadow-sm">
+                            Print
+                        </button>
+                        <button id="f5Button"
+                            class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors duration-200 shadow-sm">
+                            Hold
+                        </button>
+                    </div>
+
+                </div>
+
+
+
+                <div class="row justify-content-end" style="margin-top: -15px;">
+                    <div class="row g-2 align-items-center">
+                        {{-- Customer Code Input --}}
+                        <div class="col-md-3">
+<input type="text" name="customer_code" id="new_customer_code"
+    maxlength="10"
+    class="form-control text-uppercase @error('customer_code') is-invalid @enderror"
+    value="{{ old('customer_code') }}" placeholder="පාරිභෝගික කේතය"
+    style="width: 140px; height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black;"
+    required>
+@error('customer_code')
+    <div class="invalid-feedback">{{ $message }}</div>
+@enderror
+</div>
+
+
+                        {{-- Customer Select --}}
+                      <div class="col-md-6">
+<select name="customer_code_select" id="customer_code_select"
+    class="form-select form-select-sm select2 @error('customer_code') is-invalid @enderror"
+    style="width: 160px; height: 34px; font-size: 14px; padding: 6px 12px; line-height: 1.5;">
+    <option value="" disabled selected style="color: #999;">-- පාරිභෝගිකයා තෝරන්න --</option>
+    @foreach ($customers as $customer)
+        <option value="{{ $customer->short_name }}"
+            data-customer-code="{{ $customer->short_name }}"
+            data-customer-name="{{ $customer->name }}"
+            {{ old('customer_code_select') == $customer->short_name ? 'selected' : '' }}>
+            {{ $customer->name }} ({{ $customer->short_name }})
+        </option>
+    @endforeach
+</select>
+@error('customer_code')
+    <div class="invalid-feedback" style="font-size: 11px;">{{ $message }}</div>
+@enderror
+</div>
+
+
+
+
+                        {{-- Loan Amount Display --}}
+                      <div class="col-md-3">
+<div class="form-control"
+    style="width: 80px; height: 34px; font-size: 14px; padding: 6px 12px; border: 1px solid black; color: black; background-color: #f0f0f0; text-align: right;">
+    <span id="loan_amount_display">0.00</span>
+</div>
+</div>
+
                     </div>
                 </div>
 
-                {{-- DUPLICATE SECTION: Sales Codes --}}
-                <div class="card shadow-sm border-0 rounded-3 p-3 mt-3"
-                    style="background-color: #006400 !important; color: white; height: 180px; display: flex; flex-direction: column;">
+                {{-- GRN Section --}}
+                <div class="row mt-2">
+                    <div class="col-md-12">
+                        <input type="text" id="grn_display" class="form-control" placeholder="Select GRN Entry..."
+                            readonly
+                            style="height: 45px; font-size: 16px; padding: 8px 16px; display: none; text-align: center !important; border: 1px solid black; color: black;">
+                        <select id="grn_select" class="form-select select2"
+                            style="height: 45px; font-size: 16px; padding: 8px 16px; border: 1px solid black; color: black;">
+                            <option value="">-- Select GRN Entry --</option>
+                            @foreach ($entries as $entry)
+                                <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
+                                    data-code="{{ $entry->code }}" data-item-code="{{ $entry->item_code }}"
+                                    data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
+                                    data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
+                                    data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
+                                    data-txn-date="{{ $entry->txn_date }}"
+                                    data-original-weight="{{ $entry->original_weight }}"
+                                    data-original-packs="{{ $entry->original_packs }}">
+                                    {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
+                                    {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
+                                    {{ $entry->txn_date }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
 
-                    <h6 class="mb-2 text-center" style="flex-shrink: 0;">Sales Codes</h6>
+                {{-- Hidden fields for customer and GRN --}}
+                <input type="hidden" name="customer_name" id="customer_name_hidden"
+                    value="{{ old('customer_name') }}">
+                <input type="hidden" name="grn_entry_code" id="grn_entry_code" value="">
 
-                    <input type="text" id="searchByCode" class="form-control form-control-sm mb-2"
-                        placeholder="Search code..." style="flex-shrink: 0; font-size: 12px; padding: 4px 8px;">
+                {{-- Supplier Section (Hidden) --}}
+                <div class="row g-1 form-row mt-2">
+                    <div class="col-md-3 mb-1 d-none">
+                        <select name="supplier_code_display" id="supplier_code_display"
+                            class="form-select @error('supplier_code') is-invalid @enderror" disabled
+                            style="border: 1px solid black; color: black;">
+                            <option value="" disabled selected>සැපයුම්කරු (Supplier)</option>
+                            @php $currentSupplierCode = old('supplier_code', $sale->supplier_code ?? ''); @endphp
+                            @foreach ($suppliers as $supplier)
+                                <option value="{{ $supplier->code }}" {{ $currentSupplierCode == $supplier->code ? 'selected' : '' }}>
+                                    {{ $supplier->name }} ({{ $supplier->code }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <input type="hidden" name="supplier_code" id="supplier_code"
+                            value="{{ $currentSupplierCode }}">
+                        @error('supplier_code')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
 
-                    <ul class="list-group list-group-flush" id="codeList"
-                        style="font-size: 12px; overflow-y: auto; flex-grow: 1; margin-bottom: 0;">
+                    <div class="col-md-3 mb-1 d-none">
+                        <input type="hidden" name="item_code" value="{{ old('item_code') }}">
+                        <select id="item_select" class="form-select @error('item_code') is-invalid @enderror"
+                            disabled style="border: 1px solid black; color: black;">
+                            <option value="" disabled selected>අයිතමය තෝරන්න (Select Item)</option>
+                            @foreach ($items as $item)
+                                <option value="{{ $item->item_code }}" data-code="{{ $item->code }}"
+                                    data-item-code="{{ $item->item_code }}" data-item-name="{{ $item->item_name }}" {{ old('item_code') == $item->item_code ? 'selected' : '' }}>
+                                    ({{ $item->item_code }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('item_code')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
 
-                        @foreach ($codes as $c)
-                            <li class="list-group-item py-1 px-2" data-code="{{ $c->code }}"
-                                style="cursor: pointer; background-color: #f8f9fa;">
-                                <a href="{{ route('sales.byCode', $c->code) }}"
-                                    style="text-decoration: none; color: #006400; font-weight: 500;">
-                                    {{ $c->code }}
-                                </a>
+            
+ {{-- Item Details Section --}}
+                <div class="d-flex flex-wrap gap-2 align-items-start mt-2">
+
+                    <div style="flex: 1 1 80px;">
+                        <input type="text" id="item_name_display_from_grn" class="form-control" readonly
+                            placeholder="අයිතමයේ නම (Item Name)"
+                            style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
+                    </div>
+
+                    <div style="flex: 1 1 80px;">
+                        <input type="number" name="weight" id="weight" step="0.01"
+                            class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
+                            placeholder="බර (kg)" required
+                            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+                        <small id="remaining_weight_display" class="form-text text-danger fw-bold"
+                            style="font-size: 0.85rem;">
+                            Remaining: 0.00 kg
+                        </small>
+                    </div>
+
+                    <div style="flex: 1 1 80px;">
+                        <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+                            class="form-control @error('price_per_kg') is-invalid @enderror"
+                            value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
+                            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+                    </div>
+
+                    <div style="flex: 1 1 80px;">
+                        <input type="number" name="packs" id="packs"
+                            class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
+                            placeholder="ඇසුරුම් (Packs)" required
+                            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+                        <small id="remaining_packs_display" class="form-text text-danger fw-bold"
+                            style="font-size: 0.85rem;">
+                            Remaining Packs: 0
+                        </small>
+                    </div>
+
+                    <div style="flex: 1 1 80px;">
+                        <input type="number" name="total" id="total" readonly
+                            class="form-control bg-light @error('total') is-invalid @enderror"
+                            value="{{ old('total') }}" placeholder="සමස්ත (Total)"
+                            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
+                    </div>
+                </div>
+
+                <input type="hidden" name="code" id="code" value="{{ old('code') }}">
+                <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
+                <input type="hidden" name="original_weight" id="original_weight_input">
+                <input type="hidden" name="original_packs" id="original_packs_input">
+
+
+                {{-- Action Buttons --}}
+                <div class="d-grid gap-2 d-md-flex justify-content-center mt-4">
+                    <input type="hidden" name="sale_id" id="sale_id">
+                    <button type="submit" class="btn btn-primary btn-sm shadow-sm d-none" id="addSalesEntryBtn">
+                        <i class="material-icons me-2">add_circle_outline</i>Add Sales Entry
+                    </button>
+                    <button type="button" class="btn btn-success btn-sm shadow-sm" id="updateSalesEntryBtn"
+                        style="display:none;">
+                        <i class="material-icons me-2">edit</i>Update Sales Entry
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm shadow-sm" id="deleteSalesEntryBtn"
+                        style="display:none;">
+                        <i class="material-icons me-2">delete</i>Delete Sales Entry
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm shadow-sm" id="cancelEntryBtn"
+                        style="display:none;">
+                        <i class="material-icons me-2">cancel</i>Cancel / New Entry
+                    </button>
+                </div>
+            </form>
+
+
+
+            {{-- Main Sales Table - ALWAYS RENDERED --}}
+            <div class="mt-0">
+
+
+                <div class="table-responsive">
+
+                    <style>
+                        #mainSalesTableBody tr,
+                        #mainSalesTableBody td {
+                            background-color: black !important;
+                            color: white !important;
+                        }
+                    </style>
+                    <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
+                        style="font-size: 0.85rem; margin-top: -10px;">
+
+                        <thead style="background-color: white; color: black;">
+                            <tr>
+                                <th scope="col">කේතය</th>
+
+                                <th scope="col">අයිතමය</th>
+                                <th scope="col">බර (kg)</th>
+                                <th scope="col">මිල</th>
+                                <th scope="col">සමස්ත</th>
+                                <th scope="col">මලු</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mainSalesTableBody">
+                            {{-- This tbody will be dynamically populated by JavaScript. --}}
+                            {{-- IMPORTANT: Ensure your JavaScript populating this table adds 'data-sale-id',
+                            'data-customer-code', and 'data-customer-name' attributes to each <tr> --}}
+                                {{-- Example:
+                            <tr data-sale-id="123" data-customer-code="CUST001" data-customer-name="John Doe">...
+                            </tr> --}}
+                        </tbody>
+                    </table>
+                    <h5 style="font-size: 1.5rem; color: red; margin: 0; white-space: nowrap; text-align: right;">
+                        <strong>Total Sales Value:</strong> Rs.
+                        <span id="mainTotalSalesValueBottom">{{ number_format($totalSum, 2) }}</span>
+                    </h5>
+                    <div id="itemSummary"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
+  <div class="col-md-3"> {{-- Updated from margin-left: 74px to no margin --}}
+        <div class="card shadow-sm border-0 rounded-3" style="height: 250px;"> {{-- Fixed total height --}}
+            <div class="p-3"
+                style="background-color: #004d00; border-top-left-radius: .3rem; border-top-right-radius: .3rem;">
+                <h6 class="mb-2 text-center text-white">
+                    මුද්‍රණය නොකළ විකුණුම් වාර්තා
+                </h6>
+                {{-- 🔍 Search Bar --}}
+                <input type="text" id="searchUnprintedCustomerCode" class="form-control form-control-sm mb-2"
+                    placeholder="Search by customer code...">
+            </div>
+
+            {{-- Scrollable list area --}}
+            <div style="flex: 1; overflow-y: auto; padding: 0.5rem; background: #5ed772ff;">
+                @if ($salesNotPrinted->count())
+                    <ul id="unprintedSalesList" style="list-style: none; padding-left: 0; margin: 0;">
+                        @php
+                            $sortedSalesNotPrinted = $salesNotPrinted->sortByDesc(function ($salesForCustomer) {
+                                return $salesForCustomer->max('created_at');
+                            });
+                        @endphp
+
+                        @foreach ($sortedSalesNotPrinted as $customerCode => $salesForCustomer)
+                            @php
+                                $firstSaleForCustomer = $salesForCustomer->first();
+                                $customerName = $firstSaleForCustomer->customer_name;
+                                $totalCustomerSalesAmount = $salesForCustomer->sum('total');
+                            @endphp
+
+                            <li data-customer-code="{{ $customerCode }}">
+                                <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
+                                    data-customer-name="{{ $customerName }}" data-bill-no="" data-bill-type="unprinted"
+                                    style="font-size: 11px; padding: 2px 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; margin-bottom: 3px; border-radius: 4px; background-color: #f9f9f9; cursor: pointer;">
+                                    <span style="flex: 1;">
+                                        ({{ strtoupper($customerCode) }}) -
+                                        Rs.{{ number_format($totalCustomerSalesAmount, 2) }}
+                                    </span>
+                                    <i class="material-icons arrow-icon" style="font-size: 14px;">keyboard_arrow_right</i>
+                                </div>
                             </li>
                         @endforeach
                     </ul>
-                </div>
+                @else
+                    <div class="alert alert-info text-center m-2">
+                        No unprinted sales records found.
+                    </div>
+                @endif
+            </div>
+        </div>
 
+        {{-- DUPLICATE SECTION: Sales Codes --}}
+        <div class="card shadow-sm border-0 rounded-3 p-3 mt-3"
+            style="background-color: #006400 !important; color: white; height: 180px; display: flex; flex-direction: column;">
+
+            <h6 class="mb-2 text-center" style="flex-shrink: 0;">Sales Codes</h6>
+
+            <input type="text" id="searchByCode" class="form-control form-control-sm mb-2"
+                placeholder="Search code..." style="flex-shrink: 0; font-size: 12px; padding: 4px 8px;">
+
+            <ul class="list-group list-group-flush" id="codeList"
+                style="font-size: 12px; overflow-y: auto; flex-grow: 1; margin-bottom: 0;">
+
+                @foreach ($codes as $c)
+                    <li class="list-group-item py-1 px-2" data-code="{{ $c->code }}"
+                        style="cursor: pointer; background-color: #f8f9fa;">
+                        <a href="{{ route('sales.byCode', $c->code) }}"
+                            style="text-decoration: none; color: #006400; font-weight: 500;">
+                            {{ $c->code }}
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    </div>
+</div>
 
 
 
@@ -1856,8 +1878,7 @@
                                         <div class="grn-option-row">
                                             <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
                                             <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
-                                            <div class="grn-column grn-original-weight">${originalWeight || ''}</div>
-                                            <div class="grn-column grn-original-packs">${originalPacks || ''}</div>
+                                           
                                             <div class="grn-column grn-grn-no">${weight || ''}</div>
                                             <div class="grn-column grn-packs">${packs || 0}</div>
                                             <div class="grn-column grn-txn-date">${txnDate || ''}</div>
@@ -1906,8 +1927,7 @@
                                                     <div class="grn-option-row grn-header-row">
                                                         <div class="grn-column grn-code">Code</div>
                                                         <div class="grn-column grn-supplier-code">Sup</div>
-                                                        <div class="grn-column grn-supplier-code">OWeight</div>
-                                                        <div class="grn-column grn-supplier-code">OPacks</div>
+                                                       
                                                         <div class="grn-column grn-grn-no">BWeight</div>
                                                         <div class="grn-column grn-packs">BPacks</div>
                                                         <div class="grn-column grn-txn-date">Date</div>

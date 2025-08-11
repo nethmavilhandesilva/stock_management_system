@@ -5,6 +5,32 @@
     body {
         background-color: #99ff99;
     }
+
+    /* ===== PRINT SETTINGS ===== */
+    @media print {
+        /* Hide everything except the card */
+        body * {
+            visibility: hidden;
+        }
+
+        .custom-card, .custom-card * {
+            visibility: visible;
+        }
+
+        .custom-card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+
+        /* Optional: Change background & text color for print */
+        body, .custom-card {
+            background-color: white !important;
+            color: black !important;
+        }
+    }
+
     .custom-card {
         background-color: #006400 !important;
         color: white; /* for text readability */
@@ -18,7 +44,6 @@
         background-color: #004d00 !important;
         color: white;
     }
-    /* Optional: style table rows for better contrast */
     .custom-card table tbody tr:nth-child(odd) {
         background-color: #00550088; /* slightly lighter translucent green */
     }
@@ -26,7 +51,6 @@
         background-color: transparent;
     }
 
-    /* Title bar - flex container for inline layout */
     .report-title-bar {
         display: flex;
         align-items: center;
@@ -56,7 +80,6 @@
         white-space: nowrap;
     }
 
-    /* Print button style */
     .print-btn {
         background-color: #004d00;
         color: white;
@@ -91,19 +114,17 @@
                 <table class="table table-bordered table-striped table-hover mb-0">
                     <thead>
                         <tr>
-                              <th>පාරිභෝගික නම</th>
+                            <th>පාරිභෝගික නම</th>
                             <th>විස්තරය</th>
-                            <th>මුදල </th>
-                          
+                            <th>මුදල</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($loans as $loan)
                             <tr>
-                                 <td>{{ $loan->customer_short_name }}</td>
+                                <td>{{ $loan->customer_short_name }}</td>
                                 <td>{{ $loan->description }}</td>
                                 <td>{{ number_format($loan->amount, 2) }}</td>
-                               
                             </tr>
                         @endforeach
                     </tbody>
