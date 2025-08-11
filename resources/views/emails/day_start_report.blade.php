@@ -237,6 +237,62 @@
                 </tbody>
             </table>
         </div>
+
+        <br>
+        <hr>
+        <br>
+
+        {{-- Sales History Report Section --}}
+        <div class="header">
+            <h4 class="fw-bold">විකුණුම් ඉතිහාසය</h4>
+            <span class="date-info">{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
+        </div>
+
+        <div class="table-container">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>බිල් අංකය</th>
+                        <th>භාණ්ඩ කේතය</th>
+                        <th>භාණ්ඩ නාමය</th>
+                        <th>මලු</th>
+                        <th>බර (Kg)</th>
+                        <th>මිල (1Kg)</th>
+                        <th>එකතුව</th>
+                        <th>දිනය</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $totalSalesValue = 0;
+                    @endphp
+                    @forelse($salesReportData as $sale)
+                        @php
+                            $totalSalesValue += $sale->total;
+                        @endphp
+                        <tr>
+                            <td>{{ $sale->bill_no }}</td>
+                            <td>{{ $sale->item_code }}</td>
+                            <td>{{ $sale->item_name }}</td>
+                            <td>{{ number_format($sale->packs) }}</td>
+                            <td>{{ number_format($sale->weight, 2) }}</td>
+                            <td>Rs. {{ number_format($sale->price_per_kg, 2) }}</td>
+                            <td>Rs. {{ number_format($sale->total, 2) }}</td>
+                            <td>{{ \Carbon\Carbon::parse($sale->created_at)->timezone('Asia/Colombo')->format('Y-m-d') }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">විකුණුම් දත්ත නොමැත.</td>
+                        </tr>
+                    @endforelse
+                    <tr class="total-row">
+                        <td colspan="6">සමස්ත විකුණුම් එකතුව:</td>
+                        <td>Rs. {{ number_format($totalSalesValue, 2) }}</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>
