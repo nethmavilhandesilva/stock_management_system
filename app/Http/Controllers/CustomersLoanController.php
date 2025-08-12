@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 use App\Models\CustomersLoan;
+use App\Models\IncomeExpenses;
 use Illuminate\Support\Facades\DB;
  // Corrected model name if it was 'CustomersLoan' in your DB
 
@@ -34,15 +35,13 @@ class CustomersLoanController extends Controller
     // Return the view with customers and filtered loans
     return view('dashboard.customers_loans.index', compact('customers', 'loans'));
 }
-
-
- public function store(Request $request)
+public function store(Request $request)
 {
     // Base validation rules
     $rules = [
-        'loan_type' => 'required|string|in:old,today',
+        'loan_type' => 'required|string|in:old,today,ingoing,outgoing',
         'settling_way' => 'nullable|string|in:cash,cheque',
-        'customer_id' => 'required|exists:customers,id',
+        'customer_id' => 'nullable|exists:customers,id',
         'amount' => 'required|numeric|min:0.01',
         'description' => 'required|string|max:255',
         'bill_no' => 'nullable|string|max:255',
@@ -51,129 +50,97 @@ class CustomersLoanController extends Controller
         'cheque_date' => 'nullable|date',
     ];
 
-    // Conditional required fields if settling_way is given
-    if ($request->input('settling_way') === 'cheque') {
+    // Conditional required fields based on loan type and settling way
+    if ($request->input('loan_type') === 'ingoing' || $request->input('loan_type') === 'outgoing') {
+        $rules['customer_id'] = 'nullable';
+        $rules['settling_way'] = 'nullable';
+        $rules['bill_no'] = 'nullable';
+        $rules['cheque_no'] = 'nullable';
+        $rules['bank'] = 'nullable';
+        $rules['cheque_date'] = 'nullable';
+    } elseif ($request->input('settling_way') === 'cheque') {
         $rules['cheque_no'] = 'required|string|max:255';
         $rules['bank'] = 'required|string|max:255';
         $rules['cheque_date'] = 'required|date';
         $rules['bill_no'] = 'nullable';
-    } elseif ($request->filled('settling_way')) {
-        // Only require bill_no if settling_way is set and is not cheque
+        $rules['customer_id'] = 'required|exists:customers,id';
+    } else { // Handles loan_type 'old' and 'today' with 'cash' settling_way
         $rules['bill_no'] = 'nullable|string|max:255';
         $rules['cheque_no'] = 'nullable';
         $rules['bank'] = 'nullable';
         $rules['cheque_date'] = 'nullable';
+        $rules['customer_id'] = 'required|exists:customers,id';
     }
 
     $validated = $request->validate($rules);
 
-    // Fetch the customer
-    $customer = Customer::find($validated['customer_id']);
+    // This is the conditional logic to prevent saving 'ingoing'/'outgoing' to CustomersLoan
+    if ($validated['loan_type'] !== 'ingoing' && $validated['loan_type'] !== 'outgoing') {
+        // Create and save the new CustomersLoan record
+        $loan = new CustomersLoan();
+        $loan->loan_type = $validated['loan_type'];
+        $loan->settling_way = $validated['settling_way'] ?? null;
+        $loan->customer_id = $validated['customer_id'];
+        $loan->amount = $validated['amount'];
+        $loan->description = $validated['description'];
 
-    // Create new loan
-    $loan = new CustomersLoan();
-    $loan->loan_type = $validated['loan_type'];
-    $loan->settling_way = $validated['settling_way'] ?? null; // default to null
-    $loan->customer_id = $validated['customer_id'];
-    $loan->amount = $validated['amount'];
-    $loan->description = $validated['description'];
+        if ($loan->customer_id) {
+            $customer = Customer::find($loan->customer_id);
+            $loan->customer_short_name = $customer->short_name;
+        } else {
+            $loan->customer_short_name = null;
+        }
 
-    // Assign customer's short name
-    $loan->customer_short_name = $customer->short_name;
+        if (($validated['settling_way'] ?? null) === 'cheque') {
+            $loan->cheque_no = $validated['cheque_no'];
+            $loan->bank = $validated['bank'];
+            $loan->cheque_date = $validated['cheque_date'];
+            $loan->bill_no = null;
+        } else {
+            $loan->bill_no = $validated['bill_no'] ?? null;
+            $loan->cheque_no = null;
+            $loan->bank = null;
+            $loan->cheque_date = null;
+        }
+        $loan->save();
+    }
+    
+    // Create and save a new IncomeExpenses record for all transactions
+    $incomeExpense = new IncomeExpenses();
+    $incomeExpense->loan_type = $validated['loan_type'];
+    $incomeExpense->customer_id = $validated['customer_id'] ?? null;
+    $incomeExpense->description = $validated['description'];
+    $incomeExpense->bill_no = $validated['bill_no'] ?? null;
+    $incomeExpense->cheque_no = $validated['cheque_no'] ?? null;
+    $incomeExpense->bank = $validated['bank'] ?? null;
+    $incomeExpense->cheque_date = $validated['cheque_date'] ?? null;
+    $incomeExpense->settling_way = $validated['settling_way'] ?? null;
+    $incomeExpense->customer_short_name = null;
 
-    // Assign fields based on settling way
-    if (($validated['settling_way'] ?? null) === 'cheque') {
-        $loan->cheque_no = $validated['cheque_no'];
-        $loan->bank = $validated['bank'];
-        $loan->cheque_date = $validated['cheque_date'];
-        $loan->bill_no = null;
-    } else {
-        $loan->bill_no = $validated['bill_no'] ?? null;
-        $loan->cheque_no = null;
-        $loan->bank = null;
-        $loan->cheque_date = null;
+    // This is the corrected block to handle the potential missing customer_id
+    if (isset($validated['customer_id']) && $validated['customer_id']) {
+        $customer = Customer::find($validated['customer_id']);
+        if ($customer) {
+            $incomeExpense->customer_short_name = $customer->short_name;
+        }
     }
 
-    $loan->save();
+    // Determine the amount and type based on loan_type
+    if ($validated['loan_type'] === 'ingoing') {
+        $incomeExpense->amount = $validated['amount'];
+        $incomeExpense->type = 'income';
+    } elseif ($validated['loan_type'] === 'outgoing' || $validated['loan_type'] === 'today') {
+        $incomeExpense->amount = -$validated['amount'];
+        $incomeExpense->type = 'expense';
+    } elseif ($validated['loan_type'] === 'old') {
+        $incomeExpense->amount = $validated['amount'];
+        $incomeExpense->type = 'income';
+    }
+    
+    $incomeExpense->save();
 
-    return redirect()->route('customers-loans.index');
+    return redirect()->route('customers-loans.index')->with('success', 'Loan and income/expense record created successfully!');
 }
-
-  
-    public function edit(CustomersLoan $loan)
-    {
-        // Fetch all customers for the dropdown/search in the edit form
-        $customers = Customer::all();
-        // Return the edit view with the specific loan and all customers
-        return view('dashboard.customers_loans.edit', compact('loan', 'customers'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\CustomersLoan  $loan
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function update(Request $request, CustomersLoan $loan)
-{
-    // Base validation rules
-    $rules = [
-        'loan_type' => 'required|string|in:old,today',
-        'settling_way' => 'nullable|string|in:cash,cheque',
-        'customer_id' => 'required|exists:customers,id',
-        'amount' => 'required|numeric|min:0.01',
-        'bill_no' => 'nullable|string|max:255',
-        'description' => 'required|string|max:255',
-        'cheque_no' => 'nullable|string|max:255',
-        'bank' => 'nullable|string|max:255',
-        'cheque_date' => 'nullable|date',
-    ];
-
-    // Conditional validation if settling_way is provided
-    if ($request->input('settling_way') === 'cheque') {
-        $rules['cheque_no'] = 'required|string|max:255';
-        $rules['bank'] = 'required|string|max:255';
-        $rules['cheque_date'] = 'required|date';
-        $rules['bill_no'] = 'nullable'; // not required if cheque
-    } elseif ($request->filled('settling_way')) {
-        // Require bill_no only if settling_way is set and not cheque
-        $rules['bill_no'] = 'nullable|string|max:255';
-        $rules['cheque_no'] = 'nullable';
-        $rules['bank'] = 'nullable';
-        $rules['cheque_date'] = 'nullable';
-    }
-
-    $validated = $request->validate($rules);
-
-    // Force null if settling_way is not provided
-    $validated['settling_way'] = $validated['settling_way'] ?? null;
-
-    // Assign fields manually for better control
-    $loan->loan_type = $validated['loan_type'];
-    $loan->settling_way = $validated['settling_way'];
-    $loan->customer_id = $validated['customer_id'];
-    $loan->amount = $validated['amount'];
-    $loan->description = $validated['description'];
-
-    if (($validated['settling_way'] ?? null) === 'cheque') {
-        $loan->cheque_no = $validated['cheque_no'];
-        $loan->bank = $validated['bank'];
-        $loan->cheque_date = $validated['cheque_date'];
-        $loan->bill_no = null;
-    } else {
-        $loan->bill_no = $validated['bill_no'] ?? null;
-        $loan->cheque_no = null;
-        $loan->bank = null;
-        $loan->cheque_date = null;
-    }
-
-    $loan->save();
-
-    return redirect()->route('customers-loans.index')
-        ->with('success', 'Loan updated successfully!');
-}
-
     public function destroy(CustomersLoan $loan)
 {
     try {

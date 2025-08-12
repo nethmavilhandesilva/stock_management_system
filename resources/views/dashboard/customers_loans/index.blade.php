@@ -57,7 +57,8 @@
             margin-bottom: 0.2rem;
         }
 
-        .form-control-sm, .form-select-sm {
+        .form-control-sm,
+        .form-select-sm {
             padding: 0.15rem 0.4rem !important;
             font-size: 0.75rem !important;
             border: 1px solid black !important;
@@ -73,15 +74,13 @@
 
     <div class="container my-4">
         <div class="custom-card">
-
-        
-
             @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
 
             {{-- Loan Entry Form --}}
-            <form method="POST" action="{{ route('customers-loans.store') }}" id="loanForm" class="p-3 border border-2 border-dark rounded bg-custom-dark">
+            <form method="POST" action="{{ route('customers-loans.store') }}" id="loanForm"
+                class="p-3 border border-2 border-dark rounded bg-custom-dark">
                 @csrf
                 {{-- Laravel method spoofing --}}
                 <input type="hidden" name="_method" id="methodField" value="POST">
@@ -89,14 +88,24 @@
 
                 <div class="row gy-2">
                     <div class="col-md-8">
-                        <label class="text-form-label"><strong>Loan Type:</strong></label><br>
                         <label class="me-3">
                             <input type="radio" name="loan_type" value="old" checked>
                             වෙළෙන්දාගේ ලාද පරණ නය
                         </label>
-                        <label>
+
+                        <label class="me-3">
                             <input type="radio" name="loan_type" value="today">
                             වෙළෙන්දාගේ අද දින නය ගැනීම
+                        </label>
+
+                        <label class="me-3">
+                            <input type="radio" name="loan_type" value="ingoing">
+                            Ingoing
+                        </label>
+
+                        <label>
+                            <input type="radio" name="loan_type" value="outgoing">
+                            Outgoing
                         </label>
                     </div>
 
@@ -112,7 +121,7 @@
                         </label>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-4" id="customer_section">
                         <label for="customer_id" class="text-form-label">ගෙණුම්කරු</label>
                         <select class="form-select form-select-sm" id="customer_id" name="customer_id" required>
                             <option value="">-- Select Customer --</option>
@@ -122,29 +131,34 @@
                         </select>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-3" id="bill_no_section">
                         <label for="bill_no" class="text-form-label">Bill No</label>
                         <input type="text" class="form-control form-control-sm" name="bill_no">
                     </div>
 
-                    <div class="col-md-2">
-                        <label for="amount" class="text-form-label">මුදල</label>
-                        <input type="number" step="0.01" class="form-control form-control-sm" name="amount" required>
-                    </div>
-                
-                    <div class="col-md-5">
-                        <label for="description" class="text-form-label">විස්තරය</label>
-                        <input type="text" class="form-control form-control-sm" name="description" id="description" required>
-                        <span id="totalAmountDisplay" class="text-white-50" style="font-weight: bold; font-size: 0.9rem;"></span>
+                    <div id="loan-details-row" class="row gx-2">
+                        <div class="col-md-2" id="amount_section">
+                            <label for="amount" class="text-form-label">මුදල</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" name="amount" required>
+                        </div>
+                        <div class="col-md-5" id="description_section">
+                            <label for="description" class="text-form-label">විස්තරය</label>
+                            <input type="text" class="form-control form-control-sm" name="description" id="description"
+                                required>
+                            <span id="totalAmountDisplay" class="text-white-50"
+                                style="font-weight: bold; font-size: 0.9rem;"></span>
+                        </div>
                     </div>
 
                     <div id="chequeFields" class="col-md-5 ms-auto d-none">
                         <div class="border rounded p-2 bg-light" style="border-color: #006600 !important;">
-                            <h6 class="text-success fw-bold mb-2" style="border-bottom: 1px solid #006600;">Cheque Details</h6>
+                            <h6 class="text-success fw-bold mb-2" style="border-bottom: 1px solid #006600;">Cheque Details
+                            </h6>
                             <div class="row g-2">
                                 <div class="col-4">
                                     <label for="cheque_date" class="form-label mb-1">Cheque Date</label>
-                                    <input type="date" class="form-control form-control-sm" name="cheque_date" value="{{ date('Y-m-d') }}" disabled>
+                                    <input type="date" class="form-control form-control-sm" name="cheque_date"
+                                        value="{{ date('Y-m-d') }}" disabled>
                                 </div>
                                 <div class="col-4">
                                     <label for="cheque_no" class="form-label mb-1">Cheque No</label>
@@ -159,13 +173,14 @@
                     </div>
 
                     <div class="col-12 mt-3">
-                        <button type="submit" class="btn btn-light text-dark" id="addLoanButton"style="display:none;">Add Loan</button>
-                        <button type="submit" class="btn btn-success" id="updateLoanButton" >Update Loan</button>
-                        <button type="button" class="btn btn-secondary" id="cancelEditButton" style="display:none;">Cancel</button>
+                        <button type="submit" class="btn btn-light text-dark" id="addLoanButton" style="display:none;">Add
+                            Loan</button>
+                        <button type="submit" class="btn btn-success" id="updateLoanButton">Update Loan</button>
+                        <button type="button" class="btn btn-secondary" id="cancelEditButton"
+                            style="display:none;">Cancel</button>
                     </div>
                 </div>
             </form>
- 
 
             <h4>Loan Records</h4>
             <div class="table-responsive">
@@ -190,10 +205,12 @@
                                 <td>{{ $loan->bill_no ?? '-' }}</td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-warning edit-loan-btn">Edit</button>
-                                    <form action="{{ route('customers-loans.destroy', $loan->id) }}" method="POST" class="d-inline">
+                                    <form action="{{ route('customers-loans.destroy', $loan->id) }}" method="POST"
+                                        class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" onclick="return confirm('Are you sure?')" class="btn btn-sm btn-danger">Delete</button>
+                                        <button type="submit" onclick="return confirm('Are you sure?')"
+                                            class="btn btn-sm btn-danger">Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -204,15 +221,12 @@
                         @endforelse
                     </tbody>
                 </table>
-                             <!-- Add the button below the form, right aligned -->
-  <div class="mt-3 text-end">
-    <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark">
-        ණය වාර්තාව
-    </a>
-</div>
-
+                <div class="mt-3 text-end">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark">
+                        ණය වාර්තාව
+                    </a>
+                </div>
             </div>
-
         </div>
     </div>
 
@@ -243,21 +257,24 @@
                 }
             } else if (loanType === 'today') {
                 descriptionField.value = "වෙළෙන්දාගේ අද දින නය ගැනීම";
+            } else if (loanType === 'ingoing') {
+                descriptionField.value = "Ingoing";
+            } else if (loanType === 'outgoing') {
+                descriptionField.value = "Outgoing";
             }
 
-            // This is the new part. Check for both 'today' and 'old' to fetch the total loans.
             if (customerId && (loanType === 'today' || loanType === 'old')) {
                 $.ajax({
                     url: `/customers/${customerId}/loans-total`,
                     method: 'GET',
-                    success: function(response) {
+                    success: function (response) {
                         const formattedAmount = parseFloat(response.total_amount).toLocaleString(undefined, {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
                         });
                         totalAmountDisplay.text(`(Total Loans: ${formattedAmount})`);
                     },
-                    error: function() {
+                    error: function () {
                         totalAmountDisplay.text('(Could not fetch total loans)');
                     }
                 });
@@ -265,48 +282,74 @@
         }
 
         function toggleLoanTypeDependentFields() {
-    const loanType = $('input[name="loan_type"]:checked').val();
-    const settlingWay = $('input[name="settling_way"]:checked').val();
+            const loanType = $('input[name="loan_type"]:checked').val();
+            const settlingWay = $('input[name="settling_way"]:checked').val();
 
-    // Hide settling way section if loanType is 'today'
-    if (loanType === 'today') {
-        $('#settlingWaySection').addClass('d-none');
-        $('#settlingWaySection input').prop('disabled', true);
+            const isIngoingOrOutgoing = (loanType === 'ingoing' || loanType === 'outgoing');
 
-        // Hide cheque fields if loanType is 'today'
-        $('#chequeFields').addClass('d-none');
-        $('#chequeFields input').prop('disabled', true);
+            // Hide unnecessary fields for 'ingoing' and 'outgoing'
+            if (isIngoingOrOutgoing) {
+                $('#settlingWaySection').addClass('d-none');
+                $('#settlingWaySection input').prop('disabled', true);
+                $('#customer_section').addClass('d-none');
+                $('#customer_id').prop('disabled', true);
+                $('#bill_no_section').addClass('d-none');
+                $('input[name="bill_no"]').prop('disabled', true);
+                $('#chequeFields').addClass('d-none');
+                $('#chequeFields input').prop('disabled', true);
+                
+                // Adjust column widths for amount and description to be on the same line
+                $('#amount_section').removeClass('col-md-2').addClass('col-md-3');
+                $('#description_section').removeClass('col-md-5').addClass('col-md-9');
 
-        // Also disable bill_no if you want, or enable - adjust as needed
-        $('input[name="bill_no"]').prop('disabled', false);
+                $('#customer_id').val(null).trigger('change');
+            } 
+            // Handle visibility for 'old' and 'today' loan types
+            else {
+                // Show all fields and reset column sizes
+                $('#customer_section').removeClass('d-none');
+                $('#customer_id').prop('disabled', false);
+                $('#bill_no_section').removeClass('d-none');
+                $('input[name="bill_no"]').prop('disabled', false);
+                
+                $('#amount_section').removeClass('col-md-3').addClass('col-md-2');
+                $('#description_section').removeClass('col-md-9').addClass('col-md-5');
+                
+                // Handle cheque and bill no fields based on settling way
+                if (loanType === 'today') {
+                    $('#settlingWaySection').addClass('d-none');
+                    $('#settlingWaySection input').prop('disabled', true);
+                    $('#chequeFields').addClass('d-none');
+                    $('#chequeFields input').prop('disabled', true);
+                    $('input[name="bill_no"]').prop('disabled', false);
+                } else if (loanType === 'old') {
+                    $('#settlingWaySection').removeClass('d-none');
+                    $('#settlingWaySection input').prop('disabled', false);
 
-    } else {
-        $('#settlingWaySection').removeClass('d-none');
-        $('#settlingWaySection input').prop('disabled', false);
+                    if (settlingWay === 'cheque') {
+                        $('#chequeFields').removeClass('d-none');
+                        $('#chequeFields input').prop('disabled', false);
+                        $('input[name="bill_no"]').prop('disabled', true);
+                    } else {
+                        $('#chequeFields').addClass('d-none');
+                        $('#chequeFields input').prop('disabled', true);
+                        $('input[name="bill_no"]').prop('disabled', false);
+                    }
+                }
+            }
 
-        if (settlingWay === 'cheque') {
-            $('#chequeFields').removeClass('d-none');
-            $('#chequeFields input').prop('disabled', false);
-            $('input[name="bill_no"]').prop('disabled', true);
-        } else {
-            $('#chequeFields').addClass('d-none');
-            $('#chequeFields input').prop('disabled', true);
-            $('input[name="bill_no"]').prop('disabled', false);
+            updateDescription();
         }
-    }
 
-    updateDescription();
-}
-
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('#customer_id, #filter_customer').select2({
                 placeholder: "-- Select Customer --",
                 allowClear: true,
                 width: '100%'
             });
 
-            $('#customer_id').on('select2:open', function() {
-                setTimeout(function() {
+            $('#customer_id').on('select2:open', function () {
+                setTimeout(function () {
                     $('.select2-container--open .select2-search__field').focus();
                 }, 50);
             });
@@ -319,7 +362,7 @@
             resetForm();
 
             // Edit button click handler
-            $('.edit-loan-btn').on('click', function() {
+            $('.edit-loan-btn').on('click', function () {
                 const loan = $(this).closest('tr').data('loan');
 
                 // Change form action URL to update route
@@ -328,7 +371,14 @@
                 $('#methodField').val('PUT');
 
                 $('#loan_id').val(loan.id);
-                $('#customer_id').val(loan.customer_id).trigger('change');
+                
+                // Check if customer_id exists before setting it for ingoing/outgoing types
+                if (loan.customer_id) {
+                    $('#customer_id').val(loan.customer_id).trigger('change');
+                } else {
+                    $('#customer_id').val(null).trigger('change');
+                }
+                
                 $('input[name="loan_type"][value="' + loan.loan_type + '"]').prop('checked', true);
                 $('input[name="amount"]').val(loan.amount);
                 $('input[name="description"]').val(loan.description);
@@ -363,35 +413,34 @@
                 // Always keep name attribute set to _method in HTML, so no need to change it here
                 $('input[name="loan_type"][value="old"]').prop('checked', true);
                 $('input[name="settling_way"][value="cash"]').prop('checked', true);
-                $('#customer_id').val('').trigger('change');
+                $('#customer_id').val(null).trigger('change'); // Clear Select2
                 toggleLoanTypeDependentFields();
                 updateDescription();
-                
-               
+            
                 $('#updateLoanButton').hide();
                 $('#cancelEditButton').hide();
             }
 
-            $('#cancelEditButton').on('click', function() {
+            $('#cancelEditButton').on('click', function () {
                 resetForm();
             });
 
-            $('#customer_id').on('select2:close', function() {
+            $('#customer_id').on('select2:close', function () {
                 $('input[name="bill_no"]').focus();
             });
-            $('input[name="bill_no"]').on('keypress', function(e) {
+            $('input[name="bill_no"]').on('keypress', function (e) {
                 if (e.which === 13) {
                     e.preventDefault();
                     $('input[name="amount"]').focus();
                 }
             });
-            $('input[name="amount"]').on('keypress', function(e) {
+            $('input[name="amount"]').on('keypress', function (e) {
                 if (e.which === 13) {
                     e.preventDefault();
                     $('input[name="description"]').focus();
                 }
             });
-            $('input[name="description"]').on('keypress', function(e) {
+            $('input[name="description"]').on('keypress', function (e) {
                 if (e.which === 13) {
                     e.preventDefault();
                     $('#addLoanButton, #updateLoanButton').click();
@@ -399,7 +448,7 @@
             });
 
             // Debug: Log form data on submit to verify _method value
-            $('#loanForm').on('submit', function(e) {
+            $('#loanForm').on('submit', function (e) {
                 const formData = $(this).serializeArray();
                 console.log('Submitting form data:', formData);
             });
