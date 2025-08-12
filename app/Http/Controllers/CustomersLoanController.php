@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Customer;
-use App\Models\CustomersLoan; // Corrected model name if it was 'CustomersLoan' in your DB
+use App\Models\CustomersLoan;
+use Illuminate\Support\Facades\DB;
+ // Corrected model name if it was 'CustomersLoan' in your DB
 
 class CustomersLoanController extends Controller
 {
@@ -226,9 +228,10 @@ public function getTotalLoanAmount($customerId)
 }
 public function loanReport()
 {
-    $loans = CustomersLoan::select('description', 'amount', 'customer_short_name')->get();
+    $loans = CustomersLoan::select('customer_short_name', DB::raw('SUM(amount) as total_amount'))
+        ->groupBy('customer_short_name')
+        ->get();
 
-    // Pass data to a view or return JSON for AJAX
     return view('dashboard.reports.loan-report', compact('loans'));
 }
 
