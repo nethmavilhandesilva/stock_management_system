@@ -169,6 +169,13 @@
                             <td>{{ number_format($receivedTotal, 2) }}</td>
                             <td>{{ number_format($paidTotal, 2) }}</td>
                         </tr>
+                        <tr style="font-weight: bold; background-color: #004d00; color: white;">
+                            @php
+                                $netBalance =  $paidTotal-$receivedTotal ;
+                            @endphp
+                            <td colspan="6" class="text-end">ශුද්ධ ශේෂය:</td>
+                            <td>{{ number_format($netBalance, 2) }}</td>
+                        </tr>
                     </tbody>
                 </table>
             @endif

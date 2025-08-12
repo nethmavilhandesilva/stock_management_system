@@ -59,7 +59,7 @@ class CustomersLoanController extends Controller
         $rules['bill_no'] = 'nullable';
     } elseif ($request->filled('settling_way')) {
         // Only require bill_no if settling_way is set and is not cheque
-        $rules['bill_no'] = 'required|string|max:255';
+        $rules['bill_no'] = 'nullable|string|max:255';
         $rules['cheque_no'] = 'nullable';
         $rules['bank'] = 'nullable';
         $rules['cheque_date'] = 'nullable';
@@ -138,7 +138,7 @@ class CustomersLoanController extends Controller
         $rules['bill_no'] = 'nullable'; // not required if cheque
     } elseif ($request->filled('settling_way')) {
         // Require bill_no only if settling_way is set and not cheque
-        $rules['bill_no'] = 'required|string|max:255';
+        $rules['bill_no'] = 'nullable|string|max:255';
         $rules['cheque_no'] = 'nullable';
         $rules['bank'] = 'nullable';
         $rules['cheque_date'] = 'nullable';

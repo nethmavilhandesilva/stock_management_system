@@ -2189,6 +2189,7 @@
                 let globalLoanAmount = 0;  // global variable to hold loan amount
 
                 document.addEventListener('keydown', function (e) {
+                    console.log('Key pressed:', e.key); 
                     if (e.key === "F1") {
                         e.preventDefault();
 
