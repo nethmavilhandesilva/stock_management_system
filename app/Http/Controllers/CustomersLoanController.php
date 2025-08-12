@@ -144,8 +144,19 @@ public function store(Request $request)
     public function destroy(CustomersLoan $loan)
 {
     try {
+        // Find and delete the corresponding IncomeExpenses record.
+        // The where clauses match the fields used during creation to ensure
+        // the correct record is targeted for deletion.
+        IncomeExpenses::where('loan_type', $loan->loan_type)
+                      ->where('customer_id', $loan->customer_id)
+                      ->where('amount', $loan->amount)
+                      ->where('description', $loan->description)
+                      ->delete();
+                      
+        // Now, delete the CustomersLoan record itself.
         $loan->delete();
-        return redirect()->back()->with('success', 'Loan deleted successfully!');
+        
+        return redirect()->back()->with('success', 'Loan and associated income/expense record deleted successfully!');
     } catch (\Exception $e) {
         return redirect()->back()->withErrors('Failed to delete loan: ' . $e->getMessage());
     }

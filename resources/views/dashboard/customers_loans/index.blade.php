@@ -100,12 +100,12 @@
 
                         <label class="me-3">
                             <input type="radio" name="loan_type" value="ingoing">
-                            Ingoing
+                            වෙනත් ලාභීම/ආදායම්
                         </label>
 
                         <label>
                             <input type="radio" name="loan_type" value="outgoing">
-                            Outgoing
+                            වි‍යදම්
                         </label>
                     </div>
 
@@ -208,8 +208,7 @@
                                     <form action="{{ route('customers-loans.destroy', $loan->id) }}" method="POST"
                                         class="d-inline">
                                         @csrf
-                                        @method('DELETE')
-                                        <button type="submit" onclick="return confirm('Are you sure?')"
+                                        @method('DELETE') <button type="submit" onclick="return confirm('Are you sure?')"
                                             class="btn btn-sm btn-danger">Delete</button>
                                     </form>
                                 </td>
@@ -258,9 +257,9 @@
             } else if (loanType === 'today') {
                 descriptionField.value = "වෙළෙන්දාගේ අද දින නය ගැනීම";
             } else if (loanType === 'ingoing') {
-                descriptionField.value = "Ingoing";
+                descriptionField.value = "වෙනත් ලාභීම/ආදායම්";
             } else if (loanType === 'outgoing') {
-                descriptionField.value = "Outgoing";
+                descriptionField.value = "වි‍යදම්";
             }
 
             if (customerId && (loanType === 'today' || loanType === 'old')) {
@@ -297,13 +296,13 @@
                 $('input[name="bill_no"]').prop('disabled', true);
                 $('#chequeFields').addClass('d-none');
                 $('#chequeFields input').prop('disabled', true);
-                
+
                 // Adjust column widths for amount and description to be on the same line
                 $('#amount_section').removeClass('col-md-2').addClass('col-md-3');
                 $('#description_section').removeClass('col-md-5').addClass('col-md-9');
 
                 $('#customer_id').val(null).trigger('change');
-            } 
+            }
             // Handle visibility for 'old' and 'today' loan types
             else {
                 // Show all fields and reset column sizes
@@ -311,10 +310,10 @@
                 $('#customer_id').prop('disabled', false);
                 $('#bill_no_section').removeClass('d-none');
                 $('input[name="bill_no"]').prop('disabled', false);
-                
+
                 $('#amount_section').removeClass('col-md-3').addClass('col-md-2');
                 $('#description_section').removeClass('col-md-9').addClass('col-md-5');
-                
+
                 // Handle cheque and bill no fields based on settling way
                 if (loanType === 'today') {
                     $('#settlingWaySection').addClass('d-none');
@@ -371,14 +370,14 @@
                 $('#methodField').val('PUT');
 
                 $('#loan_id').val(loan.id);
-                
+
                 // Check if customer_id exists before setting it for ingoing/outgoing types
                 if (loan.customer_id) {
                     $('#customer_id').val(loan.customer_id).trigger('change');
                 } else {
                     $('#customer_id').val(null).trigger('change');
                 }
-                
+
                 $('input[name="loan_type"][value="' + loan.loan_type + '"]').prop('checked', true);
                 $('input[name="amount"]').val(loan.amount);
                 $('input[name="description"]').val(loan.description);
@@ -416,7 +415,7 @@
                 $('#customer_id').val(null).trigger('change'); // Clear Select2
                 toggleLoanTypeDependentFields();
                 updateDescription();
-            
+
                 $('#updateLoanButton').hide();
                 $('#cancelEditButton').hide();
             }
