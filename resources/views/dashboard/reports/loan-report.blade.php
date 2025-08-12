@@ -31,6 +31,17 @@
         }
     }
 
+    /* New CSS classes for highlighting */
+    .blue-highlight {
+        color: #64b5f6 !important; /* A slightly brighter blue for visibility */
+        font-weight: bold;
+    }
+
+    .red-highlight {
+        color: #ef5350 !important; /* A brighter red for visibility */
+        font-weight: bold;
+    }
+
     .custom-card {
         background-color: #006400 !important;
         color: white;
@@ -131,14 +142,14 @@
                 <table class="table table-bordered table-striped table-hover table-sm mb-0">
                     <thead>
                         <tr>
-                            <th>පාරිභෝගික නම</th>                            
+                            <th>පාරිභෝගික නම</th>
                             <th>මුදල</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($loans as $loan)
                             <tr>
-                                <td>{{ $loan->customer_short_name }}</td>
+                                <td class="{{ $loan->highlight_color ?? '' }}">{{ $loan->customer_short_name }}</td>
                                 <td>{{ number_format($loan->total_amount, 2) }}</td>
                             </tr>
                         @endforeach

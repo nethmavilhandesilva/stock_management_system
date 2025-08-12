@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Customer;
 use App\Models\CustomersLoan;
 use App\Models\IncomeExpenses;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
  // Corrected model name if it was 'CustomersLoan' in your DB
 
@@ -204,14 +205,61 @@ public function getTotalLoanAmount($customerId)
 
     return view('dashboard.reports.loan-results', compact('loans'));
 }
-public function loanReport()
-{
-    $loans = CustomersLoan::select('customer_short_name', DB::raw('SUM(amount) as total_amount'))
-        ->groupBy('customer_short_name')
-        ->get();
+ public function loanReport()
+    {
+        // 1. Fetch all loan data from the database.
+        $allLoans = CustomersLoan::all();
 
-    return view('dashboard.reports.loan-report', compact('loans'));
-}
+        // 2. Group the loans by customer_short_name to process them individually.
+        $groupedLoans = $allLoans->groupBy('customer_short_name');
 
+        $finalLoans = [];
+
+        // 3. Iterate through each customer's loan group to apply the highlighting logic.
+        foreach ($groupedLoans as $customerShortName => $loans) {
+            // Find the most recent 'old' and 'today' loans for this customer.
+            $lastOldLoan = $loans->where('loan_type', 'old')->sortByDesc('created_at')->first();
+            $lastTodayLoan = $loans->where('loan_type', 'today')->sortByDesc('created_at')->first();
+
+            $highlightColor = null;
+
+            // 4. Apply the NEW highlighting logic.
+            // Condition 1: Check if a today loan exists.
+            if ($lastOldLoan && $lastTodayLoan) {
+                // Calculate the number of days between the last 'old' loan and the last 'today' loan.
+                $daysBetweenLoans = Carbon::parse($lastOldLoan->created_at)->diffInDays(Carbon::parse($lastTodayLoan->created_at));
+
+                // Apply the highlight color based on the time gap between the loans.
+                if ($daysBetweenLoans > 30) {
+                    $highlightColor = 'red-highlight';
+                } elseif ($daysBetweenLoans >= 14 && $daysBetweenLoans <= 30) {
+                    $highlightColor = 'blue-highlight';
+                }
+            }
+            // Condition 2: Fallback to the old logic if no 'today' loan exists.
+            elseif ($lastOldLoan && !$lastTodayLoan) {
+                 $daysSinceLastOldLoan = Carbon::parse($lastOldLoan->created_at)->diffInDays(Carbon::now());
+                 if ($daysSinceLastOldLoan > 30) {
+                    $highlightColor = 'red-highlight';
+                } elseif ($daysSinceLastOldLoan >= 14 && $daysSinceLastOldLoan <= 30) {
+                    $highlightColor = 'blue-highlight';
+                }
+            }
+
+
+            // 5. Calculate the total amount for the customer.
+            $totalAmount = $loans->sum('amount');
+
+            // 6. Create a standardized object to pass to the view.
+            $finalLoans[] = (object) [
+                'customer_short_name' => $customerShortName,
+                'total_amount' => $totalAmount,
+                'highlight_color' => $highlightColor,
+            ];
+        }
+
+        // 7. Return the view with the processed loan data.
+        return view('dashboard.reports.loan-report', ['loans' => collect($finalLoans)]);
+    }
 
 }
