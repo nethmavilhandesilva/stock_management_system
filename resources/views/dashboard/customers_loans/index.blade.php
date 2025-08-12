@@ -126,7 +126,7 @@
                         <select class="form-select form-select-sm" id="customer_id" name="customer_id" required>
                             <option value="">-- Select Customer --</option>
                             @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->short_name }} - {{ $customer->name }}</option>
+                                <option value="{{ $customer->id }}" data-credit-limit="{{ $customer->credit_limit }}">{{ $customer->short_name }} - {{ $customer->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -140,6 +140,7 @@
                         <div class="col-md-2" id="amount_section">
                             <label for="amount" class="text-form-label">මුදල</label>
                             <input type="number" step="0.01" class="form-control form-control-sm" name="amount" required>
+                            <span id="creditLimitMessage" class="text-danger" style="font-weight: bold; font-size: 0.8rem;"></span>
                         </div>
                         <div class="col-md-5" id="description_section">
                             <label for="description" class="text-form-label">විස්තරය</label>
@@ -415,9 +416,10 @@
                 $('#customer_id').val(null).trigger('change'); // Clear Select2
                 toggleLoanTypeDependentFields();
                 updateDescription();
-
+                
                 $('#updateLoanButton').hide();
                 $('#cancelEditButton').hide();
+                $('#creditLimitMessage').text('');
             }
 
             $('#cancelEditButton').on('click', function () {
@@ -445,11 +447,51 @@
                     $('#addLoanButton, #updateLoanButton').click();
                 }
             });
+            
+            // New logic to handle credit limit validation
+            function checkCreditLimit() {
+                const loanType = $('input[name="loan_type"]:checked').val();
+                const customerId = $('#customer_id').val();
+                const amount = parseFloat($('input[name="amount"]').val());
+                const creditLimitMessage = $('#creditLimitMessage');
+                const submitButtons = $('#addLoanButton, #updateLoanButton');
+                const selectedCustomerOption = $('#customer_id option:selected');
+                const creditLimit = parseFloat(selectedCustomerOption.data('credit-limit'));
+
+                creditLimitMessage.text('');
+                submitButtons.prop('disabled', false);
+
+                // Only perform this check for 'today' and 'old' loan types and if a customer is selected
+                if ((loanType === 'today' || loanType === 'old') && customerId && amount > 0) {
+                    if (!isNaN(creditLimit) && amount > creditLimit) {
+                        creditLimitMessage.text('Amount exceeds credit limit!');
+                        submitButtons.prop('disabled', true);
+                    }
+                }
+            }
+
+            // Bind the credit limit check to the amount and customer_id fields
+            $('input[name="amount"]').on('input', checkCreditLimit);
+            $('#customer_id').on('change', checkCreditLimit);
+            $('input[name="loan_type"]').on('change', checkCreditLimit);
 
             // Debug: Log form data on submit to verify _method value
             $('#loanForm').on('submit', function (e) {
-                const formData = $(this).serializeArray();
-                console.log('Submitting form data:', formData);
+                // Re-run the validation check on submit to be safe
+                const customerId = $('#customer_id').val();
+                const amount = parseFloat($('input[name="amount"]').val());
+                const selectedCustomerOption = $('#customer_id option:selected');
+                const creditLimit = parseFloat(selectedCustomerOption.data('credit-limit'));
+                const loanType = $('input[name="loan_type"]:checked').val();
+                
+                if ((loanType === 'today' || loanType === 'old') && customerId && !isNaN(creditLimit) && amount > creditLimit) {
+                    // Replaced alert with a custom message in case the user disabled JS
+                    // or for a second check. The creditLimitMessage span is the primary UX.
+                    e.preventDefault(); // Stop the form from submitting
+                } else {
+                    const formData = $(this).serializeArray();
+                    console.log('Submitting form data:', formData);
+                }
             });
         });
     </script>
