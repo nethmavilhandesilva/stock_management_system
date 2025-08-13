@@ -192,6 +192,62 @@ public function unhide($id)
 
     return response()->json(['status' => 'unhidden']);
 }
+ public function Damagestore(Request $request)
+    {
+        // 1. Validate the incoming request data
+        $validatedData = $request->validate([
+            'wasted_code'   => 'required|string',
+            'wasted_packs'  => 'required|numeric|min:0',
+            'wasted_weight' => 'required|numeric|min:0',
+        ]);
+
+        // 2. Find the corresponding GrnEntry record using the `wasted_code`
+        // We use a database transaction to ensure both the deduction and the
+        // optional new record are handled atomically.
+        try {
+            DB::beginTransaction();
+
+            $grnEntry = GrnEntry::where('code', $validatedData['wasted_code'])->first();
+
+            // Check if the GRN entry exists
+            if (!$grnEntry) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'GRN entry with the provided code not found!');
+            }
+
+            // 3. Deduct the wasted packs and weight
+            $grnEntry->packs -= $validatedData['wasted_packs'];
+            $grnEntry->weight -= $validatedData['wasted_weight'];
+
+            // Prevent negative values
+            if ($grnEntry->packs < 0 || $grnEntry->weight < 0) {
+                 DB::rollBack();
+                 return redirect()->back()->with('error', 'Deduction would result in a negative value. Please check the amounts.');
+            }
+
+            // Save the updated GrnEntry record
+            $grnEntry->save();
+
+            // 4. Optionally, you might want to store a separate record of the damage.
+            // This is good practice for auditing and tracking.
+            // Assuming you have a GrnDamage model:
+            // \App\Models\GrnDamage::create([
+            //     'grn_entry_id' => $grnEntry->id,
+            //     'code' => $validatedData['wasted_code'],
+            //     'packs_deducted' => $validatedData['wasted_packs'],
+            //     'weight_deducted' => $validatedData['wasted_weight'],
+            //     'user_id' => auth()->id() // If you have user authentication
+            // ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Wasted stock recorded and deducted successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'An error occurred while processing the request.');
+        }
+    }
 
 
 }

@@ -7,35 +7,35 @@ use App\Models\Customer;
 use App\Models\CustomersLoan;
 use App\Models\IncomeExpenses;
 use Carbon\Carbon;
+use App\Models\GrnEntry;
 use Illuminate\Support\Facades\DB;
  // Corrected model name if it was 'CustomersLoan' in your DB
 
 class CustomersLoanController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\View\View
-     */
-   public function index(Request $request)
-{
-    // Fetch all customers for the dropdown/search
-    $customers = Customer::all();
+   
+    public function index(Request $request)
+    {
+        // Fetch all customers for the dropdown/search
+        $customers = Customer::all();
 
-    // Start the query to fetch loans with related customers, ordered by latest
-    $query = IncomeExpenses::with('customer');
+        // Fetch distinct codes from GrnEntry for the wasted dropdown
+        $grnCodes = GrnEntry::distinct()->pluck('code');
 
-    // If a filter_customer query param exists and is not empty, filter the loans by that customer
-    if ($request->filled('filter_customer')) {
-        $query->where('customer_id', $request->filter_customer);
+        // Start the query to fetch loans with related customers, ordered by latest
+        $query = CustomersLoan::with('customer');
+
+        // If a filter_customer query param exists and is not empty, filter the loans by that customer
+        if ($request->filled('filter_customer')) {
+            $query->where('customer_id', $request->filter_customer);
+        }
+
+        // Execute the query to get the loans
+        $loans = $query->orderBy('created_at', 'desc')->get();
+
+        // Return the view with customers and filtered loans, and the GRN codes
+        return view('dashboard.customers_loans.index', compact('customers', 'loans', 'grnCodes'));
     }
-
-    // Execute the query to get the loans
-    $loans = $query->get();
-
-    // Return the view with customers and filtered loans
-    return view('dashboard.customers_loans.index', compact('customers', 'loans'));
-}
 public function store(Request $request)
 {
     // Base validation rules

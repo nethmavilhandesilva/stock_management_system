@@ -70,12 +70,25 @@
         .bg-custom-dark strong {
             color: #fff !important;
         }
+
+        .btn-green-submit {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        .btn-green-submit:hover {
+            background-color: #218838;
+            color: #fff;
+        }
     </style>
 
     <div class="container my-4">
         <div class="custom-card">
             @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+            @if(session('error'))
+                <div class="alert alert-danger">{{ session('error') }}</div>
             @endif
 
             {{-- Loan Entry Form --}}
@@ -103,9 +116,15 @@
                             වෙනත් ලාභීම/ආදායම්
                         </label>
 
-                        <label>
+                        <label class="me-3">
                             <input type="radio" name="loan_type" value="outgoing">
                             වි‍යදම්
+                        </label>
+
+                        {{-- NEW: GRN Damages Radio Button --}}
+                        <label>
+                            <input type="radio" name="loan_type" value="grn_damage">
+                            GRN Damages
                         </label>
                     </div>
 
@@ -173,8 +192,35 @@
                         </div>
                     </div>
 
-                    <div class="col-12 mt-3">
-                        <button type="submit" class="btn" id="submitButton">Add Loan</button>
+                    {{-- NEW: Wasted Details Section --}}
+                    <div id="wastedFields" class="col-md-7 ms-auto d-none">
+                        <div class="border rounded p-2 bg-light" style="border-color: #006600 !important;">
+                            <h6 class="text-success fw-bold mb-2" style="border-bottom: 1px solid #006600;">Wasted Details
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <label for="wasted_code" class="form-label mb-1">Code</label>
+                                    <select class="form-select form-select-sm" name="wasted_code" id="wasted_code" disabled>
+                                        <option value="">-- Select Code --</option>
+                                        @foreach($grnCodes as $code)
+                                            <option value="{{ $code }}">{{ $code }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label for="wasted_packs" class="form-label mb-1">Wasted Packs</label>
+                                    <input type="number" step="1" class="form-control form-control-sm" name="wasted_packs" id="wasted_packs" disabled>
+                                </div>
+                                <div class="col-4">
+                                    <label for="wasted_weight" class="form-label mb-1">Wasted Weight</label>
+                                    <input type="number" step="0.01" class="form-control form-control-sm" name="wasted_weight" id="wasted_weight" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-3" id="mainSubmitSection">
+                        <button type="submit" class="btn btn-light text-dark" id="submitButton">Add Loan</button>
                         <button type="button" class="btn btn-secondary" id="cancelEditButton"
                             style="display:none;">Cancel</button>
                     </div>
@@ -243,6 +289,9 @@
             const bankField = document.getElementById('bank');
             const customerId = $('#customer_id').val();
             const totalAmountDisplay = $('#totalAmountDisplay');
+            const wastedCode = $('#wasted_code').val();
+            const wastedPacks = $('input[name="wasted_packs"]').val();
+            const wastedWeight = $('input[name="wasted_weight"]').val();
 
             totalAmountDisplay.text('');
             descriptionField.value = "";
@@ -259,6 +308,12 @@
                 descriptionField.value = "වෙනත් ලාභීම/ආදායම්";
             } else if (loanType === 'outgoing') {
                 descriptionField.value = "වි‍යදම්";
+            } else if (loanType === 'grn_damage') {
+                if (wastedCode) {
+                    descriptionField.value = `Wasted stock from code: ${wastedCode} (${wastedPacks} packs, ${wastedWeight} kg)`;
+                } else {
+                    descriptionField.value = "GRN Damages";
+                }
             }
 
             if (customerId && (loanType === 'today' || loanType === 'old')) {
@@ -282,58 +337,56 @@
         function toggleLoanTypeDependentFields() {
             const loanType = $('input[name="loan_type"]:checked').val();
             const settlingWay = $('input[name="settling_way"]:checked').val();
+            const form = $('#loanForm');
+            const submitButton = $('#submitButton');
 
-            const isIngoingOrOutgoing = (loanType === 'ingoing' || loanType === 'outgoing');
-
-            if (isIngoingOrOutgoing) {
-                $('#settlingWaySection').addClass('d-none');
-                $('#settlingWaySection input').prop('disabled', true);
-                $('#customer_section').addClass('d-none');
-                $('#customer_id').prop('disabled', true);
-                $('#bill_no_section').addClass('d-none');
-                $('input[name="bill_no"]').prop('disabled', true);
-                $('#chequeFields').addClass('d-none');
-                $('#chequeFields input').prop('disabled', true);
-
-                $('#amount_section').removeClass('col-md-2').addClass('col-md-3');
-                $('#description_section').removeClass('col-md-5').addClass('col-md-9');
-
-                $('#customer_id').val(null).trigger('change');
+            // Set the form action and button text based on the loan type
+            if (loanType === 'grn_damage') {
+                form.attr('action', '{{ route("grn-damages.store") }}');
+                submitButton.text('Add Waste').addClass('btn-green-submit').removeClass('btn-light text-dark');
+            } else {
+                form.attr('action', '{{ route("customers-loans.store") }}');
+                submitButton.text('Add Loan').removeClass('btn-green-submit').addClass('btn-light text-dark');
             }
-            else {
-                $('#customer_section').removeClass('d-none');
-                $('#customer_id').prop('disabled', false);
-                $('#bill_no_section').removeClass('d-none');
-                $('input[name="bill_no"]').prop('disabled', false);
 
-                $('#amount_section').removeClass('col-md-3').addClass('col-md-2');
-                $('#description_section').removeClass('col-md-9').addClass('col-md-5');
+            // Hide all dependent sections by default
+            $('#settlingWaySection').addClass('d-none').find('input').prop('disabled', true);
+            $('#customer_section').addClass('d-none').find('select').prop('disabled', true);
+            $('#bill_no_section').addClass('d-none').find('input').prop('disabled', true);
+            $('#chequeFields').addClass('d-none').find('input').prop('disabled', true);
+            $('#wastedFields').addClass('d-none').find('input, select').prop('disabled', true);
 
-                if (loanType === 'today') {
-                    $('#settlingWaySection').addClass('d-none');
-                    $('#settlingWaySection input').prop('disabled', true);
-                    $('#chequeFields').addClass('d-none');
-                    $('#chequeFields input').prop('disabled', true);
-                    $('input[name="bill_no"]').prop('disabled', false);
-                } else if (loanType === 'old') {
-                    $('#settlingWaySection').removeClass('d-none');
-                    $('#settlingWaySection input').prop('disabled', false);
+            // Hide/show the main loan details row and other elements
+            $('#loan-details-row').removeClass('d-none');
+            $('#mainSubmitSection').show();
+            $('input[name="amount"]').prop('disabled', false).attr('required', true);
+            $('input[name="description"]').prop('disabled', false).attr('required', true);
 
-                    if (settlingWay === 'cheque') {
-                        $('#chequeFields').removeClass('d-none');
-                        $('#chequeFields input').prop('disabled', false);
-                        $('input[name="bill_no"]').prop('disabled', true);
-                    } else {
-                        $('#chequeFields').addClass('d-none');
-                        $('#chequeFields input').prop('disabled', true);
-                        $('input[name="bill_no"]').prop('disabled', false);
-                    }
+            // Logic to show/hide sections based on the selected loan type
+            if (loanType === 'old') {
+                $('#settlingWaySection').removeClass('d-none').find('input').prop('disabled', false);
+                $('#customer_section').removeClass('d-none').find('select').prop('disabled', false);
+                $('#bill_no_section').removeClass('d-none').find('input').prop('disabled', false);
+                if (settlingWay === 'cheque') {
+                    $('#chequeFields').removeClass('d-none').find('input').prop('disabled', false);
+                    $('input[name="bill_no"]').prop('disabled', true);
                 }
+            } else if (loanType === 'today') {
+                $('#customer_section').removeClass('d-none').find('select').prop('disabled', false);
+                $('#bill_no_section').removeClass('d-none').find('input').prop('disabled', false);
+            } else if (loanType === 'ingoing' || loanType === 'outgoing') {
+                $('#customer_id').val(null).trigger('change');
+                $('input[name="bill_no"]').val('');
+            } else if (loanType === 'grn_damage') {
+                $('#loan-details-row').addClass('d-none');
+                $('input[name="amount"]').prop('disabled', true).removeAttr('required');
+                $('input[name="description"]').prop('disabled', true).removeAttr('required');
+                $('#customer_id').val(null).trigger('change');
+                $('#wastedFields').removeClass('d-none').find('input, select').prop('disabled', false);
             }
             updateDescription();
         }
 
-        // Function to reset the form to 'add' state
         function resetForm() {
             $('#loanForm')[0].reset();
             $('#loanForm').attr('action', "{{ route('customers-loans.store') }}");
@@ -344,20 +397,24 @@
             toggleLoanTypeDependentFields();
             updateDescription();
             
-            // Set button for 'Add' state
-            $('#submitButton').text('Add Loan').removeClass('btn-success').addClass('btn-light text-dark');
+            // Re-enable all input fields on reset
+            $('input[name="amount"]').prop('disabled', false);
+            $('input[name="description"]').prop('disabled', false);
+            $('input[name="bill_no"]').prop('disabled', false);
+            
+            $('#submitButton').text('Add Loan').removeClass('btn-green-submit').addClass('btn-light text-dark');
             $('#cancelEditButton').hide();
             $('#creditLimitMessage').text('');
         }
 
         $(document).ready(function () {
-            $('#customer_id, #filter_customer').select2({
-                placeholder: "-- Select Customer --",
+            $('#customer_id, #filter_customer, #wasted_code').select2({
+                placeholder: "-- Select --",
                 allowClear: true,
                 width: '100%'
             });
 
-            $('#customer_id').on('select2:open', function () {
+            $('#customer_id, #wasted_code').on('select2:open', function () {
                 setTimeout(function () {
                     $('.select2-container--open .select2-search__field').focus();
                 }, 50);
@@ -367,18 +424,25 @@
             $('input[name="loan_type"]').on('change', toggleLoanTypeDependentFields);
             $('#bank').on('input', updateDescription);
             $('#customer_id').on('change', updateDescription);
-            
-            // Initialize the form to 'add' mode on page load
+            $('#wasted_code, input[name="wasted_packs"], input[name="wasted_weight"]').on('change input', updateDescription);
+
             resetForm();
 
-            // Edit button click handler
             $('.edit-loan-btn').on('click', function () {
                 const loan = $(this).closest('tr').data('loan');
+                
+                // Resetting all dependent fields and then setting what is needed
+                resetForm();
 
-                // Change form action URL to update route
-                $('#loanForm').attr('action', `/customers-loans/${loan.id}`);
+                // Adjust form action for editing
+                let editActionUrl = ``;
+                if (loan.loan_type === 'grn_damage') {
+                    editActionUrl = `/grn-damages/${loan.id}`; // Assuming this route for updating GRN damages
+                } else {
+                    editActionUrl = `/customers-loans/${loan.id}`;
+                }
+                $('#loanForm').attr('action', editActionUrl);
                 $('#methodField').val('PUT');
-
                 $('#loan_id').val(loan.id);
 
                 if (loan.customer_id) {
@@ -390,11 +454,19 @@
                 $('input[name="loan_type"][value="' + loan.loan_type + '"]').prop('checked', true);
                 $('input[name="amount"]').val(loan.amount);
                 $('input[name="description"]').val(loan.description);
+                
+                $('input[name="bill_no"]').val('');
+                $('input[name="cheque_date"]').val('');
+                $('input[name="cheque_no"]').val('');
+                $('input[name="bank"]').val('');
+                $('#wasted_code').val(null).trigger('change');
+                $('input[name="wasted_packs"]').val('');
+                $('input[name="wasted_weight"]').val('');
 
                 if (loan.loan_type === 'today') {
                     $('input[name="settling_way"]').prop('checked', false);
                     $('input[name="bill_no"]').val(loan.bill_no ?? '');
-                } else {
+                } else if (loan.loan_type === 'old' || loan.loan_type === 'ingoing' || loan.loan_type === 'outgoing') {
                     $('input[name="settling_way"][value="' + (loan.settling_way ?? 'cash') + '"]').prop('checked', true);
                     if (loan.settling_way === 'cheque') {
                         $('input[name="cheque_date"]').val(loan.cheque_date ?? '');
@@ -404,12 +476,15 @@
                     } else {
                         $('input[name="bill_no"]').val(loan.bill_no ?? '');
                     }
+                } else if (loan.loan_type === 'grn_damage') {
+                    $('#wasted_code').val(loan.wasted_code).trigger('change');
+                    $('input[name="wasted_packs"]').val(loan.wasted_packs);
+                    $('input[name="wasted_weight"]').val(loan.wasted_weight);
                 }
 
                 toggleLoanTypeDependentFields();
                 updateDescription();
 
-                // Set button for 'Update' state
                 $('#submitButton').text('Update Loan').removeClass('btn-light text-dark').addClass('btn-success');
                 $('#cancelEditButton').show();
             });
@@ -445,17 +520,17 @@
                 const customerId = $('#customer_id').val();
                 const amount = parseFloat($('input[name="amount"]').val());
                 const creditLimitMessage = $('#creditLimitMessage');
-                const submitButtons = $('#submitButton');
+                const submitButton = $('#submitButton');
                 const selectedCustomerOption = $('#customer_id option:selected');
                 const creditLimit = parseFloat(selectedCustomerOption.data('credit-limit'));
 
                 creditLimitMessage.text('');
-                submitButtons.prop('disabled', false);
+                submitButton.prop('disabled', false);
 
                 if ((loanType === 'today' || loanType === 'old') && customerId && amount > 0) {
                     if (!isNaN(creditLimit) && amount > creditLimit) {
                         creditLimitMessage.text('Amount exceeds credit limit!');
-                        submitButtons.prop('disabled', true);
+                        submitButton.prop('disabled', true);
                     }
                 }
             }
