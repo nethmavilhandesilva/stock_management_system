@@ -23,7 +23,7 @@ class CustomersLoanController extends Controller
     $customers = Customer::all();
 
     // Start the query to fetch loans with related customers, ordered by latest
-    $query = CustomersLoan::with('customer')->latest();
+    $query = IncomeExpenses::with('customer');
 
     // If a filter_customer query param exists and is not empty, filter the loans by that customer
     if ($request->filled('filter_customer')) {
@@ -142,6 +142,119 @@ public function store(Request $request)
 
     return redirect()->route('customers-loans.index')->with('success', 'Loan and income/expense record created successfully!');
 }
+public function update(Request $request, $id)
+{
+    // Base validation rules
+    $rules = [
+        'loan_type'     => 'required|string|in:old,today,ingoing,outgoing',
+        'settling_way'  => 'nullable|string|in:cash,cheque',
+        'customer_id'   => 'nullable|exists:customers,id',
+        'amount'        => 'required|numeric|min:0.01',
+        'description'   => 'required|string|max:255',
+        'bill_no'       => 'nullable|string|max:255',
+        'cheque_no'     => 'nullable|string|max:255',
+        'bank'          => 'nullable|string|max:255',
+        'cheque_date'   => 'nullable|date',
+    ];
+
+    // Conditional rules based on loan type and settling way
+    if (in_array($request->loan_type, ['ingoing', 'outgoing'])) {
+        $rules['customer_id']  = 'nullable';
+        $rules['settling_way'] = 'nullable';
+        $rules['bill_no']      = 'nullable';
+        $rules['cheque_no']    = 'nullable';
+        $rules['bank']         = 'nullable';
+        $rules['cheque_date']  = 'nullable';
+    } elseif ($request->settling_way === 'cheque') {
+        $rules['cheque_no']    = 'required|string|max:255';
+        $rules['bank']         = 'required|string|max:255';
+        $rules['cheque_date']  = 'required|date';
+        $rules['bill_no']      = 'nullable';
+        $rules['customer_id']  = 'required|exists:customers,id';
+    } else { // loan_type 'old' or 'today' with 'cash'
+        $rules['bill_no']      = 'nullable|string|max:255';
+        $rules['cheque_no']    = 'nullable';
+        $rules['bank']         = 'nullable';
+        $rules['cheque_date']  = 'nullable';
+        $rules['customer_id']  = 'required|exists:customers,id';
+    }
+
+    $validated = $request->validate($rules);
+
+    // Find existing loan
+    $loan = CustomersLoan::findOrFail($id);
+
+    // Only update CustomersLoan if NOT ingoing/outgoing
+    if (!in_array($validated['loan_type'], ['ingoing', 'outgoing'])) {
+        $loan->loan_type      = $validated['loan_type'];
+        $loan->settling_way   = $validated['settling_way'] ?? null;
+        $loan->customer_id    = $validated['customer_id'];
+        $loan->amount         = $validated['amount'];
+        $loan->description    = $validated['description'];
+
+        // Update short name if customer exists
+        if ($loan->customer_id) {
+            $customer = Customer::find($loan->customer_id);
+            $loan->customer_short_name = $customer ? $customer->short_name : null;
+        } else {
+            $loan->customer_short_name = null;
+        }
+
+        // Cheque details
+        if (($validated['settling_way'] ?? null) === 'cheque') {
+            $loan->cheque_no   = $validated['cheque_no'];
+            $loan->bank        = $validated['bank'];
+            $loan->cheque_date = $validated['cheque_date'];
+            $loan->bill_no     = null;
+        } else {
+            $loan->bill_no     = $validated['bill_no'] ?? null;
+            $loan->cheque_no   = null;
+            $loan->bank        = null;
+            $loan->cheque_date = null;
+        }
+
+        $loan->save();
+    }
+
+    // Find or create related IncomeExpenses record by loan_id
+    $incomeExpense = IncomeExpenses::where('loan_id', $loan->id)->first() ?? new IncomeExpenses();
+    $incomeExpense->loan_id       = $loan->id;
+    $incomeExpense->loan_type     = $validated['loan_type'];
+    $incomeExpense->customer_id   = $validated['customer_id'] ?? null;
+    $incomeExpense->description   = $validated['description'];
+    $incomeExpense->bill_no       = $validated['bill_no'] ?? null;
+    $incomeExpense->cheque_no     = $validated['cheque_no'] ?? null;
+    $incomeExpense->bank          = $validated['bank'] ?? null;
+    $incomeExpense->cheque_date   = $validated['cheque_date'] ?? null;
+    $incomeExpense->settling_way  = $validated['settling_way'] ?? null;
+
+    // Update short name for income/expense record
+    if (!empty($validated['customer_id'])) {
+        $customer = Customer::find($validated['customer_id']);
+        $incomeExpense->customer_short_name = $customer ? $customer->short_name : null;
+    } else {
+        $incomeExpense->customer_short_name = null;
+    }
+
+    // Amount & type assignment
+    if ($validated['loan_type'] === 'ingoing') {
+        $incomeExpense->amount = $validated['amount'];
+        $incomeExpense->type   = 'income';
+    } elseif (in_array($validated['loan_type'], ['outgoing', 'today'])) {
+        $incomeExpense->amount = -$validated['amount'];
+        $incomeExpense->type   = 'expense';
+    } elseif ($validated['loan_type'] === 'old') {
+        $incomeExpense->amount = $validated['amount'];
+        $incomeExpense->type   = 'income';
+    }
+
+    $incomeExpense->save();
+
+    return redirect()
+        ->route('customers-loans.index')
+        ->with('success', 'Loan and income/expense record updated successfully!');
+}
+
     public function destroy(CustomersLoan $loan)
 {
     try {
@@ -205,61 +318,67 @@ public function getTotalLoanAmount($customerId)
 
     return view('dashboard.reports.loan-results', compact('loans'));
 }
- public function loanReport()
-    {
-        // 1. Fetch all loan data from the database.
-        $allLoans = CustomersLoan::all();
+public function loanReport()
+{
+    $allLoans = CustomersLoan::all();
+    $groupedLoans = $allLoans->groupBy('customer_short_name');
+    $finalLoans = [];
 
-        // 2. Group the loans by customer_short_name to process them individually.
-        $groupedLoans = $allLoans->groupBy('customer_short_name');
+    foreach ($groupedLoans as $customerShortName => $loans) {
+        $lastOldLoan = $loans->where('loan_type', 'old')->sortByDesc('created_at')->first();
 
-        $finalLoans = [];
+        // Find the FIRST today loan after last old loan
+        $firstTodayAfterOld = $loans->where('loan_type', 'today')
+                                     ->where('created_at', '>', $lastOldLoan->created_at ?? '1970-01-01')
+                                     ->sortBy('created_at')
+                                     ->first();
 
-        // 3. Iterate through each customer's loan group to apply the highlighting logic.
-        foreach ($groupedLoans as $customerShortName => $loans) {
-            // Find the most recent 'old' and 'today' loans for this customer.
-            $lastOldLoan = $loans->where('loan_type', 'old')->sortByDesc('created_at')->first();
-            $lastTodayLoan = $loans->where('loan_type', 'today')->sortByDesc('created_at')->first();
+        $highlightColor = null;
 
-            $highlightColor = null;
+        if ($lastOldLoan && $firstTodayAfterOld) {
+            $daysBetweenLoans = Carbon::parse($lastOldLoan->created_at)
+                                    ->diffInDays(Carbon::parse($firstTodayAfterOld->created_at));
 
-            // 4. Apply the NEW highlighting logic.
-            // Condition 1: Check if a today loan exists.
-            if ($lastOldLoan && $lastTodayLoan) {
-                // Calculate the number of days between the last 'old' loan and the last 'today' loan.
-                $daysBetweenLoans = Carbon::parse($lastOldLoan->created_at)->diffInDays(Carbon::parse($lastTodayLoan->created_at));
-
-                // Apply the highlight color based on the time gap between the loans.
-                if ($daysBetweenLoans > 30) {
-                    $highlightColor = 'red-highlight';
-                } elseif ($daysBetweenLoans >= 14 && $daysBetweenLoans <= 30) {
-                    $highlightColor = 'blue-highlight';
-                }
-            }
-            // Condition 2: Fallback to the old logic if no 'today' loan exists.
-            elseif ($lastOldLoan && !$lastTodayLoan) {
-                 $daysSinceLastOldLoan = Carbon::parse($lastOldLoan->created_at)->diffInDays(Carbon::now());
-                 if ($daysSinceLastOldLoan > 30) {
-                    $highlightColor = 'red-highlight';
-                } elseif ($daysSinceLastOldLoan >= 14 && $daysSinceLastOldLoan <= 30) {
-                    $highlightColor = 'blue-highlight';
-                }
+            if ($daysBetweenLoans > 30) {
+                $highlightColor = 'red-highlight';
+            } elseif ($daysBetweenLoans >= 14 && $daysBetweenLoans <= 30) {
+                $highlightColor = 'blue-highlight';
             }
 
+            // Remove highlight if any additional today loan exists
+            $extraTodayLoanExists = $loans->where('loan_type', 'today')
+                                          ->where('created_at', '>', $firstTodayAfterOld->created_at)
+                                          ->count() > 0;
 
-            // 5. Calculate the total amount for the customer.
-            $totalAmount = $loans->sum('amount');
+            if ($extraTodayLoanExists) {
+                $highlightColor = null;
+            }
 
-            // 6. Create a standardized object to pass to the view.
-            $finalLoans[] = (object) [
-                'customer_short_name' => $customerShortName,
-                'total_amount' => $totalAmount,
-                'highlight_color' => $highlightColor,
-            ];
+        } elseif ($lastOldLoan && !$firstTodayAfterOld) {
+            $daysSinceLastOldLoan = Carbon::parse($lastOldLoan->created_at)
+                                         ->diffInDays(Carbon::now());
+
+            if ($daysSinceLastOldLoan > 30) {
+                $highlightColor = 'red-highlight';
+            } elseif ($daysSinceLastOldLoan >= 14 && $daysSinceLastOldLoan <= 30) {
+                $highlightColor = 'blue-highlight';
+            }
         }
 
-        // 7. Return the view with the processed loan data.
-        return view('dashboard.reports.loan-report', ['loans' => collect($finalLoans)]);
+        // Calculate total as sum(today) - sum(old)
+        $totalToday = $loans->where('loan_type', 'today')->sum('amount');
+        $totalOld = $loans->where('loan_type', 'old')->sum('amount');
+        $totalAmount = $totalToday - $totalOld;
+
+        $finalLoans[] = (object) [
+            'customer_short_name' => $customerShortName,
+            'total_amount' => $totalAmount,
+            'highlight_color' => $highlightColor,
+        ];
     }
+
+    return view('dashboard.reports.loan-report', ['loans' => collect($finalLoans)]);
+}
+
 
 }

@@ -139,22 +139,34 @@
                     No loan records found.
                 </div>
             @else
-                <table class="table table-bordered table-striped table-hover table-sm mb-0">
-                    <thead>
-                        <tr>
-                            <th>පාරිභෝගික නම</th>
-                            <th>මුදල</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($loans as $loan)
-                            <tr>
-                                <td class="{{ $loan->highlight_color ?? '' }}">{{ $loan->customer_short_name }}</td>
-                                <td>{{ number_format($loan->total_amount, 2) }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+              <table class="table table-bordered table-striped table-hover table-sm mb-0">
+    <thead>
+        <tr>
+            <th>පාරිභෝගික නම</th>
+            <th>මුදල</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach ($loans as $loan)
+            <tr>
+                <td class="{{ $loan->highlight_color ?? '' }}">{{ $loan->customer_short_name }}</td>
+                <td>{{ number_format($loan->total_amount, 2) }}</td>
+            </tr>
+        @endforeach
+    </tbody>
+    <tfoot>
+        <tr>
+            <th class="text-end">Grand Total:</th>
+            <th>
+                {{
+                    number_format($loans->sum(function($loan) {
+                        return $loan->total_amount;
+                    }), 2)
+                }}
+            </th>
+        </tr>
+    </tfoot>
+</table>
             @endif
         </div>
     </div>

@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\IncomeExpenses;
 use App\Models\SalesHistory;
 use Illuminate\Http\Request;
 use App\Models\Sale;
@@ -14,6 +15,7 @@ use App\Exports\DynamicReportExport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Salesadjustment;
+
 
 class ReportController extends Controller
 {
@@ -616,7 +618,51 @@ public function salesAdjustmentReport(Request $request)
 
     return view('dashboard.reports.salesadjustment', compact('entries', 'code', 'startDate', 'endDate'));
 }
+ public function financialReport()
+    {
+        $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')->get();
 
+        $reportData = [];
+        $totalDr = 0;
+        $totalCr = 0;
+
+        foreach ($records as $record) {
+            $dr = null;
+            $cr = null;
+
+            // Build description with customer name, bill_no (if exists), and description
+            $desc = $record->customer_short_name;
+            if (!empty($record->bill_no)) {
+                $desc .= " ({$record->bill_no})";
+            }
+            $desc .= " - {$record->description}";
+
+            if (in_array($record->loan_type, ['old', 'ingoing'])) {
+                $dr = $record->amount;
+                $totalDr += $record->amount;
+            } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
+                $cr = $record->amount;
+                $totalCr += $record->amount;
+            }
+
+            $reportData[] = [
+                'description' => $desc,
+                'dr' => $dr,
+                'cr' => $cr
+            ];
+        }
+
+        // Add Sales total to DR
+        $salesTotal = Sale::sum('total');
+        $totalDr += $salesTotal;
+        $reportData[] = [
+            'description' => 'Sales Total',
+            'dr' => $salesTotal,
+            'cr' => null
+        ];
+
+        return view('dashboard.reports.financial', compact('reportData', 'totalDr', 'totalCr','salesTotal'));
+    }
 }
 
 

@@ -25,15 +25,9 @@ class IncomeExpenses extends Model
         'unique_code',
         'user_id',
     ];
+  public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 
-    // Example relationships (optional)
-    // public function customer()
-    // {
-    //     return $this->belongsTo(Customer::class);
-    // }
-
-    // public function user()
-    // {
-    //     return $this->belongsTo(User::class);
-    // }
 }

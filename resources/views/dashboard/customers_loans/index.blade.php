@@ -174,9 +174,7 @@
                     </div>
 
                     <div class="col-12 mt-3">
-                        <button type="submit" class="btn btn-light text-dark" id="addLoanButton" style="display:none;">Add
-                            Loan</button>
-                        <button type="submit" class="btn btn-success" id="updateLoanButton">Update Loan</button>
+                        <button type="submit" class="btn" id="submitButton">Add Loan</button>
                         <button type="button" class="btn btn-secondary" id="cancelEditButton"
                             style="display:none;">Cancel</button>
                     </div>
@@ -201,7 +199,7 @@
                             <tr class="loan-row" data-loan='@json($loan)'>
                                 <td>{{ $loan->description }}</td>
                                 <td>{{ number_format($loan->amount, 2) }}</td>
-                                <td>{{ $loan->customer->short_name }}</td>
+                                <td>{{ $loan->customer_short_name }}</td>
                                 <td>{{ ucfirst($loan->loan_type) }}</td>
                                 <td>{{ $loan->bill_no ?? '-' }}</td>
                                 <td>
@@ -287,7 +285,6 @@
 
             const isIngoingOrOutgoing = (loanType === 'ingoing' || loanType === 'outgoing');
 
-            // Hide unnecessary fields for 'ingoing' and 'outgoing'
             if (isIngoingOrOutgoing) {
                 $('#settlingWaySection').addClass('d-none');
                 $('#settlingWaySection input').prop('disabled', true);
@@ -298,15 +295,12 @@
                 $('#chequeFields').addClass('d-none');
                 $('#chequeFields input').prop('disabled', true);
 
-                // Adjust column widths for amount and description to be on the same line
                 $('#amount_section').removeClass('col-md-2').addClass('col-md-3');
                 $('#description_section').removeClass('col-md-5').addClass('col-md-9');
 
                 $('#customer_id').val(null).trigger('change');
             }
-            // Handle visibility for 'old' and 'today' loan types
             else {
-                // Show all fields and reset column sizes
                 $('#customer_section').removeClass('d-none');
                 $('#customer_id').prop('disabled', false);
                 $('#bill_no_section').removeClass('d-none');
@@ -315,7 +309,6 @@
                 $('#amount_section').removeClass('col-md-3').addClass('col-md-2');
                 $('#description_section').removeClass('col-md-9').addClass('col-md-5');
 
-                // Handle cheque and bill no fields based on settling way
                 if (loanType === 'today') {
                     $('#settlingWaySection').addClass('d-none');
                     $('#settlingWaySection input').prop('disabled', true);
@@ -337,8 +330,24 @@
                     }
                 }
             }
-
             updateDescription();
+        }
+
+        // Function to reset the form to 'add' state
+        function resetForm() {
+            $('#loanForm')[0].reset();
+            $('#loanForm').attr('action', "{{ route('customers-loans.store') }}");
+            $('#methodField').val('POST');
+            $('input[name="loan_type"][value="old"]').prop('checked', true);
+            $('input[name="settling_way"][value="cash"]').prop('checked', true);
+            $('#customer_id').val(null).trigger('change');
+            toggleLoanTypeDependentFields();
+            updateDescription();
+            
+            // Set button for 'Add' state
+            $('#submitButton').text('Add Loan').removeClass('btn-success').addClass('btn-light text-dark');
+            $('#cancelEditButton').hide();
+            $('#creditLimitMessage').text('');
         }
 
         $(document).ready(function () {
@@ -358,7 +367,8 @@
             $('input[name="loan_type"]').on('change', toggleLoanTypeDependentFields);
             $('#bank').on('input', updateDescription);
             $('#customer_id').on('change', updateDescription);
-
+            
+            // Initialize the form to 'add' mode on page load
             resetForm();
 
             // Edit button click handler
@@ -367,12 +377,10 @@
 
                 // Change form action URL to update route
                 $('#loanForm').attr('action', `/customers-loans/${loan.id}`);
-                // Set method spoofing to PUT for update
                 $('#methodField').val('PUT');
 
                 $('#loan_id').val(loan.id);
 
-                // Check if customer_id exists before setting it for ingoing/outgoing types
                 if (loan.customer_id) {
                     $('#customer_id').val(loan.customer_id).trigger('change');
                 } else {
@@ -401,31 +409,15 @@
                 toggleLoanTypeDependentFields();
                 updateDescription();
 
-                $('#addLoanButton').hide();
-                $('#updateLoanButton').show();
+                // Set button for 'Update' state
+                $('#submitButton').text('Update Loan').removeClass('btn-light text-dark').addClass('btn-success');
                 $('#cancelEditButton').show();
             });
-
-            function resetForm() {
-                $('#loanForm')[0].reset();
-                $('#loanForm').attr('action', "{{ route('customers-loans.store') }}");
-                $('#methodField').val('POST');
-                // Always keep name attribute set to _method in HTML, so no need to change it here
-                $('input[name="loan_type"][value="old"]').prop('checked', true);
-                $('input[name="settling_way"][value="cash"]').prop('checked', true);
-                $('#customer_id').val(null).trigger('change'); // Clear Select2
-                toggleLoanTypeDependentFields();
-                updateDescription();
-                
-                $('#updateLoanButton').hide();
-                $('#cancelEditButton').hide();
-                $('#creditLimitMessage').text('');
-            }
 
             $('#cancelEditButton').on('click', function () {
                 resetForm();
             });
-
+            
             $('#customer_id').on('select2:close', function () {
                 $('input[name="bill_no"]').focus();
             });
@@ -444,24 +436,22 @@
             $('input[name="description"]').on('keypress', function (e) {
                 if (e.which === 13) {
                     e.preventDefault();
-                    $('#addLoanButton, #updateLoanButton').click();
+                    $('#submitButton').click();
                 }
             });
             
-            // New logic to handle credit limit validation
             function checkCreditLimit() {
                 const loanType = $('input[name="loan_type"]:checked').val();
                 const customerId = $('#customer_id').val();
                 const amount = parseFloat($('input[name="amount"]').val());
                 const creditLimitMessage = $('#creditLimitMessage');
-                const submitButtons = $('#addLoanButton, #updateLoanButton');
+                const submitButtons = $('#submitButton');
                 const selectedCustomerOption = $('#customer_id option:selected');
                 const creditLimit = parseFloat(selectedCustomerOption.data('credit-limit'));
 
                 creditLimitMessage.text('');
                 submitButtons.prop('disabled', false);
 
-                // Only perform this check for 'today' and 'old' loan types and if a customer is selected
                 if ((loanType === 'today' || loanType === 'old') && customerId && amount > 0) {
                     if (!isNaN(creditLimit) && amount > creditLimit) {
                         creditLimitMessage.text('Amount exceeds credit limit!');
@@ -470,29 +460,9 @@
                 }
             }
 
-            // Bind the credit limit check to the amount and customer_id fields
             $('input[name="amount"]').on('input', checkCreditLimit);
             $('#customer_id').on('change', checkCreditLimit);
             $('input[name="loan_type"]').on('change', checkCreditLimit);
-
-            // Debug: Log form data on submit to verify _method value
-            $('#loanForm').on('submit', function (e) {
-                // Re-run the validation check on submit to be safe
-                const customerId = $('#customer_id').val();
-                const amount = parseFloat($('input[name="amount"]').val());
-                const selectedCustomerOption = $('#customer_id option:selected');
-                const creditLimit = parseFloat(selectedCustomerOption.data('credit-limit'));
-                const loanType = $('input[name="loan_type"]:checked').val();
-                
-                if ((loanType === 'today' || loanType === 'old') && customerId && !isNaN(creditLimit) && amount > creditLimit) {
-                    // Replaced alert with a custom message in case the user disabled JS
-                    // or for a second check. The creditLimitMessage span is the primary UX.
-                    e.preventDefault(); // Stop the form from submitting
-                } else {
-                    const formData = $(this).serializeArray();
-                    console.log('Submitting form data:', formData);
-                }
-            });
         });
     </script>
 @endsection
