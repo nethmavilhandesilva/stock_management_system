@@ -23,7 +23,7 @@ class CustomersLoanController extends Controller
         $grnCodes = GrnEntry::distinct()->pluck('code');
 
         // Start the query to fetch loans with related customers, ordered by latest
-        $query = CustomersLoan::with('customer');
+        $query = IncomeExpenses::with('customer');
 
         // If a filter_customer query param exists and is not empty, filter the loans by that customer
         if ($request->filled('filter_customer')) {

@@ -22,76 +22,69 @@ class GrnEntryController extends Controller
         $suppliers = Supplier::all();
         return view('dashboard.grn.create', compact('items', 'suppliers'));
     }
- public function store(Request $request)
-    {
-        $request->validate([
-            'item_code' => 'required',
-            'supplier_code' => 'required',
-            'packs' => 'required|integer',
-            'weight' => 'required|numeric',
-            'txn_date' => 'required|date',
-            'grn_no' => 'nullable',
-            'warehouse_no' => 'nullable',
-            // --- NEW: Add validation for the separate total_grn field ---
-            'total_grn' => 'required|numeric',
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'item_code'     => 'required',
+        'supplier_code' => 'required',
+        'packs'         => 'required|integer|min:1',
+        'weight'        => 'required|numeric|min:0.01',
+        'txn_date'      => 'required|date',
+        'grn_no'        => 'nullable|string',
+        'warehouse_no'  => 'nullable|string',
+        'total_grn'     => 'required|numeric|min:0',
+        'per_kg_price'    => 'required|numeric|min:0',
+    ]);
 
-        // 🔍 Fetch item name (type) and supplier name using their respective codes
-        $item = Item::where('no', $request->item_code)->first();
-        if (!$item) {
-            return back()->withErrors(['item_code' => 'Invalid item selected.']);
-        }
-
-        $supplier = Supplier::where('code', $request->supplier_code)->first();
-        if (!$supplier) {
-            return back()->withErrors(['supplier_code' => 'Invalid supplier selected.']);
-        }
-
-        // Auto generate GRN entry code
-        $last = GrnEntry::latest()->first();
-        $autoNo = $last ? $last->id + 1 : 1;
-        $autoPurchaseNo = str_pad($autoNo, 4, '0', STR_PAD_LEFT);
-
-        // --- NEW LOGIC FOR SEQUENTIAL NUMBER ---
-        // 1. Get the last GRN Entry record and its sequential number
-        $lastGrnEntry = GrnEntry::orderBy('sequence_no', 'desc')->first();
-
-        // 2. Determine the next sequential number
-        if ($lastGrnEntry) {
-            $nextSequentialNumber = $lastGrnEntry->sequence_no + 1;
-        } else {
-            // If no records exist, start from 1000
-            $nextSequentialNumber = 1000;
-        }
-
-        // 3. Construct the 'code' string using the new sequential number, and the first three letters of the item name and supplier name
-        $itemTypePrefix = substr($item->no, 0, 3);
-        $supplierNamePrefix = substr($supplier->code, 0, 3);
-
-        $code = $itemTypePrefix . '-' . $supplierNamePrefix . '-' . $nextSequentialNumber;
-        // --- END NEW LOGIC ---
-
-        // 📝 Store the record
-        GrnEntry::create([
-            'auto_purchase_no' => $autoPurchaseNo,
-            'code' => $code,
-            'supplier_code' => $request->supplier_code,
-            'item_code' => $request->item_code,
-            'item_name' => $item->type,
-            'packs' => $request->packs,
-            'weight' => $request->weight,
-            'txn_date' => $request->txn_date,
-            'grn_no' => $request->grn_no,
-            'warehouse_no' => $request->warehouse_no,
-            'original_packs' => $request->packs,
-            'original_weight' => $request->weight,
-            'sequence_no' => $nextSequentialNumber, // Save the new sequence number
-            'total_grn' => $request->total_grn, // Store the separate total from the request
-        ]);
-
-        return redirect()->route('grn.index')->with('success', 'GRN Entry added successfully.');
+    // Fetch item
+    $item = Item::where('no', $request->item_code)->first();
+    if (!$item) {
+        return back()->withErrors(['item_code' => 'Invalid item selected.']);
     }
 
+    // Fetch supplier
+    $supplier = Supplier::where('code', $request->supplier_code)->first();
+    if (!$supplier) {
+        return back()->withErrors(['supplier_code' => 'Invalid supplier selected.']);
+    }
+
+    // Auto generate auto_purchase_no
+    $last = GrnEntry::latest()->first();
+    $autoNo = $last ? $last->id + 1 : 1;
+    $autoPurchaseNo = str_pad($autoNo, 4, '0', STR_PAD_LEFT);
+
+    // Sequential number logic
+    $lastGrnEntry = GrnEntry::orderBy('sequence_no', 'desc')->first();
+    $nextSequentialNumber = $lastGrnEntry ? $lastGrnEntry->sequence_no + 1 : 1000;
+
+    // Build code string
+    $itemTypePrefix     = substr($item->no, 0, 3);
+    $supplierNamePrefix = substr($supplier->code, 0, 3);
+    $code = $itemTypePrefix . '-' . $supplierNamePrefix . '-' . $nextSequentialNumber;
+
+    // Create record
+    GrnEntry::create([
+        'auto_purchase_no' => $autoPurchaseNo,
+        'code'             => $code,
+        'supplier_code'    => $request->supplier_code,
+        'item_code'        => $request->item_code,
+        'item_name'        => $item->type,
+        'packs'            => $request->packs,
+        'weight'           => $request->weight,
+        'txn_date'         => $request->txn_date,
+        'grn_no'           => $request->grn_no,
+        'warehouse_no'     => $request->warehouse_no,
+        'original_packs'   => $request->packs,
+        'original_weight'  => $request->weight,
+        'sequence_no'      => $nextSequentialNumber,
+        'total_grn'        => $request->total_grn,
+       'PerKGPrice' => $request->per_kg_price
+    ]);
+
+    return redirect()
+        ->route('grn.index')
+        ->with('success', 'GRN Entry added successfully.');
+}
     public function edit($id)
     {
         $entry = GrnEntry::findOrFail($id);
@@ -101,47 +94,46 @@ class GrnEntryController extends Controller
     }
 
    public function update(Request $request, $id)
-    {
-        // Define the validation rules for the form fields.
-        // `total_grn` is added as `nullable|numeric` because it is an optional field.
-        $request->validate([
-            'item_code' => 'required',
-            'supplier_code' => 'required',
-            'packs' => 'required|integer',
-            'weight' => 'required|numeric',
-            'txn_date' => 'required|date',
-            'grn_no' => 'required',
-            'warehouse_no' => 'required',
-            'total_grn' => 'nullable|numeric' // Added validation for the new field
-        ]);
+{
+    $request->validate([
+        'item_code' => 'required',
+        'item_name' => 'required|string',
+        'supplier_code' => 'required',
+        'packs' => 'required|integer|min:1',
+        'weight' => 'required|numeric|min:0.01',
+        'txn_date' => 'required|date',
+        'grn_no' => 'required|string',
+        'warehouse_no' => 'required|string',
+        'total_grn' => 'nullable|numeric|min:0',
+        'per_kg_price' => 'nullable|numeric|min:0',
+    ]);
 
-        // Find the GRN entry by its ID.
-        $entry = GrnEntry::findOrFail($id);
+    $entry = GrnEntry::findOrFail($id);
 
-        // Prepare the data to be updated.
-        $updateData = [
-            'item_code' => $request->item_code,
-            'item_name' => $request->item_name,
-            'supplier_code' => $request->supplier_code,
-            'packs' => $request->packs,
-            'weight' => $request->weight,
-            'txn_date' => $request->txn_date,
-            'grn_no' => $request->grn_no,
-            'warehouse_no' => $request->warehouse_no,
-        ];
-        
-        // Only update `total_grn` if it's present in the request.
-        // This prevents overwriting with a null value if the password isn't entered.
-        if ($request->has('total_grn')) {
-            $updateData['total_grn'] = $request->total_grn;
-        }
+    $updateData = [
+        'item_code' => $request->item_code,
+        'item_name' => $request->item_name,
+        'supplier_code' => $request->supplier_code,
+        'packs' => $request->packs,
+        'weight' => $request->weight,
+        'txn_date' => $request->txn_date,
+        'grn_no' => $request->grn_no,
+        'warehouse_no' => $request->warehouse_no,
+    ];
 
-        // Update the entry in the database.
-        $entry->update($updateData);
-
-        // Redirect back to the index page with a success message.
-        return redirect()->route('grn.index')->with('success', 'Entry updated successfully.');
+    // Only update password-protected fields if password is entered
+    if($request->has('total_grn')) {
+        $updateData['total_grn'] = $request->total_grn;
     }
+    if($request->has('per_kg_price')) {
+        $updateData['PerKGPrice'] = $request->per_kg_price;
+    }
+
+    $entry->update($updateData);
+
+    return redirect()->route('grn.index')->with('success','Entry updated successfully.');
+}
+
 
     public function destroy($id)
     {
