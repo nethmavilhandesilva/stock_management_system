@@ -96,7 +96,11 @@ class SalesEntryController extends Controller
                 throw new \Exception('Selected GRN entry not found for update.');
             }
 
-            // 2. Calculate the new weight and packs for the GRN entry
+            // 2. Get the PerKGPrice from the GRN entry and calculate PerKGTotal
+            $perKgPrice = $grnEntry->PerKGPrice; // Fetch PerKGPrice from the GRN entry
+            $perKgTotal = $perKgPrice * $validated['weight']; // Calculate PerKGTotal
+
+            // 3. Calculate the new weight and packs for the GRN entry
             $weightToDeduct = $validated['weight'];
             $packsToDeduct = $validated['packs'];
 
@@ -104,16 +108,18 @@ class SalesEntryController extends Controller
             $grnEntry->weight = max(0, $grnEntry->weight - $weightToDeduct);
             $grnEntry->packs = max(0, $grnEntry->packs - $packsToDeduct);
 
-            // 3. Update the GRN record in the database
+            // 4. Update the GRN record in the database
             $grnEntry->save();
 
-            // 4. Create the Sale record
+            // 5. Create the Sale record
             $loggedInUserId = auth()->user()->user_id;
 
             // Create UniqueCode as: customer_code-user_id
             $uniqueCode = $validated['customer_code'] . '-' . $loggedInUserId;
 
-            // 4. Create the Sale record
+            // Calculate the new SellingKGTotal column
+            $sellingKGTotal = $validated['weight'] * $validated['price_per_kg'];
+
             Sale::create([
                 'supplier_code' => $validated['supplier_code'],
                 'customer_code' => $validated['customer_code'],
@@ -131,9 +137,11 @@ class SalesEntryController extends Controller
                 'FirstTimeBillPrintedOn' => null,
                 'BillChangedOn' => null,
                 'CustomerBillEnteredOn' => now(),
-                'UniqueCode' => $uniqueCode, // ✅ store generated UniqueCode
+                'UniqueCode' => $uniqueCode,
+                'PerKGPrice' => $perKgPrice, // Store the fetched PerKGPrice
+                'PerKGTotal' => $perKgTotal, // Store the calculated PerKGTotal
+                'SellingKGTotal' => $sellingKGTotal, // Store the newly calculated SellingKGTotal
             ]);
-
 
             DB::commit(); // Commit the transaction
 
@@ -553,6 +561,9 @@ class SalesEntryController extends Controller
                         'supplier_code' => $sale->supplier_code,
                         'bill_printed' => $sale->bill_printed,
                         'is_printed' => $sale->is_printed,
+                        'PerKGPrice'=> $sale->PerKGPrice,
+                        'PerKGTotal'=> $sale->PerKGTotal,
+                        'SellingKGTotal'=> $sale->SellingKGTotal,
                         'created_at' => $sale->created_at->format('Y-m-d H:i:s'),
                         'updated_at' => $sale->updated_at->format('Y-m-d H:i:s'),
                     ];
