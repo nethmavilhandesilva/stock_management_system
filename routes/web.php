@@ -10,6 +10,7 @@ use App\Http\Controllers\SalesEntryController; // ✅ Correct use statement
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CustomersLoanController;
+use App\Http\Controllers\EmailController;
 
 // New default route to redirect to login
 Route::get('/', function () {
@@ -88,5 +89,7 @@ Route::get('/sales/code/{code}', [SalesEntryController::class, 'showByCode'])->n
 Route::post('/loan-report/results', [CustomersLoanController::class, 'loanReportResults'])->name('loan.report.results');
 Route::get('/customers-loans/report', [CustomersLoanController::class, 'loanReport'])->name('customers-loans.report');
 Route::resource('customers-loans', CustomersLoanController::class);
-
+//Emails
+Route::post('/send-receipt-email', [EmailController::class, 'sendReceiptEmail'])->name('send.receipt.email');
+Route::post('/send-receipt-email', [EmailController::class, 'sendReceiptEmail'])->name('send.receipt.email');
 require __DIR__.'/auth.php';
