@@ -67,7 +67,7 @@ class SalesEntryController extends Controller
 
 
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
         // Add grn_entry_code to validation
         $validated = $request->validate([
@@ -96,9 +96,9 @@ class SalesEntryController extends Controller
                 throw new \Exception('Selected GRN entry not found for update.');
             }
 
-            // 2. Get the PerKGPrice from the GRN entry and calculate PerKGTotal
-            $perKgPrice = $grnEntry->PerKGPrice; // Fetch PerKGPrice from the GRN entry
-            $perKgTotal = $perKgPrice * $validated['weight']; // Calculate PerKGTotal
+            // 2. Get the PerKGPrice from the GRN entry and calculate PerKGTotal (the cost)
+            $perKgPrice = $grnEntry->PerKGPrice;
+            $perKgTotal = $perKgPrice * $validated['weight'];
 
             // 3. Calculate the new weight and packs for the GRN entry
             $weightToDeduct = $validated['weight'];
@@ -117,8 +117,11 @@ class SalesEntryController extends Controller
             // Create UniqueCode as: customer_code-user_id
             $uniqueCode = $validated['customer_code'] . '-' . $loggedInUserId;
 
-            // Calculate the new SellingKGTotal column
-            $sellingKGTotal = $validated['weight'] * $validated['price_per_kg'];
+            // --- ADJUSTMENT START ---
+            // Calculate the new SellingKGTotal as the difference between the final sale price ($validated['total']) and the cost price ($perKgTotal).
+            // This effectively calculates the profit or loss for the sale.
+            $sellingKGTotal = $validated['total'] - $perKgTotal;
+            // --- ADJUSTMENT END ---
 
             Sale::create([
                 'supplier_code' => $validated['supplier_code'],
@@ -140,7 +143,7 @@ class SalesEntryController extends Controller
                 'UniqueCode' => $uniqueCode,
                 'PerKGPrice' => $perKgPrice, // Store the fetched PerKGPrice
                 'PerKGTotal' => $perKgTotal, // Store the calculated PerKGTotal
-                'SellingKGTotal' => $sellingKGTotal, // Store the newly calculated SellingKGTotal
+                'SellingKGTotal' => $sellingKGTotal, // Store the newly calculated profit/loss
             ]);
 
             DB::commit(); // Commit the transaction

@@ -1,4 +1,3 @@
-<!-- resources/views/reports/financial.blade.php -->
 @extends('layouts.app')
 
 @section('content')
@@ -104,25 +103,37 @@
             @endforeach
         </tbody>
         <tfoot>
-            <tr class="fw-bold">
-                <td>Total</td>
-                <td>{{ number_format($totalDr, 2) }}</td>
-                <td>{{ number_format($totalCr, 2) }}</td>
-            </tr>
-            <tr class="fw-bold table-warning">
-                <td>ඇතැති මුදල්</td>
-                <td colspan="2">
-                    @php
-                        $diff = $totalCr - $totalDr;
-                    @endphp
-                    @if($diff < 0)
-                        <span class="text-danger">{{ number_format($diff, 2) }}</span>
-                    @else
-                        <span class="text-success">{{ number_format($diff, 2) }}</span>
-                    @endif
-                </td>
-            </tr>
-        </tfoot>
+    <tr class="fw-bold">
+        <td>Total</td>
+        <td>{{ number_format($totalDr, 2) }}</td>
+        <td>{{ number_format($totalCr, 2) }}</td>
+    </tr>
+    <tr class="fw-bold table-warning">
+        <td>ඇතැති මුදල්</td>
+        <td colspan="2">
+            @php
+                $diff = $totalCr - $totalDr;
+            @endphp
+            @if($diff < 0)
+                <span class="text-danger">{{ number_format($diff, 2) }}</span>
+            @else
+                <span class="text-success">{{ number_format($diff, 2) }}</span>
+            @endif
+        </td>
+    </tr>
+    <tr class="fw-bold table-warning">
+        <td>💰 Profit</td>
+        <td colspan="2" class="text-success">
+            {{ number_format($profitTotal, 2) }}
+        </td>
+    </tr>
+    <tr class="fw-bold table-warning">
+        <td>Total Damages</td>
+        <td colspan="2" class="text-danger">
+            {{ number_format($totalDamages, 2) }}
+        </td>
+    </tr>
+</tfoot>
     </table>
 </div>
 @endsection

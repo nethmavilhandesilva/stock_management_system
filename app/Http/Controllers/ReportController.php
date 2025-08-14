@@ -618,7 +618,7 @@ public function salesAdjustmentReport(Request $request)
 
     return view('dashboard.reports.salesadjustment', compact('entries', 'code', 'startDate', 'endDate'));
 }
- public function financialReport()
+public function financialReport()
     {
         $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')->get();
 
@@ -630,7 +630,7 @@ public function salesAdjustmentReport(Request $request)
             $dr = null;
             $cr = null;
 
-            // Build description with customer name, bill_no (if exists), and description
+            // Build description
             $desc = $record->customer_short_name;
             if (!empty($record->bill_no)) {
                 $desc .= " ({$record->bill_no})";
@@ -652,7 +652,7 @@ public function salesAdjustmentReport(Request $request)
             ];
         }
 
-        // Add Sales total to DR
+        // Add Sales total
         $salesTotal = Sale::sum('total');
         $totalDr += $salesTotal;
         $reportData[] = [
@@ -661,7 +661,24 @@ public function salesAdjustmentReport(Request $request)
             'cr' => null
         ];
 
-        return view('dashboard.reports.financial', compact('reportData', 'totalDr', 'totalCr','salesTotal'));
+        // Get Profit from SellingKGTotal
+        $profitTotal = Sale::sum('SellingKGTotal');
+
+        // 🆕 New: Calculate Total Damages
+        $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
+            ->value(DB::raw('SUM(wasted_weight * PerKGPrice)'));
+
+        // Handle case where result is null
+        $totalDamages = $totalDamages ?? 0;
+
+        return view('dashboard.reports.financial', compact(
+            'reportData',
+            'totalDr',
+            'totalCr',
+            'salesTotal',
+            'profitTotal',
+            'totalDamages' // 🆕 New: Pass the total damages to the view
+        ));
     }
 }
 

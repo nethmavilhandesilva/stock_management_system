@@ -96,27 +96,7 @@
                 </div>
             @endif
 
-            {{-- Password + Clear Data side-by-side --}}
-            <form action="{{ route('clear.data') }}" method="POST"
-                  onsubmit="return confirm('Are you sure you want to delete all data?');" class="mb-3">
-                @csrf
-                <div class="row g-2 align-items-center">
-                    <div class="col-md-6">
-                        <input type="password"
-                               id="verificationField"
-                               class="form-control form-control-sm"
-                               placeholder="Enter 'nethma123' to enable">
-                    </div>
-                    <div class="col-md-auto">
-                        <button type="submit"
-                                class="btn btn-danger btn-sm"
-                                id="clearDataButton"
-                                disabled>
-                            Clear Data
-                        </button>
-                    </div>
-                </div>
-            </form>
+           
 
             {{-- Column unlock password --}}
             <div class="mb-3">

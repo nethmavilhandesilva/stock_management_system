@@ -920,7 +920,7 @@
                                     style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
                                 <small id="remaining_weight_display" class="form-text text-danger fw-bold"
                                     style="font-size: 0.85rem;">
-                                    Remaining: 0.00 kg
+                                    BW: 0.00 kg
                                 </small>
                             </div>
 
@@ -938,7 +938,7 @@
                                     style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
                                 <small id="remaining_packs_display" class="form-text text-danger fw-bold"
                                     style="font-size: 0.85rem;">
-                                    Remaining Packs: 0
+                                    BP: 0
                                 </small>
                             </div>
 
@@ -1682,8 +1682,8 @@
                     if (remainingPacks < 0) remainingPacks = 0;
                     if (remainingWeight < 0) remainingWeight = 0;
 
-                    remainingPacksDisplay.textContent = `Remaining Packs: ${remainingPacks}`;
-                    remainingWeightDisplay.textContent = `Remaining: ${remainingWeight.toFixed(2)} kg`;
+                    remainingPacksDisplay.textContent = `BP: ${remainingPacks}`;
+                    remainingWeightDisplay.textContent = `BW: ${remainingWeight.toFixed(2)} `;
                 }
 
                 // --- GRN Change Handler (Modified to use jQuery) ---

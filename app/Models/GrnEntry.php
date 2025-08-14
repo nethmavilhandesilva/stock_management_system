@@ -26,7 +26,10 @@ class GrnEntry extends Model
         'sequence_no',
          'is_hidden' ,
          'total_grn',
-         'PerKGPrice'
+         'PerKGPrice',
+        'wasted_packs',
+        'wasted_weight',
+        'total_wasted_weight'
     ];
 
     // Optional: If you don't want timestamps (created_at, updated_at)
