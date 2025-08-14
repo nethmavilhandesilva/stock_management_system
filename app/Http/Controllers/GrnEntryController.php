@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GrnEntry;
 use App\Models\Item;
 use App\Models\Supplier;
+use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -34,7 +35,7 @@ public function store(Request $request)
         'grn_no'          => 'nullable|string',
         'warehouse_no'    => 'nullable|string',
         'total_grn'       => 'required|numeric|min:0',
-        'per_kg_price'    => 'required|numeric|min:0',
+        'per_kg_price'    => 'nullable|numeric|min:0',
         'wasted_weight'   => 'nullable|numeric|min:0', // optional
         'wasted_packs'    => 'nullable|numeric|min:0', // optional
     ]);
@@ -103,49 +104,66 @@ public function store(Request $request)
         $entry = GrnEntry::findOrFail($id);
         $items = Item::all();
         $suppliers = Supplier::all();
+        
         return view('dashboard.grn.edit', compact('entry', 'items', 'suppliers'));
     }
 
-   public function update(Request $request, $id)
+public function update(Request $request, $id)
 {
     $request->validate([
-        'item_code' => 'required',
-        'item_name' => 'required|string',
-        'supplier_code' => 'required',
-        'packs' => 'required|integer|min:1',
-        'weight' => 'required|numeric|min:0.01',
-        'txn_date' => 'required|date',
-        'grn_no' => 'required|string',
-        'warehouse_no' => 'required|string',
-        'total_grn' => 'nullable|numeric|min:0',
-        'per_kg_price' => 'nullable|numeric|min:0',
+        'item_code'       => 'required',
+        'item_name'       => 'required|string',
+        'supplier_code'   => 'required',
+        'packs'           => 'required|integer|min:1',
+        'weight'          => 'required|numeric|min:0.01',
+        'txn_date'        => 'required|date',
+        'grn_no'          => 'required|string',
+        'warehouse_no'    => 'required|string',
+        'total_grn'       => 'nullable|numeric|min:0',
+        'per_kg_price'    => 'nullable|numeric|min:0',
     ]);
 
     $entry = GrnEntry::findOrFail($id);
 
     $updateData = [
-        'item_code' => $request->item_code,
-        'item_name' => $request->item_name,
-        'supplier_code' => $request->supplier_code,
-        'packs' => $request->packs,
-        'weight' => $request->weight,
-        'txn_date' => $request->txn_date,
-        'grn_no' => $request->grn_no,
-        'warehouse_no' => $request->warehouse_no,
+        'item_code'      => $request->item_code,
+        'item_name'      => $request->item_name,
+        'supplier_code'  => $request->supplier_code,
+        'packs'          => $request->packs,
+        'weight'         => $request->weight,
+        'txn_date'       => $request->txn_date,
+        'grn_no'         => $request->grn_no,
+        'warehouse_no'   => $request->warehouse_no,
     ];
 
-    // Only update password-protected fields if password is entered
     if($request->has('total_grn')) {
         $updateData['total_grn'] = $request->total_grn;
     }
+
     if($request->has('per_kg_price')) {
         $updateData['PerKGPrice'] = $request->per_kg_price;
     }
 
+    // 1️⃣ Update the GRN entry
     $entry->update($updateData);
+
+    // 2️⃣ Update matching Sale rows based on 'code'
+    if($request->has('per_kg_price')) {
+        $newPerKgPrice = $request->per_kg_price;
+
+        Sale::where('code', $entry->code)
+            ->get()
+            ->each(function($sale) use ($newPerKgPrice) {
+                $sale->PerKGPrice      = $newPerKgPrice;
+                $sale->PerKGTotal      = $sale->weight * $newPerKgPrice;
+                $sale->SellingKGTotal  = $sale->total - $sale->PerKGTotal;
+                $sale->save();
+            });
+    }
 
     return redirect()->route('grn.index')->with('success','Entry updated successfully.');
 }
+
 
 
     public function destroy($id)
