@@ -691,6 +691,46 @@ public function financialReport()
         // Pass the grouped data to the view.
         return view('dashboard.reports.new_sales_report', ['salesByBill' => $salesByBill]);
     }
+    public function grnReport(Request $request)
+{
+    $code = $request->input('code');
+
+    // Base query for GRN entries
+    $grnQuery = GrnEntry::query();
+    if ($code) {
+        $grnQuery->where('code', $code);
+    }
+    $grnEntries = $grnQuery->get();
+
+    $salesData = collect();
+    $damageData = collect();
+
+    foreach ($grnEntries as $entry) {
+        // Fetch from Sales
+        $sales = Sale::where('code', $entry->code)->get(['code','customer_code','item_code','supplier_code','weight','price_per_kg','total','packs']);
+
+        // If not found in Sales, fetch from SalesHistory
+        if ($sales->isEmpty()) {
+            $sales = SalesHistory::where('code', $entry->code)->get(['code','customer_code','item_code','supplier_code','weight','price_per_kg','total','packs']);
+        }
+
+        $salesData = $salesData->merge($sales);
+
+        // Damage data
+        $damageData->push([
+            'code' => $entry->code,
+            'wasted_packs' => $entry->wasted_packs,
+            'wasted_weight' => $entry->wasted_weight,
+            'damage_value' => $entry->wasted_weight * $entry->PerKGPrice
+        ]);
+    }
+
+    return view('dashboard.reports.grn', [
+        'grnEntries' => $grnEntries,
+        'salesData' => $salesData,
+        'damageData' => $damageData
+    ]);
+}
 }
 
 
