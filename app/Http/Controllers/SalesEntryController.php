@@ -468,129 +468,131 @@ class SalesEntryController extends Controller
         }
     }
 
-    public function dayStart(Request $request)
-    {
-        try {
-            DB::beginTransaction();
+   public function dayStart(Request $request)
+{
+    try {
+        DB::beginTransaction();
 
-            // Validate the date input from modal
-            $request->validate([
-                'new_day_date' => 'required|date',
-            ]);
+        // Validate the date input from modal
+        $request->validate([
+            'new_day_date' => 'required|date',
+        ]);
 
-            // Use the selected date from the modal
-            $dayStartDate = Carbon::parse($request->new_day_date)->startOfDay();
+        // Use the selected date from the modal
+        $dayStartDate = Carbon::parse($request->new_day_date)->startOfDay();
 
-            $sales = Sale::all();
+        $sales = Sale::all();
 
-            // Initialize report data arrays
-            $dayStartReportData = [];
-            $grnReportData = [];
-            
-            // --- Generate Day Start Report Data ---
-            if ($sales->isNotEmpty()) {
-                $groupedData = $sales->groupBy('item_name');
-                foreach ($groupedData as $itemName => $items) {
-                    $stock = Sale::where('item_name', $itemName)->first();
-                    $originalPacks = $stock ? $stock->packs : 0;
-                    $originalWeight = $stock ? $stock->weight : 0;
+        // Initialize report data arrays
+        $dayStartReportData = [];
+        $grnReportData = [];
+        
+        // --- Generate Day Start Report Data ---
+        if ($sales->isNotEmpty()) {
+            $groupedData = $sales->groupBy('item_name');
+            foreach ($groupedData as $itemName => $items) {
+                $stock = Sale::where('item_name', $itemName)->first();
+                $originalPacks = $stock ? $stock->packs : 0;
+                $originalWeight = $stock ? $stock->weight : 0;
 
-                    $soldPacks = $items->sum('packs');
-                    $soldWeight = $items->sum('weight');
-                    $totalSalesValue = $items->sum('total');
-                    $remainingPacks = $originalPacks - $soldPacks;
-                    $remainingWeight = $originalWeight - $soldWeight;
+                $soldPacks = $items->sum('packs');
+                $soldWeight = $items->sum('weight');
+                $totalSalesValue = $items->sum('total');
+                $remainingPacks = $originalPacks - $soldPacks;
+                $remainingWeight = $originalWeight - $soldWeight;
 
-                    $dayStartReportData[] = [
-                        'item_name' => $itemName,
-                        'original_packs' => $originalPacks,
-                        'original_weight' => $originalWeight,
-                        'sold_packs' => $soldPacks,
-                        'sold_weight' => $soldWeight,
-                        'total_sales_value' => $totalSalesValue,
-                        'remaining_packs' => $remainingPacks,
-                        'remaining_weight' => $remainingWeight,
-                    ];
-                }
-            }
-
-            // --- Generate GRN Report Data ---
-            $grnEntries = GrnEntry::all();
-            foreach ($grnEntries as $grnEntry) {
-                $currentSales = Sale::where('code', $grnEntry->code)->get();
-                $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
-                $relatedSales = $currentSales->merge($historicalSales);
-
-                $totalSoldPacks = $relatedSales->sum('packs');
-                $totalSoldWeight = $relatedSales->sum('weight');
-                $totalSalesValueForGrn = $relatedSales->sum('total');
-
-                $remainingPacks = $grnEntry->original_packs - $totalSoldPacks;
-                $remainingWeight = $grnEntry->original_weight - $totalSoldWeight;
-
-                $grnReportData[] = [
-                    'date' => Carbon::parse($grnEntry->created_at)->timezone('Asia/Colombo')->format('Y-m-d H:i:s'),
-                    'grn_code' => $grnEntry->code,
-                    'item_name' => $grnEntry->item_name,
-                    'original_packs' => $grnEntry->original_packs,
-                    'original_weight' => $grnEntry->original_weight,
-                    'sold_packs' => $totalSoldPacks,
-                    'sold_weight' => $totalSoldWeight,
-                    'total_sales_value' => $totalSalesValueForGrn,
+                $dayStartReportData[] = [
+                    'item_name' => $itemName,
+                    'original_packs' => $originalPacks,
+                    'original_weight' => $originalWeight,
+                    'sold_packs' => $soldPacks,
+                    'sold_weight' => $soldWeight,
+                    'total_sales_value' => $totalSalesValue,
                     'remaining_packs' => $remainingPacks,
-                    'remaining_weight' => number_format($remainingWeight, 2, '.', ''),
+                    'remaining_weight' => $remainingWeight,
                 ];
             }
-
-            // --- Send the Combined Email ---
-            // The CombinedReportsMail constructor expects 4 arguments, including sales data.
-            // We use the $sales variable which holds the sales for the day.
-            Mail::send(new CombinedReportsMail($dayStartReportData, $grnReportData, $sales, $dayStartDate));
-
-            // --- Archive Sales and Clear Table ---
-            if ($sales->isNotEmpty()) {
-                $salesHistoryData = $sales->map(function ($sale) {
-                    return [
-                        'bill_no' => $sale->bill_no,
-                        'code' => $sale->code,
-                        'item_code' => $sale->item_code,
-                        'item_name' => $sale->item_name,
-                        'packs' => $sale->packs,
-                        'weight' => $sale->weight,
-                        'price_per_kg' => $sale->price_per_kg,
-                        'total' => $sale->total,
-                        'customer_code' => $sale->customer_code,
-                        'customer_name' => $sale->customer_name,
-                        'supplier_code' => $sale->supplier_code,
-                        'bill_printed' => $sale->bill_printed,
-                        'is_printed' => $sale->is_printed,
-                        'PerKGPrice'=> $sale->PerKGPrice,
-                        'PerKGTotal'=> $sale->PerKGTotal,
-                        'SellingKGTotal'=> $sale->SellingKGTotal,
-                        'created_at' => $sale->created_at->format('Y-m-d H:i:s'),
-                        'updated_at' => $sale->updated_at->format('Y-m-d H:i:s'),
-                    ];
-                })->toArray();
-
-                SalesHistory::insert($salesHistoryData);
-                Sale::truncate();
-            }
-
-            // --- Update Day Start Date in Settings ---
-            Setting::updateOrCreate(
-                ['key' => 'last_day_started_date'],
-                ['value' => $dayStartDate->format('Y-m-d')]
-            );
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Day started for ' . $dayStartDate->format('Y-m-d') . '. Reports sent successfully.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Day Start Failed: ' . $e->getMessage());
-            return redirect()->back();
         }
+
+        // --- Generate GRN Report Data ---
+        $grnEntries = GrnEntry::all();
+        foreach ($grnEntries as $grnEntry) {
+            $currentSales = Sale::where('code', $grnEntry->code)->get();
+            $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
+            $relatedSales = $currentSales->merge($historicalSales);
+
+            $totalSoldPacks = $relatedSales->sum('packs');
+            $totalSoldWeight = $relatedSales->sum('weight');
+            $totalSalesValueForGrn = $relatedSales->sum('total');
+
+            $remainingPacks = $grnEntry->original_packs - $totalSoldPacks;
+            $remainingWeight = $grnEntry->original_weight - $totalSoldWeight;
+
+            $grnReportData[] = [
+                'date' => Carbon::parse($grnEntry->created_at)->timezone('Asia/Colombo')->format('Y-m-d H:i:s'),
+                'grn_code' => $grnEntry->code,
+                'item_name' => $grnEntry->item_name,
+                'original_packs' => $grnEntry->original_packs,
+                'original_weight' => $grnEntry->original_weight,
+                'sold_packs' => $totalSoldPacks,
+                'sold_weight' => $totalSoldWeight,
+                'total_sales_value' => $totalSalesValueForGrn,
+                'remaining_packs' => $remainingPacks,
+                'remaining_weight' => number_format($remainingWeight, 2, '.', ''),
+            ];
+        }
+
+        // --- Send the Combined Email ---
+        Mail::send(new CombinedReportsMail($dayStartReportData, $grnReportData, $sales, $dayStartDate));
+
+        // --- Archive Sales and Clear Table ---
+        if ($sales->isNotEmpty()) {
+            $salesHistoryData = $sales->map(function ($sale) use ($dayStartDate) {
+                return [
+                    'bill_no' => $sale->bill_no,
+                    'code' => $sale->code,
+                    'item_code' => $sale->item_code,
+                    'item_name' => $sale->item_name,
+                    'packs' => $sale->packs,
+                    'weight' => $sale->weight,
+                    'price_per_kg' => $sale->price_per_kg,
+                    'total' => $sale->total,
+                    'customer_code' => $sale->customer_code,
+                    'customer_name' => $sale->customer_name,
+                    'supplier_code' => $sale->supplier_code,
+                    'bill_printed' => $sale->bill_printed,
+                    'is_printed' => $sale->is_printed,
+                    'PerKGPrice'=> $sale->PerKGPrice,
+                    'PerKGTotal'=> $sale->PerKGTotal,
+                    'SellingKGTotal'=> $sale->SellingKGTotal,
+                    'created_at' => $sale->created_at->format('Y-m-d H:i:s'),
+                    'updated_at' => $sale->updated_at->format('Y-m-d H:i:s'),
+
+                    // 🔹 Process date saved into sales_history.Date column
+                    'Date' => $dayStartDate->format('Y-m-d H:i:s'),
+                ];
+            })->toArray();
+
+            SalesHistory::insert($salesHistoryData);
+            Sale::truncate();
+        }
+
+        // --- Update Day Start Date in Settings ---
+        Setting::updateOrCreate(
+            ['key' => 'last_day_started_date'],
+            ['value' => $dayStartDate->format('Y-m-d')]
+        );
+
+        DB::commit();
+
+        return redirect()->back()->with('success', 'Day started for ' . $dayStartDate->format('Y-m-d') . '. Reports sent successfully.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Day Start Failed: ' . $e->getMessage());
+        return redirect()->back();
     }
+}
+
     public function getLoanAmount(Request $request)
     {
         // Validate the request to ensure a customer_short_name is present.

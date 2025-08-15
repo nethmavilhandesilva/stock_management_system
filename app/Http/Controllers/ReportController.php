@@ -40,7 +40,7 @@ class ReportController extends Controller
             $query = SalesHistory::query();
 
             // Apply date range filter
-            $query->whereBetween('created_at', [
+            $query->whereBetween('Date', [
                 Carbon::parse($startDate)->startOfDay(),
                 Carbon::parse($endDate)->endOfDay()
             ]);
@@ -112,7 +112,7 @@ class ReportController extends Controller
             $query = SalesHistory::query();
 
             // Apply date range filter
-            $query->whereBetween('created_at', [
+            $query->whereBetween('Date', [
                 Carbon::parse($startDate)->startOfDay(),
                 Carbon::parse($endDate)->endOfDay()
             ]);
@@ -157,7 +157,7 @@ public function getweight(Request $request)
     // Choose base query depending on date range
     if ($startDate && $endDate) {
         $query = SalesHistory::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total')
-            ->whereBetween('created_at', [
+            ->whereBetween('Date', [
                 Carbon::parse($startDate)->startOfDay(),
                 Carbon::parse($endDate)->endOfDay()
             ]);
@@ -206,7 +206,7 @@ public function getweight(Request $request)
             $query = SalesHistory::query();
 
             // Apply the date filter using Carbon for precision
-            $query->whereBetween('created_at', [
+            $query->whereBetween('Date', [
                 Carbon::parse($startDate)->startOfDay(),
                 Carbon::parse($endDate)->endOfDay()
             ]);
@@ -219,7 +219,7 @@ public function getweight(Request $request)
         // Apply the GRN code filter to the selected query
         $query->where('code', $grnCode);
 
-        $sales = $query->orderBy('created_at', 'asc')->get();
+        $sales = $query->orderBy('Date', 'asc')->get();
         $selectedGrnEntry = GrnEntry::where('code', $grnCode)->first();
 
         return view('dashboard.reports.grn_sale_code_report', [
@@ -242,7 +242,7 @@ public function getweight(Request $request)
             $query = SalesHistory::query();
 
             // Apply the date range filter using Carbon for robustness
-            $query->whereBetween('created_at', [
+            $query->whereBetween('Date', [
                 Carbon::parse($startDate)->startOfDay(),
                 Carbon::parse($endDate)->endOfDay()
             ]);

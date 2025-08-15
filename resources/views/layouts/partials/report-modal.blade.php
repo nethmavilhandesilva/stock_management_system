@@ -4,7 +4,6 @@
             @csrf
             <div class="modal-content" style="background-color: #99ff99;">
 
-                <!-- Modal Header with Close Button -->
                 <div class="modal-header" style="border-bottom: none; background-color: #99ff99;">
                     <h5 class="modal-title" id="reportFilterModalLabel" style="font-weight: bold; color: black;">
                         Filter Report
@@ -66,3 +65,19 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const passwordInput = document.getElementById('password');
+        const dateRangeContainer = document.getElementById('date-range-container');
+        const correctPassword = 'nethma123';
+
+        passwordInput.addEventListener('input', function () {
+            if (passwordInput.value === correctPassword) {
+                dateRangeContainer.style.display = 'block';
+            } else {
+                dateRangeContainer.style.display = 'none';
+            }
+        });
+    });
+</script>
