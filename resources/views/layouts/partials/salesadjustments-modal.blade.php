@@ -18,35 +18,6 @@
                         <input type="password" id="adjustment_password" name="password" class="form-control" placeholder="පස්වර්ඩ්">
                     </div>
 
-                    <div class="mb-3">
-                        <label for="adjustment_grn_select" class="form-label" style="font-weight: bold; color: black;">
-                            සැපයුම්කරු තොරතුරු තෝරන්න (Select Supplier Information)
-                        </label>
-                        <input type="hidden" name="supplier_code" id="adjustment_supplier_code">
-                        <select id="adjustment_grn_select" class="form-select form-select-sm select2" name="code">
-                            <option value="">-- සැපයුම්කරු තෝරන්න (Select Supplier) --</option>
-                            @foreach ($entries as $entry)
-                                <option value="{{ $entry->code }}"
-                                    data-supplier-code="{{ $entry->supplier_code }}"
-                                    data-code="{{ $entry->code }}"
-                                    data-item-code="{{ $entry->item_code }}"
-                                    data-item-name="{{ $entry->item_name }}"
-                                    data-weight="{{ $entry->weight }}"
-                                    data-price="{{ $entry->price_per_kg }}"
-                                    data-total="{{ $entry->total }}"
-                                    data-packs="{{ $entry->packs }}"
-                                    data-grn-no="{{ $entry->grn_no }}"
-                                    data-txn-date="{{ $entry->txn_date }}"
-                                    data-original-weight="{{ $entry->original_weight }}"
-                                    data-original-packs="{{ $entry->original_packs }}">
-                                    {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
-                                    {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
-                                    {{ $entry->txn_date }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
                     <div id="adjustment_date_range_container" style="display: none;">
                         <div class="mb-3">
                             <label for="adjustment_start_date" class="form-label" style="font-weight: bold; color: black;">

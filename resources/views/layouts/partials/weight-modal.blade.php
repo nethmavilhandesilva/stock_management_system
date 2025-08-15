@@ -17,26 +17,7 @@
                             </ul>
                         </div>
                     @endif
-                    <div class="mb-3">
-                        <label for="weight_grn_select" class="form-label" style="font-weight: bold; color: black;">GRN තොරතුරු තෝරන්න</label>
-                        <select id="weight_grn_select" class="form-select form-select-sm select2" name="grn_code" required>
-                            <option value="">-- GRN තෝරන්න --</option>
-                            @foreach ($entries as $entry)
-                                <option value="{{ $entry->code }}" data-supplier-code="{{ $entry->supplier_code }}"
-                                    data-item-code="{{ $entry->item_code }}"
-                                    data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
-                                    data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
-                                    data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
-                                    data-txn-date="{{ $entry->txn_date }}"
-                                    data-original-weight="{{ $entry->original_weight }}"
-                                    data-original-packs="{{ $entry->original_packs }}">
-                                    {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
-                                    {{ $entry->item_name }} | {{ $entry->packs }} | {{ $entry->grn_no }} |
-                                    {{ $entry->txn_date }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                   
                     
                     <div class="mb-3">
                         <label for="weight_password_field" class="form-label" style="font-weight: bold; color: black;">මුරපදය ඇතුලත් කරන්න</label>

@@ -180,76 +180,71 @@
 
 
     {{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav">
-        <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
-                aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav small">
+    <div class="container-fluid">
+        <!-- Toggler -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
+            aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
-                <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row gap-3">
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal" class="nav-link text-white">
-                            සැපයුම්කරු
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal" class="nav-link text-white">
-                            එළවළු
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal" class="nav-link text-white">
-                            බර මත
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal" class="nav-link text-white">
-                            මිල එක්කතුව
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal1" class="nav-link text-white">
-                            විකුණුම්
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9" class="nav-link text-white">
-                            වෙනස් කිරීම
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{{ route('report.grn.sales.overview') }}" target="_blank" class="nav-link text-white">
-                            ඉතිරි වාර්තාව 1
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{{ route('report.grn.sales.overview2') }}" target="_blank" class="nav-link text-white">
-                            ඉතිරි වාර්තාව 2
-                        </a>
-                    </li>
-                    <li>
-                       <a href="{{ route('financial.report') }}" target="_blank" class="nav-link text-white">
-                            ආදායම් / වියදම්
-                        </a>
-                    </li>
-
-
-                </ul>
-            </div>
+        <!-- Links -->
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
+            <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row gap-2">
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal" class="nav-link text-white px-2 py-1">
+                        සැපයුම්කරු
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal" class="nav-link text-white px-2 py-1">
+                        එළවළු
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal" class="nav-link text-white px-2 py-1">
+                        බර මත
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal" class="nav-link text-white px-2 py-1">
+                        මිල එක්කතුව
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal1" class="nav-link text-white px-2 py-1">
+                        විකුණුම්
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9" class="nav-link text-white px-2 py-1">
+                        වෙනස් කිරීම
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('report.grn.sales.overview') }}" target="_blank" class="nav-link text-white px-2 py-1">
+                        ඉතිරි වාර්තාව 1
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('report.grn.sales.overview2') }}" target="_blank" class="nav-link text-white px-2 py-1">
+                        ඉතිරි වාර්තාව 2
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('financial.report') }}" target="_blank" class="nav-link text-white px-2 py-1">
+                        ආදායම් / වියදම්
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('sales.report') }}" target="_blank" class="nav-link text-white px-2 py-1">
+                        විකුණුම් වාර්තාව
+                    </a>
+                </li>
+            </ul>
         </div>
-    </nav>
-
-
-
+    </div>
+</nav>
 
     <style>
         /* Custom CSS to push content up if fixed-bottom nav bar covers it */

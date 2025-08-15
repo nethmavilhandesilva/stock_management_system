@@ -149,47 +149,47 @@ class ReportController extends Controller
     }
  
 public function getweight(Request $request)
-    {
-        $grnCode = $request->input('grn_code');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+{
+    $grnCode = $request->input('grn_code');
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
 
-        // If no GRN code is selected, return an error. This is a good practice.
-        if (!$grnCode) {
-            return redirect()->back()->withErrors('Please select a GRN code.');
-        }
-
-        // Determine which model to query based on the presence of a date range
-        if ($startDate && $endDate) {
-            // If both start_date and end_date are provided, query Salesadjustment
-            $query = SalesHistory::query();
-
-            // Apply the date filter with Carbon for robustness
-            $query->whereBetween('created_at', [
+    // Choose base query depending on date range
+    if ($startDate && $endDate) {
+        $query = SalesHistory::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total')
+            ->whereBetween('created_at', [
                 Carbon::parse($startDate)->startOfDay(),
                 Carbon::parse($endDate)->endOfDay()
             ]);
-
-        } else {
-            // Otherwise, query Sale (default behavior)
-            $query = Sale::query();
-        }
-
-        // Apply the GRN code filter to the selected query
-        $query->where('code', $grnCode);
-
-        $sales = $query->orderBy('created_at', 'asc')->get();
-        $selectedGrnEntry = GrnEntry::where('code', $grnCode)->first();
-
-        return view('dashboard.reports.weight-based-report', [
-            'sales' => $sales,
-            'selectedGrnCode' => $grnCode,
-            'selectedGrnEntry' => $selectedGrnEntry,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'filters' => $request->all(),
-        ]);
+    } else {
+        $query = Sale::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total');
     }
+
+    // Filter by GRN code if given
+    if (!empty($grnCode)) {
+        $query->where('code', $grnCode);
+    }
+
+    // Group by item name & code
+    $sales = $query->groupBy('item_name', 'item_code')
+        ->orderBy('item_name', 'asc')
+        ->get();
+
+    // Only fetch GRN entry if code given
+    $selectedGrnEntry = !empty($grnCode)
+        ? GrnEntry::where('code', $grnCode)->first()
+        : null;
+
+    return view('dashboard.reports.weight-based-report', [
+        'sales' => $sales,
+        'selectedGrnCode' => $grnCode,
+        'selectedGrnEntry' => $selectedGrnEntry,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'filters' => $request->all(),
+    ]);
+}
+
     public function getGrnSalecodereport(Request $request)
     {
         $grnCode = $request->input('grn_code');
@@ -679,6 +679,17 @@ public function financialReport()
             'profitTotal',
             'totalDamages' // 🆕 New: Pass the total damages to the view
         ));
+    }
+     public function salesReport()
+    {
+        // Fetch all sales records and group them by the 'bill_no' column.
+        // The `all()` method fetches all records, and `groupBy()` organizes them.
+        // This returns a Collection where each key is a unique 'bill_no'
+        // and each value is another Collection of Sale models for that bill.
+        $salesByBill = Sale::all()->groupBy('bill_no');
+
+        // Pass the grouped data to the view.
+        return view('dashboard.reports.new_sales_report', ['salesByBill' => $salesByBill]);
     }
 }
 

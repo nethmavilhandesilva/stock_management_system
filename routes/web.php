@@ -80,6 +80,7 @@ Route::get('/reports/grn-sales-overview2', [ReportController::class, 'getGrnSale
 Route::post('/reports/salesadjustment/filter', [ReportController::class, 'salesAdjustmentReport'])->name('reports.salesadjustment.filter');
 Route::post('/report/download/{reportType}/{format}', [ReportController::class, 'downloadReport'])->name('report.download');
 Route::get('/financial-report', [ReportController::class, 'financialReport'])->name('financial.report');
+Route::get('/sales-report', [ReportController::class, 'salesReport'])->name('sales.report');
 // Customer loans
 Route::get('/customers/{id}/loans-total', [CustomersLoanController::class, 'getTotalLoanAmount']);
 Route::post('/get-loan-amount', [SalesEntryController::class, 'getLoanAmount'])->name('get.loan.amount');
