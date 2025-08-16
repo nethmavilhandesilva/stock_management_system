@@ -501,40 +501,34 @@
             padding: 0 !important;
         }
 
-        .grn-header-row {
-            display: grid;
-            /* Adjusted column widths and added more space to move columns to the right */
-            grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
-            gap: 0.5px !important;
-            /* Increased the gap between columns for more space */
-            background-color: white !important;
-            /* white bg */
-            color: black !important;
-            /* black text */
-            font-weight: bold;
-            padding: 8px 12px;
-            white-space: nowrap;
-            /* prevent wrapping */
-            border-bottom: 2px solid #ccc;
-        }
+        /* Header row styling */
+.grn-header-row {
+    display: grid;
+    grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
+    gap: 2px; /* smaller gap for tighter layout */
+    background-color: #fff !important; /* white background */
+    color: #000 !important; /* black text */
+    font-weight: bold;
+    font-size: 16px; /* reduced font size */
+    padding: 6px 8px; /* less padding for compact look */
+    white-space: nowrap; /* prevent text wrapping */
+    border-bottom: 2px solid #ccc;
+}
 
-        /* Data rows styling */
-        .grn-option-row {
-            display: grid;
-            /* Use the same column widths as the header for perfect alignment */
-            grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
-            gap: 5px;
-            /* Increased the gap between columns for more space */
-            background-color: yellow;
-            /* black bg */
-            color: black;
-            /* white text */
-            padding: 8px 12px;
-            white-space: nowrap;
-            /* prevent wrapping */
-            align-items: center;
-            border-bottom: 1px solid #222;
-        }
+/* Data rows styling */
+.grn-option-row {
+    display: grid;
+    grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
+    gap: 2px; /* same gap for alignment */
+    background-color: #fffa99; /* softer yellow */
+    color: #000;
+    font-size: 16px; /* reduced font size */
+    padding: 6px 8px; /* compact padding */
+    white-space: nowrap;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+
 
         /* Make sure Code column text does not wrap and stays in one line */
         .grn-code {
@@ -1932,7 +1926,9 @@
                         const $result = $(`
                                                                                     <div class="grn-option-row">
                                                                                         <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
-                                                                                        <div class="grn-column grn-supplier-code">${supplierCode || ''}</div>
+                                                                                          <div class="grn-column grn-grn-no">${originalWeight || ''}</div>
+                                                                                            <div class="grn-column grn-grn-no">${originalPacks || ''}</div>
+                                                                                       
 
                                                                                         <div class="grn-column grn-grn-no">${weight || ''}</div>
                                                                                         <div class="grn-column grn-packs">${packs || 0}</div>
@@ -1981,10 +1977,11 @@
                                                                                             <div class="grn-header-row-wrapper">
                                                                                                 <div class="grn-option-row grn-header-row">
                                                                                                     <div class="grn-column grn-code">Code</div>
-                                                                                                    <div class="grn-column grn-supplier-code">Sup</div>
+                                                                                                   <div class="grn-column grn-grn-no">OW</div>
+                                                                                                    <div class="grn-column grn-packs">OP</div>
 
-                                                                                                    <div class="grn-column grn-grn-no">BWeight</div>
-                                                                                                    <div class="grn-column grn-packs">BPacks</div>
+                                                                                                    <div class="grn-column grn-grn-no">BW</div>
+                                                                                                    <div class="grn-column grn-packs">BP</div>
                                                                                                     <div class="grn-column grn-txn-date">Date</div>
                                                                                                 </div>
                                                                                             </div>
