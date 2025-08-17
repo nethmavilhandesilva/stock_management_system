@@ -47,47 +47,55 @@
                             $grandTotalRemainingPacks = 0;
                             $grandTotalRemainingWeight = 0;
 
-                            // Group data by item_name
-                            $groupedData = collect($reportData)->groupBy('item_name');
+                            // Group data by GRN code first
+                            $groupedByCode = collect($reportData)->groupBy('grn_code');
                         @endphp
 
-                        @forelse($groupedData as $itemName => $items)
+                        @forelse($groupedByCode as $grnCode => $items)
                             @php
-                                // Initialize and calculate sub-totals for each group
-                                $subTotalOriginalPacks = $items->sum('original_packs');
-                                $subTotalOriginalWeight = $items->sum('original_weight');
-                                $subTotalSoldPacks = $items->sum('sold_packs');
-                                $subTotalSoldWeight = $items->sum('sold_weight');
-                                $subTotalSalesValue = $items->sum('total_sales_value');
-                                $subTotalRemainingPacks = $items->sum('remaining_packs');
-                                $subTotalRemainingWeight = $items->sum(function($item) {
-                                    return floatval(str_replace(',', '', $item['remaining_weight']));
-                                });
-
-                                // Add sub-totals to grand totals
-                                $grandTotalOriginalPacks += $subTotalOriginalPacks;
-                                $grandTotalOriginalWeight += $subTotalOriginalWeight;
-                                $grandTotalSoldPacks += $subTotalSoldPacks;
-                                $grandTotalSoldWeight += $subTotalSoldWeight;
-                                $grandTotalSalesValue += $subTotalSalesValue;
-                                $grandTotalRemainingPacks += $subTotalRemainingPacks;
-                                $grandTotalRemainingWeight += $subTotalRemainingWeight;
+                                // For each GRN code, further group by item_name
+                                $itemsByName = $items->groupBy('item_name');
                             @endphp
-                            <tr class="item-summary-row">
-                                <td><strong>{{ $itemName }}</strong></td>
-                                <td><strong>{{ number_format($subTotalOriginalPacks) }}</strong></td>
-                                <td><strong>{{ number_format($subTotalOriginalWeight, 2) }}</strong></td>
-                                <td><strong>{{ number_format($subTotalSoldPacks) }}</strong></td>
-                                <td><strong>{{ number_format($subTotalSoldWeight, 2) }}</strong></td>
-                                <td><strong>Rs. {{ number_format($subTotalSalesValue, 2) }}</strong></td>
-                                <td><strong>{{ number_format($subTotalRemainingPacks) }}</strong></td>
-                                <td><strong>{{ number_format($subTotalRemainingWeight, 2) }}</strong></td>
-                            </tr>
+
+                            @foreach($itemsByName as $itemName => $itemRecords)
+                                @php
+                                    $subTotalOriginalPacks = $itemRecords->sum('original_packs');
+                                    $subTotalOriginalWeight = $itemRecords->sum('original_weight');
+                                    $subTotalSoldPacks = $itemRecords->sum('sold_packs');
+                                    $subTotalSoldWeight = $itemRecords->sum('sold_weight');
+                                    $subTotalSalesValue = $itemRecords->sum('total_sales_value');
+                                    $subTotalRemainingPacks = $itemRecords->sum('remaining_packs');
+                                    $subTotalRemainingWeight = $itemRecords->sum(function($item) {
+                                        return floatval(str_replace(',', '', $item['remaining_weight']));
+                                    });
+
+                                    // Add sub-totals to grand totals
+                                    $grandTotalOriginalPacks += $subTotalOriginalPacks;
+                                    $grandTotalOriginalWeight += $subTotalOriginalWeight;
+                                    $grandTotalSoldPacks += $subTotalSoldPacks;
+                                    $grandTotalSoldWeight += $subTotalSoldWeight;
+                                    $grandTotalSalesValue += $subTotalSalesValue;
+                                    $grandTotalRemainingPacks += $subTotalRemainingPacks;
+                                    $grandTotalRemainingWeight += $subTotalRemainingWeight;
+                                @endphp
+                                <tr class="item-summary-row">
+                                    {{-- Show item name with GRN code in brackets --}}
+                                    <td><strong>{{ $itemName }} ({{ $grnCode }})</strong></td>
+                                    <td><strong>{{ number_format($subTotalOriginalPacks) }}</strong></td>
+                                    <td><strong>{{ number_format($subTotalOriginalWeight, 2) }}</strong></td>
+                                    <td><strong>{{ number_format($subTotalSoldPacks) }}</strong></td>
+                                    <td><strong>{{ number_format($subTotalSoldWeight, 2) }}</strong></td>
+                                    <td><strong>Rs. {{ number_format($subTotalSalesValue, 2) }}</strong></td>
+                                    <td><strong>{{ number_format($subTotalRemainingPacks) }}</strong></td>
+                                    <td><strong>{{ number_format($subTotalRemainingWeight, 2) }}</strong></td>
+                                </tr>
+                            @endforeach
                         @empty
                             <tr>
                                 <td colspan="8" class="text-center text-muted py-4">දත්ත නොමැත.</td>
                             </tr>
                         @endforelse
+
                         {{-- Grand Totals Row --}}
                         <tr class="total-row">
                             <td class="text-end"><strong>සමස්ත එකතුව:</strong></td>
@@ -120,16 +128,16 @@
     /* Card background and default text color */
     .card {
         background-color: #004d00 !important;
-        color: white !important; /* All text inside card */
+        color: white !important;
     }
 
     /* Report Title Bar specific styling */
     .report-title-bar {
         text-align: center;
         padding: 15px 0;
-        position: relative; /* For absolute positioning of print button/date */
-        background-color: #004d00; /* Ensure header background matches card */
-        color: white; /* Ensure text is white */
+        position: relative;
+        background-color: #004d00;
+        color: white;
     }
     .report-title-bar .company-name {
         font-size: 1.8em;
@@ -148,7 +156,7 @@
         position: absolute;
         top: 15px;
         left: 15px;
-        background-color: #4CAF50; /* A pleasant green for print button */
+        background-color: #4CAF50;
         color: white;
         border: none;
         padding: 8px 15px;
@@ -159,85 +167,60 @@
 
     /* Table Styling */
     .table {
-        color: white; /* Default text color for table content */
-        font-size: 0.85em; /* Make table text smaller */
+        color: white;
+        font-size: 0.85em;
     }
     .table thead th {
-        background-color: #003300 !important; /* Darker green for table headers */
+        background-color: #003300 !important;
         color: white !important;
-        border-color: #004d00 !important; /* Border color for headers */
-        padding: 0.4rem; /* Reduce padding for smaller table cells */
+        border-color: #004d00 !important;
+        padding: 0.4rem;
     }
     .table-bordered th, .table-bordered td {
-        border-color: #006600 !important; /* Ensure borders are visible */
-        padding: 0.4rem; /* Reduce padding for smaller table cells */
+        border-color: #006600 !important;
+        padding: 0.4rem;
     }
     .table-striped tbody tr:nth-of-type(odd) {
-        background-color: #004000 !important; /* Slightly different shade for odd rows */
+        background-color: #004000 !important;
     }
     .table-striped tbody tr:nth-of-type(even) {
-        background-color: #005a00 !important; /* Slightly different shade for even rows */
+        background-color: #005a00 !important;
     }
     .table-hover tbody tr:hover {
-        background-color: #007000 !important; /* Hover effect */
+        background-color: #007000 !important;
     }
     .item-summary-row {
         background-color: #005a00 !important;
         font-weight: bold;
     }
-    .total-row { /* Specific styling for total rows */
-        background-color: #008000 !important; /* Even lighter green for total rows */
+    .total-row {
+        background-color: #008000 !important;
         color: white !important;
         font-weight: bold;
     }
-    .text-muted { /* Override text-muted on dark background */
+    .text-muted {
         color: lightgray !important;
     }
 
     /* Print specific styles */
     @media print {
-        body {
-            background-color: white !important;
-            color: black !important;
-        }
+        body { background-color: white !important; color: black !important; }
         .container-fluid, .card, .card-header, .card-body,
         .report-title-bar, .filter-summary.alert, .table,
         .table thead th, .table tbody tr, .table tbody td,
         .total-row, .item-summary-row {
             background-color: white !important;
             color: black !important;
-            border-color: #dee2e6 !important; /* Restore standard light borders for print */
+            border-color: #dee2e6 !important;
         }
-        .card {
-            box-shadow: none !important;
-            border: none !important;
-        }
-        .report-title-bar {
-            text-align: center;
-            padding: 10px 0;
-            position: static; /* Remove absolute positioning for print */
-        }
-        .report-title-bar .print-btn {
-            display: none !important; /* Hide the print button when printing */
-        }
-        .report-title-bar .right-info {
-            position: static; /* Remove absolute positioning for print */
-            display: block; /* Make it block to appear on a new line */
-            margin-top: 5px;
-        }
-        .print-button, .btn-secondary { /* Hide other buttons when printing */
-            display: none !important;
-        }
-        .total-row, .item-summary-row {
-            background-color: #f8f9fa !important; /* Light stripe for print */
-            color: black !important;
-        }
-        .table-bordered th, .table-bordered td {
-            border: 1px solid #dee2e6 !important;
-        }
-        .text-end strong {
-            color: black !important;
-        }
+        .card { box-shadow: none !important; border: none !important; }
+        .report-title-bar { text-align: center; padding: 10px 0; position: static; }
+        .report-title-bar .print-btn { display: none !important; }
+        .report-title-bar .right-info { position: static; display: block; margin-top: 5px; }
+        .print-button, .btn-secondary { display: none !important; }
+        .total-row, .item-summary-row { background-color: #f8f9fa !important; color: black !important; }
+        .table-bordered th, .table-bordered td { border: 1px solid #dee2e6 !important; }
+        .text-end strong { color: black !important; }
     }
 </style>
 

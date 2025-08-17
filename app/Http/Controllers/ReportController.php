@@ -318,58 +318,51 @@ public function getweight(Request $request)
         // Pass data to the report view
         return view('dashboard.reports.sales_filter_report', compact('sales', 'grandTotal', 'request'));
     }
-       public function getGrnSalesOverviewReport()
-    {
-        // Fetch all GRN entries
-        $grnEntries = GrnEntry::all();
+     public function getGrnSalesOverviewReport()
+{
+    // Fetch all GRN entries
+    $grnEntries = GrnEntry::all();
 
-        $reportData = [];
+    $reportData = [];
 
-        foreach ($grnEntries as $grnEntry) {
-            // Fetch sales related to this GRN entry's code
-            // First, try to get sales from the 'sales' table
-            $currentSales = Sale::where('code', $grnEntry->code)->get();
+    foreach ($grnEntries->groupBy('code') as $code => $entries) {
+        // --- Sales ---
+        $currentSales = Sale::where('code', $code)->get();
+        $historicalSales = SalesHistory::where('code', $code)->get();
+        $relatedSales = $currentSales->merge($historicalSales);
 
-            // Then, get sales from the 'sales_histories' table
-            $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
+        $totalSoldPacks = $relatedSales->sum('packs');
+        $totalSoldWeight = $relatedSales->sum('weight');
+        $totalSalesValueForGrn = $relatedSales->sum('total');
 
-            // Combine the results from both tables
-            // Using a simple merge if you're sure there won't be duplicates
-            // or if you want to prioritize current sales.
-            $relatedSales = $currentSales->merge($historicalSales);
+        // --- GRN Totals (for grouped entries) ---
+        $totalOriginalPacks = $entries->sum('original_packs');
+        $totalOriginalWeight = $entries->sum('original_weight');
 
-            // If there's a possibility of duplicate entries (e.g., a sale
-            // exists in both tables temporarily during migration), you might
-            // want to consider distinct records based on a unique identifier
-            // like 'UniqueCode' or 'id' if applicable after merging.
-            // Example: $relatedSales = $currentSales->merge($historicalSales)->unique('UniqueCode');
+        $remainingPacks = $totalOriginalPacks - $totalSoldPacks;
+        $remainingWeight = $totalOriginalWeight - $totalSoldWeight;
 
-            $totalSoldPacks = $relatedSales->sum('packs');
-            $totalSoldWeight = $relatedSales->sum('weight');
-            $totalSalesValueForGrn = $relatedSales->sum('total');
-
-            $remainingPacks = $grnEntry->original_packs - $totalSoldPacks;
-            $remainingWeight = $grnEntry->original_weight - $totalSoldWeight;
-
-            $reportData[] = [
-                'date' => Carbon::parse($grnEntry->created_at)->timezone('Asia/Colombo')->format('Y-m-d H:i:s'),
-                'grn_code' => $grnEntry->code,
-                'item_name' => $grnEntry->item_name,
-                'original_packs' => $grnEntry->original_packs,
-                'original_weight' => $grnEntry->original_weight,
-                'sold_packs' => $totalSoldPacks,
-                'sold_weight' => $totalSoldWeight,
-                'total_sales_value' => $totalSalesValueForGrn,
-                'remaining_packs' => $remainingPacks,
-                'remaining_weight' => number_format($remainingWeight, 2),
-            ];
-        }
-
-        // Pass the processed data to the view
-        return view('dashboard.reports.grn_sales_overview_report', [
-            'reportData' => collect($reportData)
-        ]);
+        $reportData[] = [
+            'date' => Carbon::parse($entries->first()->created_at)
+                        ->timezone('Asia/Colombo')
+                        ->format('Y-m-d H:i:s'),
+            'grn_code' => $code,
+            'item_name' => $entries->first()->item_name, // If multiple items per code, adjust this
+            'original_packs' => $totalOriginalPacks,
+            'original_weight' => $totalOriginalWeight,
+            'sold_packs' => $totalSoldPacks,
+            'sold_weight' => $totalSoldWeight,
+            'total_sales_value' => $totalSalesValueForGrn,
+            'remaining_packs' => $remainingPacks,
+            'remaining_weight' => number_format($remainingWeight, 2),
+        ];
     }
+
+    return view('dashboard.reports.grn_sales_overview_report', [
+        'reportData' => collect($reportData)
+    ]);
+}
+
  public function getGrnSalesOverviewReport2()
     {
         // Fetch all GRN entries
@@ -620,7 +613,9 @@ public function salesAdjustmentReport(Request $request)
 }
 public function financialReport()
     {
-        $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')->get();
+    $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
+    ->whereDate('created_at', Carbon::today())
+    ->get();
 
         $reportData = [];
         $totalDr = 0;
