@@ -32,7 +32,7 @@ class SalesEntryController extends Controller
             ->where('is_hidden', 0) // Add the condition here
             ->distinct()
             ->get();
-        $entries = GrnEntry::where('is_hidden', 0)->latest()->take(10)->get();
+        $entries = GrnEntry::where('is_hidden', 0)->get();
 
         // Fetch ALL sales records to display
         $sales = Sale::where('Processed', 'N')->get();

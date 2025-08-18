@@ -2,17 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class IncomeExpenses extends Model
 {
-    use HasFactory;
-
     protected $table = 'income_expenses';
 
     protected $fillable = [
         'customer_id',
+        'loan_id', // Added this field to link records
         'loan_type',
         'settling_way',
         'bill_no',
@@ -25,9 +23,14 @@ class IncomeExpenses extends Model
         'unique_code',
         'user_id',
     ];
-  public function customer()
+
+    public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
 
+    public function loan()
+    {
+        return $this->belongsTo(CustomersLoan::class, 'loan_id');
+    }
 }
