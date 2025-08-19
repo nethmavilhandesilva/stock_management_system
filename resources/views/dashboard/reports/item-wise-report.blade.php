@@ -65,6 +65,19 @@
         background-color: #003300;
     }
 </style>
+<style>
+    @font-face {
+        font-family: 'NotoSansSinhala';
+        src: url('{{ public_path('fonts/NotoSansSinhala-Regular.ttf') }}') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    body {
+        font-family: 'NotoSansSinhala', DejaVu Sans, sans-serif;
+        font-size: 12px;
+    }
+</style>
 
 <div class="container mt-4">
     <div class="card shadow border-0 rounded-3 p-4 custom-card">
@@ -85,7 +98,7 @@
             <th>මිල</th>
             <th>එකතුව</th>
             <th>ගෙණුම්කරු</th>
-            <th>සැපයුම්කරු කේතය</th>
+            <th>GRN NO:</th>
         </tr>
     </thead>
     <tbody>
@@ -104,7 +117,7 @@
                 <td class="text-end">{{ number_format($sale->price_per_kg, 2) }}</td>
                 <td class="text-end">{{ number_format($sale->total, 2) }}</td>
                 <td>{{ $sale->customer_code }}</td>
-                <td>{{ $sale->supplier_code }}</td>
+                <td>{{ $sale->code }}</td>
             </tr>
 
             @php

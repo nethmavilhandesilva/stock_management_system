@@ -28,12 +28,12 @@
                             <th colspan="2">ඉතිරි</th> {{-- Main header for Remaining --}}
                         </tr>
                         <tr>
-                            <th>මලු</th> {{-- Sub-header for Original Packs --}}
-                            <th>බර</th> {{-- Sub-header for Original Weight --}}
-                            <th>මලු</th> {{-- Sub-header for Sold Packs --}}
-                            <th>බර</th> {{-- Sub-header for Sold Weight --}}
-                            <th>මලු</th> {{-- Sub-header for Remaining Packs --}}
-                            <th>බර</th> {{-- Sub-header for Remaining Weight --}}
+                            <th>බර</th> {{-- Sub-header for Original Packs --}}
+                            <th>මලු</th> {{-- Sub-header for Original Weight --}}
+                            <th>බර</th> {{-- Sub-header for Sold Packs --}}
+                            <th>මලු</th> {{-- Sub-header for Sold Weight --}}
+                            <th>බර</th> {{-- Sub-header for Remaining Packs --}}
+                            <th>මලු</th> {{-- Sub-header for Remaining Weight --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -81,13 +81,15 @@
                                 <tr class="item-summary-row">
                                     {{-- Show item name with GRN code in brackets --}}
                                     <td><strong>{{ $itemName }} ({{ $grnCode }})</strong></td>
+                                       <td><strong>{{ number_format($subTotalOriginalWeight, 2) }}</strong></td>
                                     <td><strong>{{ number_format($subTotalOriginalPacks) }}</strong></td>
-                                    <td><strong>{{ number_format($subTotalOriginalWeight, 2) }}</strong></td>
-                                    <td><strong>{{ number_format($subTotalSoldPacks) }}</strong></td>
                                     <td><strong>{{ number_format($subTotalSoldWeight, 2) }}</strong></td>
+                                    <td><strong>{{ number_format($subTotalSoldPacks) }}</strong></td>
+                                   
                                     <td><strong>Rs. {{ number_format($subTotalSalesValue, 2) }}</strong></td>
+                                     <td><strong>{{ number_format($subTotalRemainingWeight, 2) }}</strong></td>
                                     <td><strong>{{ number_format($subTotalRemainingPacks) }}</strong></td>
-                                    <td><strong>{{ number_format($subTotalRemainingWeight, 2) }}</strong></td>
+                                   
                                 </tr>
                             @endforeach
                         @empty

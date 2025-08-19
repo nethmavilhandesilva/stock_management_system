@@ -39,7 +39,7 @@
     <div class="card shadow border-0 rounded-3 p-4 custom-card">
         <div class="report-title-bar">
             <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
-            <h4 class="fw-bold text-white">📄 GRN කේතය අනුව විකුණුම් වාර්තාව</h4>
+            <h4 class="fw-bold text-white">මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව</h4>
             <span class="right-info">{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
             <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
         </div>

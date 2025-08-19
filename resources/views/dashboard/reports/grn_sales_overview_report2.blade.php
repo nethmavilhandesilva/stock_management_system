@@ -23,12 +23,13 @@
                             <th colspan="2">ඉතිරි</th>
                         </tr>
                         <tr>
-                            <th>මලු</th>
                             <th>බර</th>
                             <th>මලු</th>
                             <th>බර</th>
                             <th>මලු</th>
                             <th>බර</th>
+                            <th>මලු</th>
+                           
                         </tr>
                     </thead>
                     <tbody>
@@ -60,12 +61,12 @@
                             @endphp
                             <tr>
                                 <td>{{ $data['item_name'] }}</td>
-                                <td>{{ number_format($originalPacks) }}</td>
                                 <td>{{ number_format($originalWeight, 2) }}</td>
+                                <td>{{ number_format($originalPacks) }}</td>
+                                 <td>{{ number_format($soldWeight, 2) }}</td>
                                 <td>{{ number_format($soldPacks) }}</td>
-                                <td>{{ number_format($soldWeight, 2) }}</td>
-                                <td>{{ number_format($remainingPacks) }}</td>
                                 <td>{{ number_format($remainingWeight, 2) }}</td>
+                                <td>{{ number_format($remainingPacks) }}</td>              
                             </tr>
                         @empty
                             <tr>
@@ -76,12 +77,13 @@
                         {{-- Totals Row --}}
                         <tr class="total-row">
                             <td class="text-end"><strong>සමස්ත එකතුව:</strong></td>
+                              <td><strong>{{ number_format($grandTotalOriginalWeight, 2) }}</strong></td>
                             <td><strong>{{ number_format($grandTotalOriginalPacks) }}</strong></td>
-                            <td><strong>{{ number_format($grandTotalOriginalWeight, 2) }}</strong></td>
+                             <td><strong>{{ number_format($grandTotalSoldWeight, 2) }}</strong></td>
                             <td><strong>{{ number_format($grandTotalSoldPacks) }}</strong></td>
-                            <td><strong>{{ number_format($grandTotalSoldWeight, 2) }}</strong></td>
+                           <td><strong>{{ number_format($grandTotalRemainingWeight, 2) }}</strong></td>
                             <td><strong>{{ number_format($grandTotalRemainingPacks) }}</strong></td>
-                            <td><strong>{{ number_format($grandTotalRemainingWeight, 2) }}</strong></td>
+                            
                         </tr>
                     </tbody>
                 </table>

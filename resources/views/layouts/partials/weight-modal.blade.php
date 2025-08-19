@@ -4,7 +4,7 @@
             @csrf
             <div class="modal-content" style="background-color: #99ff99;">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="weight_modal_label">📄 GRN කේතය අනුව විකුණුම් වාර්තාව</h5>
+                  
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
