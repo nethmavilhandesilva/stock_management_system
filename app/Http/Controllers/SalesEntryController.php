@@ -627,12 +627,41 @@ class SalesEntryController extends Controller
         return view('dashboard', compact('codes'));
     }
 
-    public function showByCode($code)
-    {
-        // Get all sales with that code
-        $sales = Sale::where('code', $code)->get();
-        return view('dashboard.sales.by_code', compact('sales', 'code'));
+   public function showByCode($code)
+{
+    // Get all sales with that code
+    $sales = Sale::where('code', $code)->get();
+
+    // Ensure at least one record exists
+    $firstRecord = $sales->first();
+    $itemCode = $firstRecord ? $firstRecord->item_code : null;
+    $supplierCode = $firstRecord ? $firstRecord->supplier_code : null;
+
+    // Defaults
+    $packs_ratio_display = '0 / 0';
+    $weight_ratio_display = '0.00 / 0.00';
+
+    if ($firstRecord) {
+        // Sum GRN values based only on rn.code
+        $current_grn_packs = GrnEntry::where('code', $code)->sum('packs');
+        $original_packs_grn = GrnEntry::where('code', $code)->sum('original_packs');
+        $current_grn_weight = GrnEntry::where('code', $code)->sum('weight');
+        $original_weight_grn = GrnEntry::where('code', $code)->sum('original_weight');
+
+        $packs_ratio_display = $current_grn_packs . ' / ' . $original_packs_grn;
+        $weight_ratio_display = number_format($current_grn_weight, 2) . ' / ' . number_format($original_weight_grn, 2);
     }
+
+    return view('dashboard.sales.by_code', compact(
+        'sales',
+        'code',
+        'supplierCode',
+        'itemCode',
+        'packs_ratio_display',
+        'weight_ratio_display'
+    ));
+}
+
 
 
 }
