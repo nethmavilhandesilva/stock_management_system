@@ -687,17 +687,37 @@ class ReportController extends Controller
             'totalDamages' // 🆕 New: Pass the total damages to the view
         ));
     }
-    public function salesReport()
-    {
-        // Fetch all sales records and group them by the 'bill_no' column.
-        // The `all()` method fetches all records, and `groupBy()` organizes them.
-        // This returns a Collection where each key is a unique 'bill_no'
-        // and each value is another Collection of Sale models for that bill.
-        $salesByBill = Sale::all()->groupBy('bill_no');
+ public function salesReport(Request $request)
+{
+    $query = Sale::query()->whereNotNull('bill_no')->where('bill_no', '<>', '');
 
-        // Pass the grouped data to the view.
-        return view('dashboard.reports.new_sales_report', ['salesByBill' => $salesByBill]);
+    if ($request->filled('supplier_code')) {
+        $query->where('supplier_code', $request->supplier_code);
     }
+
+    if ($request->filled('item_code')) {
+        $query->where('item_code', $request->item_code);
+    }
+
+    if ($request->filled('customer_short_name')) {
+        $search = $request->customer_short_name;
+
+        $query->where(function ($q) use ($search) {
+            $q->where('customer_code', 'like', '%' . $search . '%')
+              ->orWhereIn('customer_code', function ($sub) use ($search) {
+                  $sub->select('short_name')
+                      ->from('customers')
+                      ->where('name', 'like', '%' . $search . '%');
+              });
+        });
+    }
+
+    $salesByBill = $query->get()->groupBy('bill_no');
+
+    return view('dashboard.reports.new_sales_report', compact('salesByBill'));
+}
+
+
 public function grnReport(Request $request)
 {
     $code = $request->input('code');

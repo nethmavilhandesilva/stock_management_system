@@ -36,18 +36,22 @@ class AppServiceProvider extends ServiceProvider
             'layouts.partials.salecode-modal',
             'layouts.partials.item-wisemodal',
             'layouts.partials.salesadjustments-modal',
-            'layouts.partials.grn-modal'  // Keep if this modal still exists and uses 'entries'
+            'layouts.partials.grn-modal',
+            'layouts.partials.filterModal'  // Keep if this modal still exists and uses 'entries'
         ], function ($view) {
            $view->with('entries', GrnEntry::where('is_hidden', 0)->get());
         });
 
         // ✅ NEW: Share filter options specifically with layouts.partials.report-modal
         // This is the crucial part for your reportFilterModal
-        View::composer('layouts.partials.report-modal', function ($view) {
-            $view->with('items', Item::all());
-            $view->with('customers', Customer::all());
-            $view->with('suppliers', Supplier::all());
-        });
+      View::composer(
+    ['layouts.partials.report-modal', 'layouts.partials.filterModal'], 
+    function ($view) {
+        $view->with('items', Item::all());
+        $view->with('customers', Customer::all());
+        $view->with('suppliers', Supplier::all());
+    }
+);
 
         // ✅ NEW: Share filter options specifically with itemReportModal.blade.php
         View::composer('layouts.partials.itemReportModal', function ($view) {

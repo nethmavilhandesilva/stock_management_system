@@ -72,6 +72,7 @@
         @include('layouts.partials.dayStartModal')
         @include('layouts.partials.LoanReport-Modal')
         @include('layouts.partials.grn-modal')
+         @include('layouts.partials.filterModal')
     </div>
 
     {{-- Bootstrap JS (with Popper) --}}
