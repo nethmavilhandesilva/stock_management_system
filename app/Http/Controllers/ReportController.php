@@ -366,52 +366,57 @@ class ReportController extends Controller
     }
 
     public function getGrnSalesOverviewReport2()
-    {
-        // Fetch all GRN entries
-        $grnEntries = GrnEntry::all();
+{
+    // Fetch all GRN entries
+    $grnEntries = GrnEntry::all();
 
-        $reportData = [];
+    $reportData = [];
 
-        foreach ($grnEntries as $grnEntry) {
-            // Fetch sales related to this GRN entry's code
-            // First, try to get sales from the 'sales' table
+    // Group by item_name
+    $grouped = $grnEntries->groupBy('item_name');
+
+    foreach ($grouped as $itemName => $entries) {
+        $originalPacks = 0;
+        $originalWeight = 0;
+        $soldPacks = 0;
+        $soldWeight = 0;
+        $totalSalesValue = 0;
+
+        foreach ($entries as $grnEntry) {
             $currentSales = Sale::where('code', $grnEntry->code)->get();
-
-            // Then, get sales from the 'sales_histories' table
             $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
-
-            // Combine the results from both tables
-            // Using a simple merge. Consider unique() if duplicate 'code' entries are possible
             $relatedSales = $currentSales->merge($historicalSales);
-            // Example if 'UniqueCode' is a reliable unique identifier:
-            // $relatedSales = $currentSales->merge($historicalSales)->unique('UniqueCode');
 
             $totalSoldPacks = $relatedSales->sum('packs');
             $totalSoldWeight = $relatedSales->sum('weight');
             $totalSalesValueForGrn = $relatedSales->sum('total');
 
-            $remainingPacks = $grnEntry->original_packs - $totalSoldPacks;
-            $remainingWeight = $grnEntry->original_weight - $totalSoldWeight;
-
-            $reportData[] = [
-                'date' => Carbon::parse($grnEntry->created_at)->timezone('Asia/Colombo')->format('Y-m-d H:i:s'),
-                'grn_code' => $grnEntry->code,
-                'item_name' => $grnEntry->item_name,
-                'original_packs' => $grnEntry->original_packs,
-                'original_weight' => $grnEntry->original_weight,
-                'sold_packs' => $totalSoldPacks,
-                'sold_weight' => $totalSoldWeight,
-                'total_sales_value' => $totalSalesValueForGrn,
-                'remaining_packs' => $remainingPacks,
-                'remaining_weight' => number_format($remainingWeight, 2),
-            ];
+            $originalPacks += $grnEntry->original_packs;
+            $originalWeight += $grnEntry->original_weight;
+            $soldPacks += $totalSoldPacks;
+            $soldWeight += $totalSoldWeight;
+            $totalSalesValue += $totalSalesValueForGrn;
         }
 
-        // Pass the processed data to the view
-        return view('dashboard.reports.grn_sales_overview_report2', [
-            'reportData' => collect($reportData)
-        ]);
+        $remainingPacks = $originalPacks - $soldPacks;
+        $remainingWeight = $originalWeight - $soldWeight;
+
+        $reportData[] = [
+            'item_name' => $itemName,
+            'original_packs' => $originalPacks,
+            'original_weight' => $originalWeight,
+            'sold_packs' => $soldPacks,
+            'sold_weight' => $soldWeight,
+            'total_sales_value' => $totalSalesValue,
+            'remaining_packs' => $remainingPacks,
+            'remaining_weight' => number_format($remainingWeight, 2),
+        ];
     }
+
+    return view('dashboard.reports.grn_sales_overview_report2', [
+        'reportData' => collect($reportData)
+    ]);
+}
     public function downloadReport(Request $request, $reportType, $format)
     {
         list($reportData, $headings, $reportTitle) = $this->getReportData($reportType, $request->all());
@@ -693,43 +698,78 @@ class ReportController extends Controller
         // Pass the grouped data to the view.
         return view('dashboard.reports.new_sales_report', ['salesByBill' => $salesByBill]);
     }
-    public function grnReport(Request $request)
-    {
-        $code = $request->input('code');
+public function grnReport(Request $request)
+{
+    $code = $request->input('code');
 
-        $grnQuery = GrnEntry::query();
-        if ($code) {
-            $grnQuery->where('code', $code);
-        }
-        $grnEntries = $grnQuery->get();
-
-        $groupedData = [];
-
-        foreach ($grnEntries as $entry) {
-            $sales = Sale::where('code', $entry->code)->get(['code', 'customer_code', 'item_code', 'supplier_code', 'weight', 'price_per_kg', 'total', 'packs']);
-            if ($sales->isEmpty()) {
-                $sales = SalesHistory::where('code', $entry->code)->get(['code', 'customer_code', 'item_code', 'supplier_code', 'weight', 'price_per_kg', 'total', 'packs']);
-            }
-
-            $totalSales = $sales->sum('total'); // Sum of sales total
-            $damageValue = $entry->wasted_weight * $entry->PerKGPrice; // Damage value
-
-            $groupedData[$entry->code] = [
-                'purchase_price' => $entry->total_grn,
-                'sales' => $sales,
-                'damage' => [
-                    'wasted_packs' => $entry->wasted_packs,
-                    'wasted_weight' => $entry->wasted_weight,
-                    'damage_value' => $damageValue
-                ],
-                'profit' => $entry->total_grn - $totalSales - $damageValue
-            ];
-        }
-
-        return view('dashboard.reports.grn', [
-            'groupedData' => $groupedData
-        ]);
+    $grnQuery = GrnEntry::query();
+    if ($code) {
+        $grnQuery->where('code', $code);
     }
+    $grnEntries = $grnQuery->get();
+
+    $groupedData = [];
+    $reportData = [];
+
+    foreach ($grnEntries as $entry) {
+        // --- Sales for Cards ---
+        $sales = Sale::where('code', $entry->code)->get([
+            'code', 'customer_code', 'item_code', 'supplier_code', 'weight', 'price_per_kg', 'total', 'packs', 'item_name'
+        ]);
+        if ($sales->isEmpty()) {
+            $sales = SalesHistory::where('code', $entry->code)->get([
+                'code', 'customer_code', 'item_code', 'supplier_code', 'weight', 'price_per_kg', 'total', 'packs', 'item_name'
+            ]);
+        }
+
+        $totalSales = $sales->sum('total'); // Sum of sales total
+        $damageValue = $entry->wasted_weight * $entry->PerKGPrice; // Damage value
+
+        $groupedData[$entry->code] = [
+            'purchase_price' => $entry->total_grn,
+            'item_name' => $entry->item_name, // <-- Add item_name here
+            'sales' => $sales,
+            'damage' => [
+                'wasted_packs' => $entry->wasted_packs,
+                'wasted_weight' => $entry->wasted_weight,
+                'damage_value' => $damageValue
+            ],
+            'profit' => $entry->total_grn - $totalSales - $damageValue,
+            'updated_at' => $entry->updated_at,
+        ];
+
+        // --- Summary Table Data ---
+        $relatedSales = $sales; // For reportData, same as above
+        $totalSoldPacks = $relatedSales->sum('packs');
+        $totalSoldWeight = $relatedSales->sum('weight');
+        $totalSalesValueForGrn = $relatedSales->sum('total');
+
+        $totalOriginalPacks = $entry->original_packs;
+        $totalOriginalWeight = $entry->original_weight;
+
+        $remainingPacks = $totalOriginalPacks - $totalSoldPacks;
+        $remainingWeight = $totalOriginalWeight - $totalSoldWeight;
+
+        $reportData[] = [
+            'grn_code' => $entry->code,
+            'item_name' => $entry->item_name,
+            'original_packs' => $totalOriginalPacks,
+            'original_weight' => $totalOriginalWeight,
+            'sold_packs' => $totalSoldPacks,
+            'sold_weight' => $totalSoldWeight,
+            'total_sales_value' => $totalSalesValueForGrn,
+            'remaining_packs' => $remainingPacks,
+            'remaining_weight' => $remainingWeight,
+        ];
+    }
+
+    return view('dashboard.reports.grn', [
+        'groupedData' => $groupedData,
+        'reportData' => collect($reportData)
+    ]);
+}
+
+
 
 }
 
