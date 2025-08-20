@@ -145,7 +145,7 @@
                             මිල එක්කතුව
                         </a>
                     </li>
-                    
+
                     <li class="nav-item">
                         <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9"
                             class="nav-link text-white px-2 py-1">
@@ -1022,33 +1022,33 @@
                                 <span id="mainTotalSalesValueBottom">{{ number_format($totalSum, 2) }}</span>
                             </h5>
                             <div id="itemSummary"></div>
-                           <button id="printButton">Print Receipt</button>
-<button id="f5Button">Hold Receipt</button>
+                            <button id="printButton">Print Receipt</button>
+                            <button id="f5Button">Hold Receipt</button>
 
-<script>
-document.getElementById('f5Button').addEventListener('click', function (e) {
-    e.preventDefault(); // prevent any default behavior
+                            <script>
+                                document.getElementById('f5Button').addEventListener('click', function (e) {
+                                    e.preventDefault(); // prevent any default behavior
 
-    if (confirm("Do you want to hold?")) {
-        // Create a KeyboardEvent simulating F5
-        const f5Event = new KeyboardEvent('keydown', {
-            key: 'F5',
-            code: 'F5',
-            keyCode: 116, // F5 key code
-            which: 116, // needed for some browsers
-            bubbles: true,
-            cancelable: true
-        });
+                                    if (confirm("Do you want to hold?")) {
+                                        // Create a KeyboardEvent simulating F5
+                                        const f5Event = new KeyboardEvent('keydown', {
+                                            key: 'F5',
+                                            code: 'F5',
+                                            keyCode: 116, // F5 key code
+                                            which: 116, // needed for some browsers
+                                            bubbles: true,
+                                            cancelable: true
+                                        });
 
-        // Dispatch the event on the document
-        document.dispatchEvent(f5Event);
+                                        // Dispatch the event on the document
+                                        document.dispatchEvent(f5Event);
 
-        console.log('F5 key simulated!');
-    } else {
-        console.log('Hold cancelled by user.');
-    }
-});
-</script>
+                                        console.log('F5 key simulated!');
+                                    } else {
+                                        console.log('Hold cancelled by user.');
+                                    }
+                                });
+                            </script>
 
 
                         </div>
@@ -1182,42 +1182,42 @@ document.getElementById('f5Button').addEventListener('click', function (e) {
         </script>
         <script>
             // These event listeners will only run when the buttons are clicked with a mouse
-          document.addEventListener('DOMContentLoaded', function() {
-    // These event listeners will only run when the buttons are clicked with a mouse
-    document.getElementById('f1Button').addEventListener('click', function () {
-        // Ask for confirmation
-        if (confirm("Do you want to print?")) {
-            // Simulate the F1 key press
-            const f1Event = new KeyboardEvent('keydown', {
-                key: 'F1',
-                code: 'F1',
-                keyCode: 112, // F1 keyCode
-                bubbles: true
-            });
-            document.dispatchEvent(f1Event);
-            console.log('F1 key simulated!');
-        } else {
-            console.log('Print cancelled by user.');
-        }
-    });
+            document.addEventListener('DOMContentLoaded', function () {
+                // These event listeners will only run when the buttons are clicked with a mouse
+                document.getElementById('f1Button').addEventListener('click', function () {
+                    // Ask for confirmation
+                    if (confirm("Do you want to print?")) {
+                        // Simulate the F1 key press
+                        const f1Event = new KeyboardEvent('keydown', {
+                            key: 'F1',
+                            code: 'F1',
+                            keyCode: 112, // F1 keyCode
+                            bubbles: true
+                        });
+                        document.dispatchEvent(f1Event);
+                        console.log('F1 key simulated!');
+                    } else {
+                        console.log('Print cancelled by user.');
+                    }
+                });
 
-    document.getElementById('f5Button').addEventListener('click', function (e) {
-        e.preventDefault(); // stop form submission if inside a form
-        if (confirm("Do you want to hold?")) {
-            // Simulate the F5 key press
-            const f5Event = new KeyboardEvent('keydown', {
-                key: 'F5',
-                code: 'F5',
-                keyCode: 116, // F5 keyCode
-                bubbles: true
+                document.getElementById('f5Button').addEventListener('click', function (e) {
+                    e.preventDefault(); // stop form submission if inside a form
+                    if (confirm("Do you want to hold?")) {
+                        // Simulate the F5 key press
+                        const f5Event = new KeyboardEvent('keydown', {
+                            key: 'F5',
+                            code: 'F5',
+                            keyCode: 116, // F5 keyCode
+                            bubbles: true
+                        });
+                        document.dispatchEvent(f5Event);
+                        console.log('F5 key simulated!');
+                    } else {
+                        console.log('Hold cancelled by user.');
+                    }
+                });
             });
-            document.dispatchEvent(f5Event);
-            console.log('F5 key simulated!');
-        } else {
-            console.log('Hold cancelled by user.');
-        }
-    });
-});
 
         </script>
 
@@ -1842,16 +1842,16 @@ document.getElementById('f5Button').addEventListener('click', function (e) {
                                 if (response.length > 0) {
                                     response.forEach(function (sale) {
                                         let row = $(`
-                                                                                                                                                                                                                                                                                                    <tr>
-                                                                                                                                                                                                                                                                                                        <td>${sale.code}</td>
+                                                                                                                                                                                                                                                                                                        <tr>
+                                                                                                                                                                                                                                                                                                            <td>${sale.code}</td>
 
-                                                                                                                                                                                                                                                                                                        <td>${sale.item_name}</td>
-                                                                                                                                                                                                                                                                                                        <td>${sale.weight}</td>
-                                                                                                                                                                                                                                                                                                        <td>${sale.price_per_kg}</td>
-                                                                                                                                                                                                                                                                                                        <td>${sale.total}</td>
-                                                                                                                                                                                                                                                                                                        <td>${sale.packs}</td>
-                                                                                                                                                                                                                                                                                                    </tr>
-                                                                                                                                                                                                                                                                                                `);
+                                                                                                                                                                                                                                                                                                            <td>${sale.item_name}</td>
+                                                                                                                                                                                                                                                                                                            <td>${sale.weight}</td>
+                                                                                                                                                                                                                                                                                                            <td>${sale.price_per_kg}</td>
+                                                                                                                                                                                                                                                                                                            <td>${sale.total}</td>
+                                                                                                                                                                                                                                                                                                            <td>${sale.packs}</td>
+                                                                                                                                                                                                                                                                                                        </tr>
+                                                                                                                                                                                                                                                                                                    `);
 
                                         // Click handler to populate form with selected row
                                         row.on('click', function () {
@@ -1976,17 +1976,17 @@ document.getElementById('f5Button').addEventListener('click', function (e) {
                         const txnDate = option.data('txnDate');
 
                         const $result = $(`
-                                                                                                                    <div class="grn-option-row">
-                                                                                                                        <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
-                                                                                                                          <div class="grn-column grn-grn-no">${originalWeight || ''}</div>
-                                                                                                                            <div class="grn-column grn-grn-no">${originalPacks || ''}</div>
+                                                                                                                        <div class="grn-option-row">
+                                                                                                                            <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
+                                                                                                                              <div class="grn-column grn-grn-no">${originalWeight || ''}</div>
+                                                                                                                                <div class="grn-column grn-grn-no">${originalPacks || ''}</div>
 
 
-                                                                                                                        <div class="grn-column grn-grn-no">${weight || ''}</div>
-                                                                                                                        <div class="grn-column grn-packs">${packs || 0}</div>
-                                                                                                                        <div class="grn-column grn-txn-date">${txnDate || ''}</div>
-                                                                                                                    </div>
-                                                                                                                    `);
+                                                                                                                            <div class="grn-column grn-grn-no">${weight || ''}</div>
+                                                                                                                            <div class="grn-column grn-packs">${packs || 0}</div>
+                                                                                                                            <div class="grn-column grn-txn-date">${txnDate || ''}</div>
+                                                                                                                        </div>
+                                                                                                                        `);
 
                         return $result;
                     },
@@ -2026,18 +2026,18 @@ document.getElementById('f5Button').addEventListener('click', function (e) {
                         console.log("Header not found, creating and prepending.");
 
                         const $headerWrapper = $(`
-                                                                                                                            <div class="grn-header-row-wrapper">
-                                                                                                                                <div class="grn-option-row grn-header-row">
-                                                                                                                                    <div class="grn-column grn-code">Code</div>
-                                                                                                                                   <div class="grn-column grn-grn-no">OW</div>
-                                                                                                                                    <div class="grn-column grn-packs">OP</div>
+                                                                                                                                <div class="grn-header-row-wrapper">
+                                                                                                                                    <div class="grn-option-row grn-header-row">
+                                                                                                                                        <div class="grn-column grn-code">Code</div>
+                                                                                                                                       <div class="grn-column grn-grn-no">OW</div>
+                                                                                                                                        <div class="grn-column grn-packs">OP</div>
 
-                                                                                                                                    <div class="grn-column grn-grn-no">BW</div>
-                                                                                                                                    <div class="grn-column grn-packs">BP</div>
-                                                                                                                                    <div class="grn-column grn-txn-date">Date</div>
+                                                                                                                                        <div class="grn-column grn-grn-no">BW</div>
+                                                                                                                                        <div class="grn-column grn-packs">BP</div>
+                                                                                                                                        <div class="grn-column grn-txn-date">Date</div>
+                                                                                                                                    </div>
                                                                                                                                 </div>
-                                                                                                                            </div>
-                                                                                                                            `);
+                                                                                                                                `);
 
                         // Prepend the header wrapper to the .select2-results element
                         // This puts it before the <ul> which contains the actual options
@@ -2227,7 +2227,7 @@ document.getElementById('f5Button').addEventListener('click', function (e) {
 
                         $('#grn_select').select2('open');
                     @endif
-                                                                                                                                                                                                                                                                                                                                                                                                                                                    });
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        });
                 function populateSalesTable(salesArray) {
                     const tableBody = document.getElementById('mainSalesTableBody');
                     tableBody.innerHTML = ''; // Clear existing rows
@@ -2245,433 +2245,433 @@ document.getElementById('f5Button').addEventListener('click', function (e) {
                         row.setAttribute('data-customer-name', sale.customer_name || 'N/A'); // Ensure customer_name exists
 
                         row.innerHTML = `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        <td>${sale.code}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        <td>${sale.item_code}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        <td>${sale.item_name}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        <td>${sale.packs}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                    `;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <td>${sale.code}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <td>${sale.item_code}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <td>${sale.item_name}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <td>${sale.packs}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        `;
                         tableBody.appendChild(row);
                     });
                 }
 
-              let globalLoanAmount = 0;
+                let globalLoanAmount = 0;
 
-// Reusable print function
-function printReceipt(html, customerName, callback) {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${customerName} - Receipt</title>
-        </head>
-        <body>
-            ${html}
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-    if (callback && typeof callback === 'function') callback();
-}
+                // Reusable print function
+                function printReceipt(html, customerName, callback) {
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${customerName} - Receipt</title>
+            </head>
+            <body>
+                ${html}
+            </body>
+            </html>
+        `);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    printWindow.print();
+                    printWindow.close();
+                    if (callback && typeof callback === 'function') callback();
+                }
 
-// Function to send receipt email
-function sendReceiptEmail(html, customerName, customerEmail) {
-    fetch('{{ route('send.receipt.email') }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({ receipt_html: html, customer_name: customerName, email: customerEmail })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) console.log('Email sent:', data.message);
-        else console.error('Email failed:', data.message);
-    })
-    .catch(err => console.error('Email error:', err));
-}
+                // Function to send receipt email
+                function sendReceiptEmail(html, customerName, customerEmail) {
+                    fetch('{{ route('send.receipt.email') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ receipt_html: html, customer_name: customerName, email: customerEmail })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) console.log('Email sent:', data.message);
+                            else console.error('Email failed:', data.message);
+                        })
+                        .catch(err => console.error('Email error:', err));
+                }
 
-// Function to save receipt to D:\Receipts
-function saveReceiptToDDrive(html, customerName, billNo) {
-    fetch('{{ route("save.receipt.file") }}', {
-        method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({ receipt_html: html, customer_name: customerName, bill_no: billNo })
-    })
-    .then(res => res.json())
-    .then(data => console.log('Receipt saved:', data))
-    .catch(err => console.error('Save error:', err));
-}
+                // Function to save receipt to D:\Receipts
+                function saveReceiptToDDrive(html, customerName, billNo) {
+                    fetch('{{ route("save.receipt.file") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ receipt_html: html, customer_name: customerName, bill_no: billNo })
+                    })
+                        .then(res => res.json())
+                        .then(data => console.log('Receipt saved:', data))
+                        .catch(err => console.error('Save error:', err));
+                }
 
-// Core F1 print function
-function handlePrint() {
-    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
-        alert('No sales records to print!');
-        return;
-    }
+                // Core F1 print function
+                function handlePrint() {
+                    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+                    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+                        alert('No sales records to print!');
+                        return;
+                    }
 
-    const salesData = [];
-    tableRows.forEach(row => {
-        if (row.hasAttribute('data-sale-id')) {
-            const cells = row.querySelectorAll('td');
-            salesData.push({
-                id: row.getAttribute('data-sale-id'),
-                customer_code: row.getAttribute('data-customer-code'),
-                customer_name: row.getAttribute('data-customer-name'),
-                mobile: row.getAttribute('data-customer-mobile') || '',
-                email: "nethmavilhan2005@gmail.com",
-                code: cells[0]?.textContent.trim() || '',
-                item_code: cells[1]?.textContent.trim() || '',
-                item_name: cells[1]?.textContent.trim() || '',
-                weight: parseFloat(cells[2]?.textContent) || 0,
-                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                total: parseFloat(cells[4]?.textContent) || 0,
-                packs: parseInt(cells[5]?.textContent) || 0
-            });
-        }
-    });
+                    const salesData = [];
+                    tableRows.forEach(row => {
+                        if (row.hasAttribute('data-sale-id')) {
+                            const cells = row.querySelectorAll('td');
+                            salesData.push({
+                                id: row.getAttribute('data-sale-id'),
+                                customer_code: row.getAttribute('data-customer-code'),
+                                customer_name: row.getAttribute('data-customer-name'),
+                                mobile: row.getAttribute('data-customer-mobile') || '',
+                                email: "nethmavilhan2005@gmail.com",
+                                code: cells[0]?.textContent.trim() || '',
+                                item_code: cells[1]?.textContent.trim() || '',
+                                item_name: cells[1]?.textContent.trim() || '',
+                                weight: parseFloat(cells[2]?.textContent) || 0,
+                                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
+                                total: parseFloat(cells[4]?.textContent) || 0,
+                                packs: parseInt(cells[5]?.textContent) || 0
+                            });
+                        }
+                    });
 
-    if (!salesData.length) {
-        alert('No printable sales records found!');
-        return;
-    }
+                    if (!salesData.length) {
+                        alert('No printable sales records found!');
+                        return;
+                    }
 
-    const salesKey = salesData.map(sale => sale.id).sort().join('_');
-    let billNo = localStorage.getItem('billNo_' + salesKey);
+                    const salesKey = salesData.map(sale => sale.id).sort().join('_');
+                    let billNo = localStorage.getItem('billNo_' + salesKey);
 
-    if (!billNo) {
-        let lastBillNo = parseInt(localStorage.getItem('lastBillNo')) || 1000;
-        lastBillNo++;
-        localStorage.setItem('lastBillNo', lastBillNo);
-        billNo = lastBillNo.toString();
-        localStorage.setItem('billNo_' + salesKey, billNo);
-    }
+                    if (!billNo) {
+                        let lastBillNo = parseInt(localStorage.getItem('lastBillNo')) || 1000;
+                        lastBillNo++;
+                        localStorage.setItem('lastBillNo', lastBillNo);
+                        billNo = lastBillNo.toString();
+                        localStorage.setItem('billNo_' + salesKey, billNo);
+                    }
 
-    const salesByCustomer = salesData.reduce((acc, sale) => { (acc[sale.customer_code] ||= []).push(sale); return acc; }, {});
-    const customerCode = Object.keys(salesByCustomer)[0];
-    const customerSales = salesByCustomer[customerCode];
-    const customerName = customerSales[0].customer_code || 'N/A';
-    const mobile = customerSales[0]?.mobile || '-';
-    const customerEmail = "nethmavilhan2005@gmail.com";
-    const salesIds = customerSales.map(s => s.id);
+                    const salesByCustomer = salesData.reduce((acc, sale) => { (acc[sale.customer_code] ||= []).push(sale); return acc; }, {});
+                    const customerCode = Object.keys(salesByCustomer)[0];
+                    const customerSales = salesByCustomer[customerCode];
+                    const customerName = customerSales[0].customer_code || 'N/A';
+                    const mobile = customerSales[0]?.mobile || '-';
+                    const customerEmail = "nethmavilhan2005@gmail.com";
+                    const salesIds = customerSales.map(s => s.id);
 
-    // Fetch loan amount
-    fetch('{{ route('get.loan.amount') }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-        body: JSON.stringify({ customer_short_name: customerCode })
-    })
-    .then(res => res.json())
-    .then(data => {
-        globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
-        const date = new Date().toLocaleDateString();
-        const time = new Date().toLocaleTimeString();
-        let totalAmountSum = 0;
-        const itemGroups = {};
+                    // Fetch loan amount
+                    fetch('{{ route('get.loan.amount') }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: JSON.stringify({ customer_short_name: customerCode })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
+                            const date = new Date().toLocaleDateString();
+                            const time = new Date().toLocaleTimeString();
+                            let totalAmountSum = 0;
+                            const itemGroups = {};
 
-        const itemsHtml = customerSales.map(sale => {
-            totalAmountSum += sale.total;
-            const itemName = sale.item_name || '';
-            const weight = parseFloat(sale.weight) || 0;
-            const packs = parseInt(sale.packs) || 0;
-            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-            itemGroups[itemName].totalWeight += weight;
-            itemGroups[itemName].totalPacks += packs;
-            return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
-        }).join('');
+                            const itemsHtml = customerSales.map(sale => {
+                                totalAmountSum += sale.total;
+                                const itemName = sale.item_name || '';
+                                const weight = parseFloat(sale.weight) || 0;
+                                const packs = parseInt(sale.packs) || 0;
+                                if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+                                itemGroups[itemName].totalWeight += weight;
+                                itemGroups[itemName].totalPacks += packs;
+                                return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
+                            }).join('');
 
-        let itemSummaryHtml = '';
-        Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
-            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
-        });
+                            let itemSummaryHtml = '';
+                            Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
+                                itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
+                            });
 
-        // Conditionally create the total amount row HTML for F1
-        let totalAmountRowHtmlF1 = '';
-        if (globalLoanAmount > 0) {
-            totalAmountRowHtmlF1 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
-        }
-        
-        const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
-            <div style="text-align:center;margin-bottom:5px;">
-                <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
-                <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
-                <p style="margin:0;font-size:0.8em;">වි.ආ.ම. වේයන්ගොඩ</p>
-            </div>
-            <div style="text-align:left;margin-bottom:5px;">
+                            // Conditionally create the total amount row HTML for F1
+                            let totalAmountRowHtmlF1 = '';
+                            if (globalLoanAmount > 0) {
+                                totalAmountRowHtmlF1 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
+                            }
+
+                            const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
+                <div style="text-align:center;margin-bottom:5px;">
+                    <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
+                    <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
+                    <p style="margin:0;font-size:0.8em;">වි.ආ.ම. වේයන්ගොඩ</p>
+                </div>
+                <div style="text-align:left;margin-bottom:5px;">
+                    <table style="width:100%;font-size:10px;border-collapse:collapse;">
+                        <tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr>
+                        <tr><td colspan="4">දුර : ${mobile}</td></tr>
+                        <tr><td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td><td colspan="2" style="text-align:right;"><strong>${customerName.toUpperCase()}</strong></td>
+    </tr>
+                    </table>
+                </div>
+                <hr>
                 <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                    <tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr>
-                    <tr><td colspan="4">දුර : ${mobile}</td></tr>
-                    <tr><td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td><td colspan="2" style="text-align:right;"><strong>${customerName.toUpperCase()}</strong></td>
-</tr>
+                    <thead><tr><th>වර්ගය<br>මලු</th><th>කිලෝ</th><th>මිල</th><th>අගය</th></tr></thead>
+                    <tbody><tr><td colspan="4"><hr style="height:1px;background-color:#000;"></td></tr>${itemsHtml}</tbody>
                 </table>
-            </div>
-            <hr>
-            <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                <thead><tr><th>වර්ගය<br>මලු</th><th>කිලෝ</th><th>මිල</th><th>අගය</th></tr></thead>
-                <tbody><tr><td colspan="4"><hr style="height:1px;background-color:#000;"></td></tr>${itemsHtml}</tbody>
-            </table>
-            <hr>
-            <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td><td style="text-align:right;font-weight:bold;">${totalAmountSum.toFixed(2)}</td></tr>
-                ${totalAmountRowHtmlF1}
-            </table>
-            <div>${itemSummaryHtml}</div>
-            <hr>
-            <div style="text-align:center;margin-top:10px;">
-                <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                <p>නැවත භාර ගනු නොලැබේ</p>
-            </div>
-        </div>`;
+                <hr>
+                <table style="width:100%;font-size:10px;border-collapse:collapse;">
+                    <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td><td style="text-align:right;font-weight:bold;">${totalAmountSum.toFixed(2)}</td></tr>
+                    ${totalAmountRowHtmlF1}
+                </table>
+                <div>${itemSummaryHtml}</div>
+                <hr>
+                <div style="text-align:center;margin-top:10px;">
+                    <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+                    <p>නැවත භාර ගනු නොලැබේ</p>
+                </div>
+            </div>`;
 
-        // F1: Print + Email + Save
-        sendReceiptEmail(receiptHtml, customerName, customerEmail);
-        saveReceiptToDDrive(receiptHtml, customerName, billNo);
-        printReceipt(receiptHtml, customerName, () => {
-            fetch("{{ route('sales.markAsPrinted') }}", {
-                method: 'POST',
-                headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' },
-                body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log("Marked printed:", data);
-                sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                window.location.reload();
-            })
-            .catch(err => console.error('Mark printed error:', err));
-        });
+                            // F1: Print + Email + Save
+                            sendReceiptEmail(receiptHtml, customerName, customerEmail);
+                            saveReceiptToDDrive(receiptHtml, customerName, billNo);
+                            printReceipt(receiptHtml, customerName, () => {
+                                fetch("{{ route('sales.markAsPrinted') }}", {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                    body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
+                                })
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        console.log("Marked printed:", data);
+                                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                                        window.location.reload();
+                                    })
+                                    .catch(err => console.error('Mark printed error:', err));
+                            });
 
-    }).catch(err => console.error('Loan fetch failed:', err));
-}
+                        }).catch(err => console.error('Loan fetch failed:', err));
+                }
 
-// Keyboard events for F1 & F5
-document.addEventListener('keydown', e => {
-    if (e.key === "F1") { e.preventDefault(); handlePrint(); }
-    else if (e.key === "F5") {
-        e.preventDefault();
-        const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-        if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) return;
+                // Keyboard events for F1 & F5
+                document.addEventListener('keydown', e => {
+                    if (e.key === "F1") { e.preventDefault(); handlePrint(); }
+                    else if (e.key === "F5") {
+                        e.preventDefault();
+                        const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+                        if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) return;
 
-        const salesData = [];
-        tableRows.forEach(row => {
-            if (row.hasAttribute('data-sale-id')) {
-                const cells = row.querySelectorAll('td');
-                salesData.push({
-                    id: row.getAttribute('data-sale-id'),
-                    customer_code: row.getAttribute('data-customer-code'),
-                    customer_name: row.getAttribute('data-customer-name'),
-                    mobile: row.getAttribute('data-customer-mobile') || '',
-                    email: "nethmavilhan2005@gmail.com",
-                    item_name: cells[1]?.textContent.trim() || '',
-                    weight: parseFloat(cells[2]?.textContent) || 0,
-                    price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                    total: parseFloat(cells[4]?.textContent) || 0,
-                    packs: parseInt(cells[5]?.textContent) || 0
+                        const salesData = [];
+                        tableRows.forEach(row => {
+                            if (row.hasAttribute('data-sale-id')) {
+                                const cells = row.querySelectorAll('td');
+                                salesData.push({
+                                    id: row.getAttribute('data-sale-id'),
+                                    customer_code: row.getAttribute('data-customer-code'),
+                                    customer_name: row.getAttribute('data-customer-name'),
+                                    mobile: row.getAttribute('data-customer-mobile') || '',
+                                    email: "nethmavilhan2005@gmail.com",
+                                    item_name: cells[1]?.textContent.trim() || '',
+                                    weight: parseFloat(cells[2]?.textContent) || 0,
+                                    price_per_kg: parseFloat(cells[3]?.textContent) || 0,
+                                    total: parseFloat(cells[4]?.textContent) || 0,
+                                    packs: parseInt(cells[5]?.textContent) || 0
+                                });
+                            }
+                        });
+
+                        if (!salesData.length) return;
+                        const salesByCustomer = salesData.reduce((acc, sale) => { (acc[sale.customer_code] ||= []).push(sale); return acc; }, {});
+                        const customerCode = Object.keys(salesByCustomer)[0];
+                        const customerSales = salesByCustomer[customerCode];
+                        const customerName = customerSales[0].customer_code || 'N/A';
+                        const mobile = customerSales[0]?.mobile || '-';
+                        const customerEmail = "nethmavilhan2005@gmail.com";
+                        const salesIds = customerSales.map(s => s.id);
+                        let totalAmountSum = 0;
+                        const itemGroups = {};
+
+                        const itemsHtml = customerSales.map(sale => {
+                            totalAmountSum += sale.total;
+                            const itemName = sale.item_name || '';
+                            const weight = parseFloat(sale.weight) || 0;
+                            const packs = parseInt(sale.packs) || 0;
+                            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+                            itemGroups[itemName].totalWeight += weight;
+                            itemGroups[itemName].totalPacks += packs;
+                            return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
+                        }).join('');
+
+                        let itemSummaryHtml = '';
+                        Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
+                            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
+                        });
+
+                        // F5: Email + Save (no print, BillNo=N/A)
+                        fetch('{{ route('get.loan.amount') }}', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                            body: JSON.stringify({ customer_short_name: customerCode })
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
+                                const date = new Date().toLocaleDateString();
+                                const time = new Date().toLocaleTimeString();
+                                const billNo = 'N/A';
+
+                                // Conditionally create the total amount row HTML for F5
+                                let totalAmountRowHtmlF5 = '';
+                                if (globalLoanAmount > 0) {
+                                    totalAmountRowHtmlF5 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
+                                }
+
+                                const receiptHtml = `<div class="receipt-container" style="margin-left:-5px;">
+                    <div style="text-align:center;margin-bottom:5px;"><h3>C11 TGK ට්‍රේඩර්ස්</h3><p>අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ  බෙදාහරින්නෝ</p><p>වි.ආ.ම. වේයන්ගොඩ</p></div>
+                    <div><table><tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr><tr><td colspan="4">දුර : ${mobile}</td></tr><tr><td colspan="2">බිල් අංකය : ${billNo}</td><td colspan="2">${customerName}</td></tr></table></div><hr>
+                    <table><tbody>${itemsHtml}</tbody></table><hr>
+                    <table><tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)}</td><td style="text-align:right;">${totalAmountSum.toFixed(2)}</td></tr>
+                    ${totalAmountRowHtmlF5}</table>
+                    <div>${itemSummaryHtml}</div></div>`;
+                                sendReceiptEmail(receiptHtml, customerName, customerEmail);
+                                saveReceiptToDDrive(receiptHtml, customerName, billNo);
+
+                                fetch('{{ route('sales.markAllAsProcessed') }}', {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                                }).then(res => res.json()).then(data => { console.log('F5 processed:', data); window.location.reload(); });
+                            }).catch(err => console.error('F5 error:', err));
+                    }
                 });
-            }
-        });
 
-        if (!salesData.length) return;
-        const salesByCustomer = salesData.reduce((acc,sale)=>{ (acc[sale.customer_code] ||= []).push(sale); return acc; }, {});
-        const customerCode = Object.keys(salesByCustomer)[0];
-        const customerSales = salesByCustomer[customerCode];
-        const customerName = customerSales[0].customer_code || 'N/A';
-        const mobile = customerSales[0]?.mobile || '-';
-        const customerEmail = "nethmavilhan2005@gmail.com";
-        const salesIds = customerSales.map(s => s.id);
-        let totalAmountSum = 0;
-        const itemGroups = {};
-
-        const itemsHtml = customerSales.map(sale => {
-            totalAmountSum += sale.total;
-            const itemName = sale.item_name || '';
-            const weight = parseFloat(sale.weight) || 0;
-            const packs = parseInt(sale.packs) || 0;
-            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight:0, totalPacks:0 };
-            itemGroups[itemName].totalWeight += weight;
-            itemGroups[itemName].totalPacks += packs;
-            return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
-        }).join('');
-
-        let itemSummaryHtml = '';
-        Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
-            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length-1 ? ', ' : ''}`;
-        });
-
-        // F5: Email + Save (no print, BillNo=N/A)
-        fetch('{{ route('get.loan.amount') }}', {
-            method:'POST',
-            headers:{ 'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' },
-            body: JSON.stringify({ customer_short_name: customerCode })
-        })
-        .then(res=>res.json())
-        .then(data=>{
-            globalLoanAmount = parseFloat(data.total_loan_amount)||0;
-            const date = new Date().toLocaleDateString();
-            const time = new Date().toLocaleTimeString();
-            const billNo = 'N/A';
-            
-            // Conditionally create the total amount row HTML for F5
-            let totalAmountRowHtmlF5 = '';
-            if (globalLoanAmount > 0) {
-                 totalAmountRowHtmlF5 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;">${(globalLoanAmount+totalAmountSum).toFixed(2)}</td></tr>`;
-            }
-
-            const receiptHtml = `<div class="receipt-container" style="margin-left:-5px;">
-                <div style="text-align:center;margin-bottom:5px;"><h3>C11 TGK ට්‍රේඩර්ස්</h3><p>අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ  බෙදාහරින්නෝ</p><p>වි.ආ.ම. වේයන්ගොඩ</p></div>
-                <div><table><tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr><tr><td colspan="4">දුර : ${mobile}</td></tr><tr><td colspan="2">බිල් අංකය : ${billNo}</td><td colspan="2">${customerName}</td></tr></table></div><hr>
-                <table><tbody>${itemsHtml}</tbody></table><hr>
-                <table><tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)}</td><td style="text-align:right;">${totalAmountSum.toFixed(2)}</td></tr>
-                ${totalAmountRowHtmlF5}</table>
-                <div>${itemSummaryHtml}</div></div>`;
-            sendReceiptEmail(receiptHtml, customerName, customerEmail);
-            saveReceiptToDDrive(receiptHtml, customerName, billNo);
-
-            fetch('{{ route('sales.markAllAsProcessed') }}', {
-                method:'POST', headers:{ 'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' }
-            }).then(res=>res.json()).then(data=>{ console.log('F5 processed:', data); window.location.reload(); });
-        }).catch(err=>console.error('F5 error:', err));
-    }
-});
-
-// Optional print button
-document.getElementById('printButton').addEventListener('click', function () {
-    if (confirm("Do you want to print?")) handlePrint();
-});
+                // Optional print button
+                document.getElementById('printButton').addEventListener('click', function () {
+                    if (confirm("Do you want to print?")) handlePrint();
+                });
 
                 function printReceipt(salesContent, customerName, onCompleteCallback) {
                     const printWindow = window.open('', '', 'width=300,height=600');
 
                     printWindow.document.write(`
-                                                                                                                                                                                                                                                                            <html>
-                                                                                                                                                                                                                                                                                <head>
-                                                                                                                                                                                                                                                                                    <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
-                                                                                                                                                                                                                                                                                    <style>
-                                                                                                                                                                                                                                                                                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-                                                                                                                                                                                                                                                                                        body {
-                                                                                                                                                                                                                                                                                            font-family: 'Noto Sans Sinhala', sans-serif;
-                                                                                                                                                                                                                                                                                            margin: 0;
-                                                                                                                                                                                                                                                                                            padding: 5mm;
-                                                                                                                                                                                                                                                                                            font-size: 10px;
-                                                                                                                                                                                                                                                                                            line-height: 1.2;
-                                                                                                                                                                                                                                                                                            overflow: hidden;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .receipt-container {
-                                                                                                                                                                                                                                                                                            width: 100%;
-                                                                                                                                                                                                                                                                                            max-width: 80mm;
-                                                                                                                                                                                                                                                                                            margin-left: 0;
-                                                                                                                                                                                                                                                                                            margin-right: auto;
-                                                                                                                                                                                                                                                                                            border: none;
-                                                                                                                                                                                                                                                                                            padding: 0;
-                                                                                                                                                                                                                                                                                            text-align: left;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .company-info {
-                                                                                                                                                                                                                                                                                            text-align: left;
-                                                                                                                                                                                                                                                                                            margin-bottom: 5px;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .company-info h3 {
-                                                                                                                                                                                                                                                                                            font-size: 1.2em;
-                                                                                                                                                                                                                                                                                            margin-bottom: 2px;
-                                                                                                                                                                                                                                                                                            font-weight: bold;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .company-info p {
-                                                                                                                                                                                                                                                                                            margin: 0;
-                                                                                                                                                                                                                                                                                            line-height: 1.2;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .bill-details, .summary-section, .footer-section {
-                                                                                                                                                                                                                                                                                            text-align: left;
-                                                                                                                                                                                                                                                                                            margin-bottom: 5px;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .bill-details p, .summary-section p {
-                                                                                                                                                                                                                                                                                            margin: 0;
-                                                                                                                                                                                                                                                                                            line-height: 1.2;
-                                                                                                                                                                                                                                                                                            display: flex;
-                                                                                                                                                                                                                                                                                            justify-content: space-between;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .bill-details p span:first-child, .summary-section p span:first-child {
-                                                                                                                                                                                                                                                                                            text-align: left;
-                                                                                                                                                                                                                                                                                            font-weight: normal;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .bill-details p span:last-child, .summary-section p span:last-child {
-                                                                                                                                                                                                                                                                                            text-align:left;
-                                                                                                                                                                                                                                                                                            font-weight: bold;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .customer-name-on-bill {
-                                                                                                                                                                                                                                                                                            text-align: left;
-                                                                                                                                                                                                                                                                                            font-weight: bold;
-                                                                                                                                                                                                                                                                                            margin-top: 5px;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .divider {
-                                                                                                                                                                                                                                                                                            border-top: 1px dashed #000;
-                                                                                                                                                                                                                                                                                            margin: 8px 0;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .items-section table {
-                                                                                                                                                                                                                                                                                            width: 100%;
-                                                                                                                                                                                                                                                                                            border-bottom: none;
-                                                                                                                                                                                                                                                                                            font-size: 10px;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .items-section th, .items-section td {
-                                                                                                                                                                                                                                                                                            padding: 2px 0;
-                                                                                                                                                                                                                                                                                            text-align: right;
-                                                                                                                                                                                                                                                                                            border-bottom: none;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .items-section th {
-                                                                                                                                                                                                                                                                                            font-weight: bold;
-                                                                                                                                                                                                                                                                                            text-align: center;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .col-item {
-                                                                                                                                                                                                                                                                                            text-align: left;
-                                                                                                                                                                                                                                                                                            width: 40%;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .col-qty {
-                                                                                                                                                                                                                                                                                            width: 20%;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .col-rate {
-                                                                                                                                                                                                                                                                                            width: 20%;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .col-value {
-                                                                                                                                                                                                                                                                                            width: 20%;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .grand-total {
-                                                                                                                                                                                                                                                                                            font-size: 1.1em;
-                                                                                                                                                                                                                                                                                            font-weight: bold;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .footer-section {
-                                                                                                                                                                                                                                                                                            text-align: left;
-                                                                                                                                                                                                                                                                                            margin-top: 10px;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        .footer-section p {
-                                                                                                                                                                                                                                                                                            margin: 0;
-                                                                                                                                                                                                                                                                                            line-height: 1.2;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        hr {
-                                                                                                                                                                                                                                                                                            display: block;
-                                                                                                                                                                                                                                                                                            height: 1px;
-                                                                                                                                                                                                                                                                                            background: transparent;
-                                                                                                                                                                                                                                                                                            width: 100%;
-                                                                                                                                                                                                                                                                                            border: none;
-                                                                                                                                                                                                                                                                                            border-top: solid 2px #000 !important;
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                    </style>
-                                                                                                                                                                                                                                                                                </head>
-                                                                                                                                                                                                                                                                                <body>
-                                                                                                                                                                                                                                                                                    <div class="receipt-container">
-                                                                                                                                                                                                                                                                                        ${salesContent}
-                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                </body>
-                                                                                                                                                                                                                                                                            </html>
-                                                                                                                                                                                                                                                                        `);
+                                                                                                                                                                                                                                                                                <html>
+                                                                                                                                                                                                                                                                                    <head>
+                                                                                                                                                                                                                                                                                        <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
+                                                                                                                                                                                                                                                                                        <style>
+                                                                                                                                                                                                                                                                                            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+                                                                                                                                                                                                                                                                                            body {
+                                                                                                                                                                                                                                                                                                font-family: 'Noto Sans Sinhala', sans-serif;
+                                                                                                                                                                                                                                                                                                margin: 0;
+                                                                                                                                                                                                                                                                                                padding: 5mm;
+                                                                                                                                                                                                                                                                                                font-size: 10px;
+                                                                                                                                                                                                                                                                                                line-height: 1.2;
+                                                                                                                                                                                                                                                                                                overflow: hidden;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .receipt-container {
+                                                                                                                                                                                                                                                                                                width: 100%;
+                                                                                                                                                                                                                                                                                                max-width: 80mm;
+                                                                                                                                                                                                                                                                                                margin-left: 0;
+                                                                                                                                                                                                                                                                                                margin-right: auto;
+                                                                                                                                                                                                                                                                                                border: none;
+                                                                                                                                                                                                                                                                                                padding: 0;
+                                                                                                                                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .company-info {
+                                                                                                                                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                                                                                                                                margin-bottom: 5px;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .company-info h3 {
+                                                                                                                                                                                                                                                                                                font-size: 1.2em;
+                                                                                                                                                                                                                                                                                                margin-bottom: 2px;
+                                                                                                                                                                                                                                                                                                font-weight: bold;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .company-info p {
+                                                                                                                                                                                                                                                                                                margin: 0;
+                                                                                                                                                                                                                                                                                                line-height: 1.2;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .bill-details, .summary-section, .footer-section {
+                                                                                                                                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                                                                                                                                margin-bottom: 5px;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .bill-details p, .summary-section p {
+                                                                                                                                                                                                                                                                                                margin: 0;
+                                                                                                                                                                                                                                                                                                line-height: 1.2;
+                                                                                                                                                                                                                                                                                                display: flex;
+                                                                                                                                                                                                                                                                                                justify-content: space-between;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .bill-details p span:first-child, .summary-section p span:first-child {
+                                                                                                                                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                                                                                                                                font-weight: normal;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .bill-details p span:last-child, .summary-section p span:last-child {
+                                                                                                                                                                                                                                                                                                text-align:left;
+                                                                                                                                                                                                                                                                                                font-weight: bold;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .customer-name-on-bill {
+                                                                                                                                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                                                                                                                                font-weight: bold;
+                                                                                                                                                                                                                                                                                                margin-top: 5px;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .divider {
+                                                                                                                                                                                                                                                                                                border-top: 1px dashed #000;
+                                                                                                                                                                                                                                                                                                margin: 8px 0;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .items-section table {
+                                                                                                                                                                                                                                                                                                width: 100%;
+                                                                                                                                                                                                                                                                                                border-bottom: none;
+                                                                                                                                                                                                                                                                                                font-size: 10px;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .items-section th, .items-section td {
+                                                                                                                                                                                                                                                                                                padding: 2px 0;
+                                                                                                                                                                                                                                                                                                text-align: right;
+                                                                                                                                                                                                                                                                                                border-bottom: none;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .items-section th {
+                                                                                                                                                                                                                                                                                                font-weight: bold;
+                                                                                                                                                                                                                                                                                                text-align: center;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .col-item {
+                                                                                                                                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                                                                                                                                width: 40%;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .col-qty {
+                                                                                                                                                                                                                                                                                                width: 20%;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .col-rate {
+                                                                                                                                                                                                                                                                                                width: 20%;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .col-value {
+                                                                                                                                                                                                                                                                                                width: 20%;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .grand-total {
+                                                                                                                                                                                                                                                                                                font-size: 1.1em;
+                                                                                                                                                                                                                                                                                                font-weight: bold;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .footer-section {
+                                                                                                                                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                                                                                                                                margin-top: 10px;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            .footer-section p {
+                                                                                                                                                                                                                                                                                                margin: 0;
+                                                                                                                                                                                                                                                                                                line-height: 1.2;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            hr {
+                                                                                                                                                                                                                                                                                                display: block;
+                                                                                                                                                                                                                                                                                                height: 1px;
+                                                                                                                                                                                                                                                                                                background: transparent;
+                                                                                                                                                                                                                                                                                                width: 100%;
+                                                                                                                                                                                                                                                                                                border: none;
+                                                                                                                                                                                                                                                                                                border-top: solid 2px #000 !important;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                        </style>
+                                                                                                                                                                                                                                                                                    </head>
+                                                                                                                                                                                                                                                                                    <body>
+                                                                                                                                                                                                                                                                                        <div class="receipt-container">
+                                                                                                                                                                                                                                                                                            ${salesContent}
+                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                    </body>
+                                                                                                                                                                                                                                                                                </html>
+                                                                                                                                                                                                                                                                            `);
 
                     printWindow.document.close();
                     printWindow.focus();
@@ -2771,13 +2771,13 @@ document.getElementById('printButton').addEventListener('click', function () {
                             const packs = (parseInt(sale.packs) || 0);
 
                             newRow.innerHTML = `
-                                                                                                                                                            <td data-field="code">${code}</td>
-                                                                                                                                                            <td data-field="item_name">${itemName}</td>
-                                                                                                                                                            <td data-field="weight">${weight}</td>
-                                                                                                                                                            <td data-field="price_per_kg">${pricePerKg}</td>
-                                                                                                                                                            <td data-field="total">${total}</td>
-                                                                                                                                                            <td data-field="packs">${packs}</td>
-                                                                                                                                                        `;
+                                                                                                                                                                <td data-field="code">${code}</td>
+                                                                                                                                                                <td data-field="item_name">${itemName}</td>
+                                                                                                                                                                <td data-field="weight">${weight}</td>
+                                                                                                                                                                <td data-field="price_per_kg">${pricePerKg}</td>
+                                                                                                                                                                <td data-field="total">${total}</td>
+                                                                                                                                                                <td data-field="packs">${packs}</td>
+                                                                                                                                                            `;
 
                             mainSalesTableBodyElement.appendChild(newRow);
                             totalSalesValue += parseFloat(total);
@@ -2807,10 +2807,10 @@ document.getElementById('printButton').addEventListener('click', function () {
                         let summaryHtml = '<div style="font-size: 0.9rem; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 1rem;">';
                         for (const [itemName, totals] of Object.entries(itemGroups)) {
                             summaryHtml += `
-                                                                                                                                                          <div style="padding: 0.25rem 0.5rem; border-radius: 0.5rem; background-color: #f3f4f6; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-size: 0.8rem;">
-                                                                                                                                                                <strong>${itemName}</strong>: බර (kg) = ${totals.totalWeight.toFixed(2)}, මලු = ${totals.totalPacks}
-                                                                                                                                                            </div>
-                                                                                                                                                        `;
+                                                                                                                                                              <div style="padding: 0.25rem 0.5rem; border-radius: 0.5rem; background-color: #f3f4f6; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-size: 0.8rem;">
+                                                                                                                                                                    <strong>${itemName}</strong>: බර (kg) = ${totals.totalWeight.toFixed(2)}, මලු = ${totals.totalPacks}
+                                                                                                                                                                </div>
+                                                                                                                                                            `;
                         }
                         summaryHtml += '</div>';
 
