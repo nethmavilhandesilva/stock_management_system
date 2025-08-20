@@ -89,7 +89,7 @@ Route::get('/customers/{id}/loans-total', [CustomersLoanController::class, 'getT
 Route::post('/get-loan-amount', [SalesEntryController::class, 'getLoanAmount'])->name('get.loan.amount');
 Route::get('/sales/codes', [SalesEntryController::class, 'listCodes'])->name('sales.codes');
 Route::get('/sales/code/{code}', [SalesEntryController::class, 'showByCode'])->name('sales.byCode');
-
+Route::post('/save-receipt-file', [SalesEntryController::class, 'saveReceiptFile'])->name('save.receipt.file');
 Route::post('/loan-report/results', [CustomersLoanController::class, 'loanReportResults'])->name('loan.report.results');
 Route::get('/customers-loans/report', [CustomersLoanController::class, 'loanReport'])->name('customers-loans.report');
 Route::resource('customers-loans', CustomersLoanController::class);

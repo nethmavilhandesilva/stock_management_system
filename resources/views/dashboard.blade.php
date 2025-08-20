@@ -2234,472 +2234,284 @@
 
                 let globalLoanAmount = 0;
 
-                // The reusable print function
-                function printReceipt(html, customerName, callback) {
-                    const printWindow = window.open('', '_blank');
-                    printWindow.document.write(`
-                                            <!DOCTYPE html>
-                                            <html>
-                                            <head>
-                                                <title>${customerName} - Receipt</title>
+// Reusable print function
+function printReceipt(html, customerName, callback) {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${customerName} - Receipt</title>
+        </head>
+        <body>
+            ${html}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+    if (callback && typeof callback === 'function') callback();
+}
 
-                                            </head>
-                                            <body>
-                                                ${html}
-                                            </body>
-                                            </html>
-                                        `);
-                    printWindow.document.close();
-                    printWindow.focus();
-                    printWindow.print();
-                    printWindow.close();
-                    if (callback && typeof callback === 'function') {
-                        callback();
-                    }
-                }
+// Function to send receipt email
+function sendReceiptEmail(html, customerName, customerEmail) {
+    fetch('{{ route('send.receipt.email') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ receipt_html: html, customer_name: customerName, email: customerEmail })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) console.log('Email sent:', data.message);
+        else console.error('Email failed:', data.message);
+    })
+    .catch(err => console.error('Email error:', err));
+}
 
-                // Function to handle the email sending process
-                function sendReceiptEmail(html, customerName, customerEmail) {
-                    const emailData = {
-                        receipt_html: html,
-                        customer_name: customerName,
-                        email: customerEmail,
-                        _token: '{{ csrf_token() }}'
-                    };
+// Function to save receipt to D:\Receipts
+function saveReceiptToDDrive(html, customerName, billNo) {
+    fetch('{{ route("save.receipt.file") }}', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ receipt_html: html, customer_name: customerName, bill_no: billNo })
+    })
+    .then(res => res.json())
+    .then(data => console.log('Receipt saved:', data))
+    .catch(err => console.error('Save error:', err));
+}
 
-                    fetch('{{ route('send.receipt.email') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify(emailData)
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                console.log('Email sent successfully:', data.message);
-                            } else {
-                                console.error('Failed to send email:', data.message);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error sending email:', error);
-                        });
-                }
+// Core F1 print function
+function handlePrint() {
+    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+        alert('No sales records to print!');
+        return;
+    }
 
-                // The core printing and backend-marking logic for F1
-                function handlePrint() {
-                    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-                    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
-                        displayMessageBox('No sales records in the table to print!');
-                        return;
-                    }
+    const salesData = [];
+    tableRows.forEach(row => {
+        if (row.hasAttribute('data-sale-id')) {
+            const cells = row.querySelectorAll('td');
+            salesData.push({
+                id: row.getAttribute('data-sale-id'),
+                customer_code: row.getAttribute('data-customer-code'),
+                customer_name: row.getAttribute('data-customer-name'),
+                mobile: row.getAttribute('data-customer-mobile') || '',
+                email: "nethmavilhan2005@gmail.com",
+                code: cells[0]?.textContent.trim() || '',
+                item_code: cells[1]?.textContent.trim() || '',
+                item_name: cells[1]?.textContent.trim() || '',
+                weight: parseFloat(cells[2]?.textContent) || 0,
+                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
+                total: parseFloat(cells[4]?.textContent) || 0,
+                packs: parseInt(cells[5]?.textContent) || 0
+            });
+        }
+    });
 
-                    const salesData = [];
-                    tableRows.forEach(row => {
-                        if (row.hasAttribute('data-sale-id')) {
-                            const cells = row.querySelectorAll('td');
-                            salesData.push({
-                                id: row.getAttribute('data-sale-id'),
-                                customer_code: row.getAttribute('data-customer-code'),
-                                customer_name: row.getAttribute('data-customer-name'),
-                                mobile: row.getAttribute('data-customer-mobile') || '',
-                                email: "nethmavilhan2005@gmail.com",
-                                code: cells[0]?.textContent.trim() || '',
-                                item_code: cells[1]?.textContent.trim() || '',
-                                item_name: cells[1]?.textContent.trim() || '',
-                                weight: parseFloat(cells[2]?.textContent) || 0,
-                                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                                total: parseFloat(cells[4]?.textContent) || 0,
-                                packs: parseInt(cells[5]?.textContent) || 0
-                            });
-                        }
-                    });
+    if (!salesData.length) {
+        alert('No printable sales records found!');
+        return;
+    }
 
-                    if (!salesData.length) {
-                        displayMessageBox('No printable sales records found!');
-                        return;
-                    }
+    const salesKey = salesData.map(sale => sale.id).sort().join('_');
+    let billNo = localStorage.getItem('billNo_' + salesKey);
 
-                    const salesKey = salesData.map(sale => sale.id).sort().join('_');
-                    let billNo = localStorage.getItem('billNo_' + salesKey);
+    if (!billNo) {
+        let lastBillNo = parseInt(localStorage.getItem('lastBillNo')) || 1000;
+        lastBillNo++;
+        localStorage.setItem('lastBillNo', lastBillNo);
+        billNo = lastBillNo.toString();
+        localStorage.setItem('billNo_' + salesKey, billNo);
+    }
 
-                    if (!billNo) {
-                        function getNextBillNo() {
-                            let lastBillNo = localStorage.getItem('lastBillNo');
-                            if (!lastBillNo) {
-                                lastBillNo = 1000;
-                            } else {
-                                lastBillNo = parseInt(lastBillNo) + 1;
-                            }
-                            localStorage.setItem('lastBillNo', lastBillNo);
-                            return lastBillNo.toString();
-                        }
-                        billNo = getNextBillNo();
-                        localStorage.setItem('billNo_' + salesKey, billNo);
-                    }
+    const salesByCustomer = salesData.reduce((acc, sale) => { (acc[sale.customer_code] ||= []).push(sale); return acc; }, {});
+    const customerCode = Object.keys(salesByCustomer)[0];
+    const customerSales = salesByCustomer[customerCode];
+    const customerName = customerSales[0].customer_code || 'N/A';
+    const mobile = customerSales[0]?.mobile || '-';
+    const customerEmail = "nethmavilhan2005@gmail.com";
+    const salesIds = customerSales.map(s => s.id);
 
-                    const salesByCustomer = salesData.reduce((acc, sale) => {
-                        (acc[sale.customer_code] ||= []).push(sale);
-                        return acc;
-                    }, {});
-                    const customerCode = Object.keys(salesByCustomer)[0];
-                    const customerSales = salesByCustomer[customerCode];
-                    const customerName = customerSales[0].customer_code || 'N/A';
-                    const mobile = customerSales[0]?.mobile || '-';
-                    const customerEmail = "nethmavilhan2005@gmail.com";
+    // Fetch loan amount
+    fetch('{{ route('get.loan.amount') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ customer_short_name: customerCode })
+    })
+    .then(res => res.json())
+    .then(data => {
+        globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
+        const date = new Date().toLocaleDateString();
+        const time = new Date().toLocaleTimeString();
+        let totalAmountSum = 0;
+        const itemGroups = {};
 
-                    fetch('{{ route('get.loan.amount') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ customer_short_name: customerCode })
-                    })
-                        .then(res => res.json())
-                        .then(data => {
-                            globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
-                            const date = new Date().toLocaleDateString();
-                            const time = new Date().toLocaleTimeString();
-                            let totalAmountSum = 0;
-                            const salesIds = [];
-                            const itemGroups = {};
+        const itemsHtml = customerSales.map(sale => {
+            totalAmountSum += sale.total;
+            const itemName = sale.item_name || '';
+            const weight = parseFloat(sale.weight) || 0;
+            const packs = parseInt(sale.packs) || 0;
+            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+            itemGroups[itemName].totalWeight += weight;
+            itemGroups[itemName].totalPacks += packs;
+            return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
+        }).join('');
 
-                            const itemsHtml = customerSales.map(sale => {
-                                totalAmountSum += sale.total;
-                                salesIds.push(sale.id);
-                                const itemName = sale.item_name || '';
-                                const weight = parseFloat(sale.weight) || 0;
-                                const packs = parseInt(sale.packs) || 0;
-                                if (!itemGroups[itemName]) {
-                                    itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-                                }
-                                itemGroups[itemName].totalWeight += weight;
-                                itemGroups[itemName].totalPacks += packs;
-                                return `
-                                                    <tr>
-                                                        <td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td>
-                                                        <td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td>
-                                                        <td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td>
-                                                        <td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td>
-                                                    </tr>
-                                                `;
-                            }).join('');
+        let itemSummaryHtml = '';
+        Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
+            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
+        });
 
-                            let itemSummaryPrintHtml = '';
-                            const entries = Object.entries(itemGroups);
-                            entries.forEach(([itemName, totals], index) => {
-                                itemSummaryPrintHtml += `
-                                                    <span style="
-                                                        padding: 0.1rem 0.3rem;
-                                                        border-radius: 0.5rem;
-                                                        background-color: #f3f4f6;
-                                                        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-                                                        font-size: 0.6rem;
-                                                        white-space: nowrap;
-                                                        display: inline-block;
-                                                    ">
-                                                        <strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}
-                                                    </span>${index < entries.length - 1 ? ', ' : ''}
-                                                `;
-                            });
+        const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
+            <div style="text-align:center;margin-bottom:5px;">
+                <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
+                <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
+                <p style="margin:0;font-size:0.8em;">වි.ආ.ම. වේයන්ගොඩ</p>
+            </div>
+            <div style="text-align:left;margin-bottom:5px;">
+                <table style="width:100%;font-size:10px;border-collapse:collapse;">
+                    <tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr>
+                    <tr><td colspan="4">දුර : ${mobile}</td></tr>
+                    <tr><td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td><td colspan="2" style="text-align:right;"><strong>${customerName.toUpperCase()}</strong></td>
+</tr>
+                </table>
+            </div>
+            <hr>
+            <table style="width:100%;font-size:10px;border-collapse:collapse;">
+                <thead><tr><th>වර්ගය<br>මලු</th><th>කිලෝ</th><th>මිල</th><th>අගය</th></tr></thead>
+                <tbody><tr><td colspan="4"><hr style="height:1px;background-color:#000;"></td></tr>${itemsHtml}</tbody>
+            </table>
+            <hr>
+            <table style="width:100%;font-size:10px;border-collapse:collapse;">
+                <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td><td style="text-align:right;font-weight:bold;">${totalAmountSum.toFixed(2)}</td></tr>
+                <tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>
+            </table>
+            <div>${itemSummaryHtml}</div>
+            <hr>
+            <div style="text-align:center;margin-top:10px;">
+                <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+                <p>නැවත භාර ගනු නොලැබේ</p>
+            </div>
+        </div>`;
 
-                            const receiptHtml = `
+        // F1: Print + Email + Save
+        sendReceiptEmail(receiptHtml, customerName, customerEmail);
+        saveReceiptToDDrive(receiptHtml, customerName, billNo);
+        printReceipt(receiptHtml, customerName, () => {
+            fetch("{{ route('sales.markAsPrinted') }}", {
+                method: 'POST',
+                headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' },
+                body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Marked printed:", data);
+                sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                window.location.reload();
+            })
+            .catch(err => console.error('Mark printed error:', err));
+        });
 
-                                             <div class="receipt-container" style="margin-left: -8px; margin-right: 5px;">
-                        <div class="company-info" style="text-align: center; margin-bottom: 5px;">
-                            <h3 style="font-size: 1.9em; margin-bottom: 2px; font-weight: bold;">
-                                <span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්
-                            </h3>
-                            <p style="white-space: nowrap; margin: 0; line-height: 1.2; font-size: 0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
-                            <p style="margin: 0; line-height: 1.2; font-size: 0.8em;">වි.ආ.ම. වේයන්ගොඩ</p>
-                        </div>
-                        <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
-                            <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                <tr>
-                                    <td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td>
-                                    <td colspan="2" style="text-align: right; padding: 0;">${time}</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td>
-                                    <td colspan="2" style="text-align: right; padding: 0;">
-                                        <span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                        <hr>
-                        <div class="items-section">
-                            <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                <thead>
-                                    <tr>
-                                        <th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th>
-                                        <th style="text-align: right; padding: 2px 0;">කිලෝ</th>
-                                        <th style="text-align: right; padding: 2px 0;">මිල</th>
-                                        <th style="text-align: right; padding: 2px 0;">අගය</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td colspan="4"><hr style="height: 1px; background-color: #000;"></td></tr>
-                                    ${itemsHtml}
-                                </tbody>
-                            </table>
-                        </div>
-                        <hr>
-                        <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
-                            <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                <tr>
-                                    <td colspan="3" style="text-align: left; padding: 0;">
-                                        ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :
-                                    </td>
-                                    <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
-                                        ${totalAmountSum.toFixed(2)}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="3" style="text-align: left; padding: 0;">
-                                        මුලු එකතුව :
-                                    </td>
-                                    <td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">
-                                        ${(globalLoanAmount + totalAmountSum).toFixed(2)}
-                                    </td>
-                                </tr>
-                            </table>
-                            <div class="item-summary-section">
-                                ${itemSummaryPrintHtml}
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="footer-section" style="text-align: center; margin-top: 10px;">
-                            <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                            <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
-                        </div>
-                    </div>
-                                            `;
+    }).catch(err => console.error('Loan fetch failed:', err));
+}
 
-                            // Send the email first
-                            if (customerEmail) {
-                                sendReceiptEmail(receiptHtml, customerName, customerEmail);
-                            } else {
-                                console.log('Customer has no email address. Skipping email.');
-                            }
+// Keyboard events for F1 & F5
+document.addEventListener('keydown', e => {
+    if (e.key === "F1") { e.preventDefault(); handlePrint(); }
+    else if (e.key === "F5") {
+        e.preventDefault();
+        const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+        if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) return;
 
-                            // Then proceed with printing and marking as printed
-                            printReceipt(receiptHtml, customerName, () => {
-                                if (salesIds.length) {
-                                    fetch("{{ route('sales.markAsPrinted') }}", {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                        },
-                                        body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
-                                    })
-                                        .then(res => res.json())
-                                        .then(data => {
-                                            console.log("Marked printed:", data);
-                                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                            window.location.reload();
-                                        })
-                                        .catch(err => {
-                                            console.error("Print marking failed:", err);
-                                            displayMessageBox('Failed to mark sales as printed.');
-                                        });
-                                }
-                            });
-                        })
-                        .catch(err => {
-                            console.error('Failed to fetch loan amount:', err);
-                            displayMessageBox('Failed to fetch loan amount. Printing aborted.');
-                        });
-                }
-
-                // Event listener for keyboard shortcuts (F1 and F5)
-                document.addEventListener('keydown', function (e) {
-                    if (e.key === "F1") {
-                        e.preventDefault();
-                        handlePrint();
-                    } else if (e.key === "F5") {
-                        e.preventDefault();
-
-                        // --- START: F5 ONLY LOGIC ---
-                        const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-                        if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
-                            console.log('No sales records to process or email on F5.');
-                            return;
-                        }
-
-                        const salesData = [];
-                        tableRows.forEach(row => {
-                            if (row.hasAttribute('data-sale-id')) {
-                                const cells = row.querySelectorAll('td');
-                                salesData.push({
-                                    id: row.getAttribute('data-sale-id'),
-                                    customer_code: row.getAttribute('data-customer-code'),
-                                    customer_name: row.getAttribute('data-customer-name'),
-                                    mobile: row.getAttribute('data-customer-mobile') || '',
-                                    email: "nethmavilhan2005@gmail.com",
-                                    code: cells[0]?.textContent.trim() || '',
-                                    item_name: cells[1]?.textContent.trim() || '',
-                                    weight: parseFloat(cells[2]?.textContent) || 0,
-                                    price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                                    total: parseFloat(cells[4]?.textContent) || 0,
-                                    packs: parseInt(cells[5]?.textContent) || 0
-                                });
-                            }
-                        });
-
-                        if (!salesData.length) {
-                            console.log('No printable sales records found!');
-                            return;
-                        }
-
-                        const salesByCustomer = salesData.reduce((acc, sale) => {
-                            (acc[sale.customer_code] ||= []).push(sale);
-                            return acc;
-                        }, {});
-                        const customerCode = Object.keys(salesByCustomer)[0];
-                        const customerSales = salesByCustomer[customerCode];
-                        const customerName = customerSales[0].customer_code || 'N/A';
-                        const mobile = customerSales[0]?.mobile || '-';
-                        const customerEmail = "nethmavilhan2005@gmail.com";
-                        const salesIds = salesData.map(sale => sale.id);
-
-                        let totalAmountSum = 0;
-                        const itemGroups = {};
-
-                        const itemsHtml = customerSales.map(sale => {
-                            totalAmountSum += sale.total;
-                            const itemName = sale.item_name || '';
-                            const weight = parseFloat(sale.weight) || 0;
-                            const packs = parseInt(sale.packs) || 0;
-                            if (!itemGroups[itemName]) { itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 }; }
-                            itemGroups[itemName].totalWeight += weight;
-                            itemGroups[itemName].totalPacks += packs;
-                            return `<tr><td style="text-align: left; padding: 2px 0;">${sale.item_name} <br>${sale.packs}</td><td style="text-align: right; padding: 2px 0;">${sale.weight.toFixed(2)}</td><td style="text-align: right; padding: 2px 0;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align: right; padding: 2px 0;">${sale.total.toFixed(2)}</td></tr>`;
-                        }).join('');
-
-                        let itemSummaryPrintHtml = '';
-                        const entries = Object.entries(itemGroups);
-                        entries.forEach(([itemName, totals], index) => {
-                            itemSummaryPrintHtml += `<span style="padding: 0.1rem 0.3rem; border-radius: 0.5rem; background-color: #f3f4f6; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-size: 0.6rem; white-space: nowrap; display: inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${index < entries.length - 1 ? ', ' : ''}`;
-                        });
-
-                        // Step 1: Fetch loan amount
-                        fetch('{{ route('get.loan.amount') }}', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                            body: JSON.stringify({ customer_short_name: customerCode })
-                        })
-                            .then(res => res.json())
-                            .then(loanData => {
-                                globalLoanAmount = parseFloat(loanData.total_loan_amount) || 0;
-                                const date = new Date().toLocaleDateString();
-                                const time = new Date().toLocaleTimeString();
-                                let billNo = 'N/A'; // F5 doesn't need a bill number
-
-                                // Step 2: Generate receipt HTML
-                                const receiptHtml = `
-                                                   <div class="receipt-container" style="margin-left: -5px;">
-                                                        <div class="company-info" style="text-align: center; margin-bottom: 5px;">
-                                                            <h3 style="font-size: 1.2em; margin-bottom: 2px; font-weight: bold;"><span style="font-weight: bold;">C11</span> TGK ට්‍රේඩර්ස්</h3>
-                                                            <p style="white-space: nowrap; margin: 0; line-height: 1.2;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ  බෙදාහරින්නෝ</p>
-                                                            <p style="margin: 0; line-height: 1.2;">වි.ආ.ම. වේයන්ගොඩ</p>
-                                                        </div>
-                                                        <div class="bill-details" style="text-align: left; margin-bottom: 5px;">
-                                                            <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                <tr><td colspan="2" style="text-align: left; padding: 0;">දිනය : ${date}</td><td colspan="2" style="text-align: right; padding: 0;">${time}</td></tr>
-                                                                <tr><td colspan="4" style="text-align: left; padding: 0;">දුර : ${mobile}</td></tr>
-                                                                <tr><td colspan="2" style="text-align: left; padding: 0;">බිල් අංකය : <span style="font-weight: bold;">${billNo}</span></td><td colspan="2" style="text-align: right; padding: 0;"><span style="font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">${customerName}</span></td></tr>
-                                                            </table>
-                                                        </div>
-                                                        <hr>
-                                                        <div class="items-section">
-                                                            <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                <thead><tr><th style="text-align: left; padding: 2px 0;">වර්ගය<br>මලු</th><th style="text-align: right; padding: 2px 0;">කිලෝ</th><th style="text-align: right; padding: 2px 0;">මිල</th><th style="text-align: right; padding: 2px 0;">අගය</th></tr></thead>
-                                                                <tbody><tr><td colspan="4"><hr style="height: 1px; background-color: #000;"></td></tr>${itemsHtml}</tbody>
-                                                            </table>
-                                                        </div>
-                                                        <hr>
-                                                        <div class="summary-section" style="text-align: left; margin-bottom: 5px;">
-                                                            <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
-                                                                <tr><td colspan="3" style="text-align: left; padding: 0;">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td><td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">${totalAmountSum.toFixed(2)}</td></tr>
-                                                                <tr><td colspan="3" style="text-align: left; padding: 0;">මුලු එකතුව :</td><td style="text-align: right; font-weight: bold; font-size: 12px; padding: 0;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>
-                                                            </table>
-                                                            <div class="item-summary-section">${itemSummaryPrintHtml}</div>
-                                                        </div>
-                                                        <hr>
-                                                        <div class="footer-section" style="text-align: center; margin-top: 10px;">
-                                                            <p style="margin: 0; line-height: 1.2;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                                                            <p style="margin: 0; line-height: 1.2;">නැවත භාර ගනු නොලැබේ</p>
-                                                        </div>
-                                                    </div>
-                                                `;
-
-                                // Step 3: Send the email and then chain the next step
-                                if (customerEmail) {
-                                    return fetch('{{ route('send.receipt.email') }}', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                                        body: JSON.stringify({ receipt_html: receiptHtml, customer_name: customerName, email: customerEmail })
-                                    })
-                                        .then(response => response.json())
-                                        .then(emailData => {
-                                            if (emailData.success) {
-                                                console.log('Email sent successfully:', emailData.message);
-                                            } else {
-                                                console.error('Failed to send email:', emailData.message);
-                                            }
-                                            // Chain the next promise to mark as processed
-                                            return fetch("{{ route('sales.markAllAsProcessed') }}", {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                                            });
-                                        });
-                                } else {
-                                    console.log('Customer has no email address. Skipping email.');
-                                    // If no email, still proceed to mark as processed
-                                    return fetch("{{ route('sales.markAllAsProcessed') }}", {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                                    });
-                                }
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                    return response.text().then(text => { throw new Error(`HTTP error! status: ${response.status}, message: ${text}`); });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log('Sales marked as processed:', data);
-                                if (data.success) {
-                                    sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                    window.location.reload();
-                                } else {
-                                    console.error('Server reported an error:', data.message);
-                                    alert('Operation failed: ' + data.message);
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error in F5 process:', error);
-                                alert('An error occurred during the F5 process. Check console for details.');
-                            });
-                        // --- END: F5 ONLY LOGIC ---
-                    }
+        const salesData = [];
+        tableRows.forEach(row => {
+            if (row.hasAttribute('data-sale-id')) {
+                const cells = row.querySelectorAll('td');
+                salesData.push({
+                    id: row.getAttribute('data-sale-id'),
+                    customer_code: row.getAttribute('data-customer-code'),
+                    customer_name: row.getAttribute('data-customer-name'),
+                    mobile: row.getAttribute('data-customer-mobile') || '',
+                    email: "nethmavilhan2005@gmail.com",
+                    item_name: cells[1]?.textContent.trim() || '',
+                    weight: parseFloat(cells[2]?.textContent) || 0,
+                    price_per_kg: parseFloat(cells[3]?.textContent) || 0,
+                    total: parseFloat(cells[4]?.textContent) || 0,
+                    packs: parseInt(cells[5]?.textContent) || 0
                 });
+            }
+        });
 
-                // Event listener for a dedicated print button
-                document.getElementById('printButton').addEventListener('click', function () {
-                    if (confirm("Do you want to print?")) {
-                        handlePrint();
-                    }
-                });
+        if (!salesData.length) return;
+        const salesByCustomer = salesData.reduce((acc,sale)=>{ (acc[sale.customer_code] ||= []).push(sale); return acc; }, {});
+        const customerCode = Object.keys(salesByCustomer)[0];
+        const customerSales = salesByCustomer[customerCode];
+        const customerName = customerSales[0].customer_code || 'N/A';
+        const mobile = customerSales[0]?.mobile || '-';
+        const customerEmail = "nethmavilhan2005@gmail.com";
+        const salesIds = customerSales.map(s => s.id);
+        let totalAmountSum = 0;
+        const itemGroups = {};
+
+        const itemsHtml = customerSales.map(sale => {
+            totalAmountSum += sale.total;
+            const itemName = sale.item_name || '';
+            const weight = parseFloat(sale.weight) || 0;
+            const packs = parseInt(sale.packs) || 0;
+            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight:0, totalPacks:0 };
+            itemGroups[itemName].totalWeight += weight;
+            itemGroups[itemName].totalPacks += packs;
+            return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
+        }).join('');
+
+        let itemSummaryHtml = '';
+        Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
+            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length-1 ? ', ' : ''}`;
+        });
+
+        // F5: Email + Save (no print, BillNo=N/A)
+        fetch('{{ route('get.loan.amount') }}', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' },
+            body: JSON.stringify({ customer_short_name: customerCode })
+        })
+        .then(res=>res.json())
+        .then(data=>{
+            globalLoanAmount = parseFloat(data.total_loan_amount)||0;
+            const date = new Date().toLocaleDateString();
+            const time = new Date().toLocaleTimeString();
+            const billNo = 'N/A';
+            const receiptHtml = `<div class="receipt-container" style="margin-left:-5px;">
+                <div style="text-align:center;margin-bottom:5px;"><h3>C11 TGK ට්‍රේඩර්ස්</h3><p>අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ  බෙදාහරින්නෝ</p><p>වි.ආ.ම. වේයන්ගොඩ</p></div>
+                <div><table><tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr><tr><td colspan="4">දුර : ${mobile}</td></tr><tr><td colspan="2">බිල් අංකය : ${billNo}</td><td colspan="2">${customerName}</td></tr></table></div><hr>
+                <table><tbody>${itemsHtml}</tbody></table><hr>
+                <table><tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)}</td><td style="text-align:right;">${totalAmountSum.toFixed(2)}</td></tr>
+                <tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;">${(globalLoanAmount+totalAmountSum).toFixed(2)}</td></tr></table>
+                <div>${itemSummaryHtml}</div></div>`;
+            sendReceiptEmail(receiptHtml, customerName, customerEmail);
+            saveReceiptToDDrive(receiptHtml, customerName, billNo);
+
+            fetch('{{ route('sales.markAllAsProcessed') }}', {
+                method:'POST', headers:{ 'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' }
+            }).then(res=>res.json()).then(data=>{ console.log('F5 processed:', data); window.location.reload(); });
+        }).catch(err=>console.error('F5 error:', err));
+    }
+});
+
+// Optional print button
+document.getElementById('printButton').addEventListener('click', function () {
+    if (confirm("Do you want to print?")) handlePrint();
+});
+
                 function printReceipt(salesContent, customerName, onCompleteCallback) {
                     const printWindow = window.open('', '', 'width=300,height=600');
 

@@ -17,7 +17,10 @@ use App\Models\CustomersLoan;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\DayStartReport;
 use App\Mail\CombinedReportsMail;
-use App\Models\IncomeExpenses;
+use App\Models\IncomeExpenses; // Optional if you use FPDI later for templates
+use Fpdf\Fpdf;
+
+
 
 class SalesEntryController extends Controller
 {
@@ -762,8 +765,52 @@ class SalesEntryController extends Controller
             ->orderBy('item_name', 'asc')
             ->get();
     }
+   
+   public function saveReceiptFile(Request $request)
+{
+    $html = $request->receipt_html;
+    $customerName = $request->customer_name ?? 'customer';
+    $billNo = $request->bill_no ?? 'N/A';
 
+    // Folder path
+    $folder = 'D:\\Receipts';
 
+    // Create folder if it doesn't exist
+    if (!file_exists($folder)) {
+        mkdir($folder, 0777, true);
+    }
 
+    // Save HTML version as backup
+    $htmlFilePath = $folder . '\\' . "Receipt_{$billNo}_{$customerName}.html";
+    file_put_contents($htmlFilePath, $html);
+
+    // Save PDF version with exact size of bill
+    $pdfFilePath = $folder . '\\' . "Receipt_{$billNo}_{$customerName}.pdf";
+
+     $pdf = new \FPDF('P', 'mm', [80, 200]);
+    $pdf->AddPage();
+    $pdf->SetFont('Arial', '', 10);
+    $pdf->WriteHTML = function($pdf, $htmlContent) {
+        // Simple HTML parser for FPDF (or use HTML2FPDF library)
+        // For now, just plain text conversion:
+        $text = strip_tags($htmlContent);
+        $pdf->MultiCell(0, 4, $text);
+    };
+    // Write HTML
+    $pdf->WriteHTML($pdf, $html);
+
+    // Output PDF to file
+    $pdf->Output('F', $pdfFilePath);
+
+    return response()->json([
+        'success' => true,
+        'message' => "Receipt saved successfully! HTML: {$htmlFilePath}, PDF: {$pdfFilePath}"
+    ]);
+}
 
 }
+
+
+
+
+

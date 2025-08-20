@@ -62,21 +62,25 @@
                         </div>
 
                         {{-- Supplier Selection --}}
-                        <div class="mb-3">
-                            <label for="supplier_code" class="form-label">සැපයුම්කරු <span class="text-danger">*</span></label>
-                            <select id="supplier_code" name="supplier_code"
-                                class="form-control @error('supplier_code') is-invalid @enderror" required>
-                                <option value="" disabled selected>-- Select a Supplier --</option>
-                                @foreach($suppliers as $supplier)
-                                    <option value="{{ $supplier->code }}" data-name="{{ $supplier->name }}" {{ old('supplier_code') == $supplier->code ? 'selected' : '' }}>
-                                        {{ $supplier->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('supplier_code')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                     <div class="mb-3">
+    <label for="supplier_name" class="form-label">සැපයුම්කරු <span class="text-danger">*</span></label>
+    <input list="suppliers_list" id="supplier_name" name="supplier_name"
+           class="form-control @error('supplier_name') is-invalid @enderror" required
+           value="{{ old('supplier_name') }}">
+    
+    <datalist id="suppliers_list">
+        @foreach($suppliers as $supplier)
+            <option value="{{ $supplier->name }}" data-code="{{ $supplier->code }}">
+        @endforeach
+    </datalist>
+    
+    @error('supplier_name')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
+
+{{-- This hidden input field will store the supplier's code from the datalist --}}
+<input type="hidden" id="supplier_code_input" name="supplier_code">
 
                         {{-- GRN No --}}
                         <div class="mb-3">
@@ -199,6 +203,29 @@
                 passwordField.style.backgroundColor = '';
                 passwordField.style.borderColor = '';
             }
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const supplierNameInput = document.getElementById('supplier_name');
+        const supplierCodeInput = document.getElementById('supplier_code_input');
+        const suppliersDatalist = document.getElementById('suppliers_list');
+
+        supplierNameInput.addEventListener('input', function() {
+            let supplierCode = '';
+            
+            // Iterate through the datalist options to find a match
+            for (const option of suppliersDatalist.options) {
+                if (option.value === this.value) {
+                    supplierCode = option.getAttribute('data-code');
+                    break;
+                }
+            }
+            
+            // Set the value of the hidden input field.
+            // It will be empty if the user typed a new value.
+            supplierCodeInput.value = supplierCode;
         });
     });
 </script>

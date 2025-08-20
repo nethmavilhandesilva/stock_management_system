@@ -96,14 +96,13 @@
                 </div>
             @endif
 
-           
-
             {{-- Column unlock password --}}
             <div class="mb-3">
                 <label for="list_password" class="form-label">මුරපදය</label>
                 <input type="password" id="list_password" class="form-control" placeholder="View hidden columns...">
             </div>
 
+            
             {{-- Search box --}}
             <input type="text" id="searchInput" class="form-control"
                    placeholder="Search by Code, Supplier Code, Item Code, or Item Name...">
@@ -232,6 +231,8 @@
             document.addEventListener('click', () => contextMenu.style.display = 'none');
 
             const csrfToken = '{{ csrf_token() }}';
+
+            // Hide action
             document.getElementById('hideOption').addEventListener('click', function () {
                 if (currentEntryId) {
                     fetch(`/grn/${currentEntryId}/hide`, {
@@ -240,12 +241,22 @@
                             'X-CSRF-TOKEN': csrfToken,
                             'Content-Type': 'application/json',
                         },
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json(); // Assuming the backend returns JSON
                     }).then(() => {
                         alert("Entry marked as hidden in the database.");
                         contextMenu.style.display = 'none';
+                    }).catch(error => {
+                        console.error('Fetch error:', error);
+                        alert("Failed to mark entry as hidden. Please try again.");
                     });
                 }
             });
+
+            // Unhide action
             document.getElementById('unhideOption').addEventListener('click', function () {
                 if (currentEntryId) {
                     fetch(`/grn/${currentEntryId}/unhide`, {
@@ -254,13 +265,32 @@
                             'X-CSRF-TOKEN': csrfToken,
                             'Content-Type': 'application/json',
                         },
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json(); // Assuming the backend returns JSON
                     }).then(() => {
                         alert("Entry marked as visible in the database.");
                         contextMenu.style.display = 'none';
+                    }).catch(error => {
+                        console.error('Fetch error:', error);
+                        alert("Failed to mark entry as visible. Please try again.");
                     });
                 }
             });
 
+            // Delete modal dynamic URL
+            const deleteModal = document.getElementById('deleteConfirmationModal');
+            const deleteForm = document.getElementById('deleteForm');
+
+            deleteModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const entryId = button.getAttribute('data-entry-id');
+                const deleteUrl = `/grn/${entryId}`;
+                deleteForm.action = deleteUrl;
+            });
+            
             // Unlock hidden columns
             const passwordField = document.getElementById('list_password');
             const totalGrnCells = document.querySelectorAll('.total-grn-column');
