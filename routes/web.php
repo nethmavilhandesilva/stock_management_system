@@ -11,6 +11,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CustomersLoanController;
 use App\Http\Controllers\EmailController;
+use App\Models\Sale;
 
 // New default route to redirect to login
 Route::get('/', function () {
@@ -95,4 +96,13 @@ Route::resource('customers-loans', CustomersLoanController::class);
 //Emails
 Route::post('/send-receipt-email', [EmailController::class, 'sendReceiptEmail'])->name('send.receipt.email');
 Route::post('/send-receipt-email', [EmailController::class, 'sendReceiptEmail'])->name('send.receipt.email');
+//customer code
+Route::get('/get-customer-code', function () {
+    // fetch the first record with Processed = 'N'
+    $sale = Sale::where('Processed', 'N')->first();
+
+    return response()->json([
+        'customer_code' => $sale ? $sale->customer_code : null,
+    ]);
+});
 require __DIR__.'/auth.php';

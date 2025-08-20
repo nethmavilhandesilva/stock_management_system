@@ -17,6 +17,7 @@ use App\Models\CustomersLoan;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\DayStartReport;
 use App\Mail\CombinedReportsMail;
+use App\Models\IncomeExpenses;
 
 class SalesEntryController extends Controller
 {
@@ -59,15 +60,15 @@ class SalesEntryController extends Controller
 
         $nextDay = $lastDayStartedDate ? $lastDayStartedDate->addDay() : Carbon::now();
         $codes = Sale::select('code')
-                ->distinct()
-                ->orderBy('code')
-                ->get();
-        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay','codes'));
+            ->distinct()
+            ->orderBy('code')
+            ->get();
+        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay', 'codes'));
     }
 
 
 
-   public function store(Request $request)
+    public function store(Request $request)
     {
         // Add grn_entry_code to validation
         $validated = $request->validate([
@@ -440,7 +441,7 @@ class SalesEntryController extends Controller
         return response()->json(['sales' => $sales]);
     }
 
- public function sendDailyCombinedReport()
+    public function sendDailyCombinedReport()
     {
         try {
             // Get the current day's start and end dates
@@ -460,7 +461,7 @@ class SalesEntryController extends Controller
             // Send the email with all the collected data
             // This is line 507, where the fix is applied.
             Mail::send(new CombinedReportsMail($dayStartReportData, $grnReportData, $salesReportData, $today));
-            
+
             return back()->with('success', 'Combined report email sent successfully!');
         } catch (\Exception $e) {
             Log::error('Failed to send combined report email: ' . $e->getMessage());
@@ -486,7 +487,7 @@ class SalesEntryController extends Controller
         // Initialize report data arrays
         $dayStartReportData = [];
         $grnReportData = [];
-        
+
         // --- Generate Day Start Report Data ---
         if ($sales->isNotEmpty()) {
             $groupedData = $sales->groupBy('item_name');
@@ -542,8 +543,89 @@ class SalesEntryController extends Controller
             ];
         }
 
-        // --- Send the Combined Email ---
-        Mail::send(new CombinedReportsMail($dayStartReportData, $grnReportData, $sales, $dayStartDate));
+        // --- Generate Weight-Based Report Data ---
+        $weightBasedReportData = Sale::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total')
+            ->groupBy('item_name', 'item_code')
+            ->orderBy('item_name', 'asc')
+            ->get();
+        $salesByBill = Sale::query()
+            ->whereNotNull('bill_no')
+            ->where('bill_no', '<>', '')
+            ->get()
+            ->groupBy('bill_no');
+        $salesadjustments = Salesadjustment::orderBy('created_at', 'desc')->get();
+
+        // --- Generate Financial Report Data ---
+        $financialRecords = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
+            ->whereDate('created_at', Carbon::today())
+            ->get();
+
+        $financialReportData = [];
+        $totalDr = 0;
+        $totalCr = 0;
+
+        foreach ($financialRecords as $record) {
+            $dr = null;
+            $cr = null;
+
+            $desc = $record->customer_short_name;
+            if (!empty($record->bill_no)) {
+                $desc .= " ({$record->bill_no})";
+            }
+            $desc .= " - {$record->description}";
+
+            if (in_array($record->loan_type, ['old', 'ingoing'])) {
+                $dr = $record->amount;
+                $totalDr += $record->amount;
+            } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
+                $cr = $record->amount;
+                $totalCr += $record->amount;
+            }
+
+            $financialReportData[] = [
+                'description' => $desc,
+                'dr' => $dr,
+                'cr' => $cr
+            ];
+        }
+
+        // Add Sales total to financial report
+        $salesTotal = Sale::sum('total');
+        $totalDr += $salesTotal;
+        $financialReportData[] = [
+            'description' => 'Sales Total',
+            'dr' => $salesTotal,
+            'cr' => null
+        ];
+
+        $profitTotal = Sale::sum('SellingKGTotal');
+        $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
+            ->value(DB::raw('SUM(wasted_weight * PerKGPrice)')) ?? 0;
+        $loanQuery = CustomersLoan::query();
+
+// Optional: you can filter by date if needed (e.g., dayStartDate)
+$loanQuery->whereDate('created_at', '<=', $dayStartDate);
+
+$loans = $loanQuery->orderBy('created_at', 'desc')->get();
+
+        // --- Send the Combined Email including Financial Report ---
+        Mail::send(new CombinedReportsMail(
+            $dayStartReportData,
+            $grnReportData,
+            $sales,
+            $dayStartDate,
+            $weightBasedReportData,
+            salesByBill: $salesByBill,
+            salesadjustments: $salesadjustments,
+            financialReportData: $financialReportData, // ✅ Pass financial data
+            financialTotalDr: $totalDr,
+            financialTotalCr: $totalCr,
+            financialProfit: $profitTotal,
+            financialDamages: $totalDamages,
+            profitTotal :  $profitTotal,
+            totalDamages:  $totalDamages,
+            loans: $loans // ✅ add this
+        ));
 
         // --- Archive Sales and Clear Table ---
         if ($sales->isNotEmpty()) {
@@ -562,13 +644,11 @@ class SalesEntryController extends Controller
                     'supplier_code' => $sale->supplier_code,
                     'bill_printed' => $sale->bill_printed,
                     'is_printed' => $sale->is_printed,
-                    'PerKGPrice'=> $sale->PerKGPrice,
-                    'PerKGTotal'=> $sale->PerKGTotal,
-                    'SellingKGTotal'=> $sale->SellingKGTotal,
+                    'PerKGPrice' => $sale->PerKGPrice,
+                    'PerKGTotal' => $sale->PerKGTotal,
+                    'SellingKGTotal' => $sale->SellingKGTotal,
                     'created_at' => $sale->created_at->format('Y-m-d H:i:s'),
                     'updated_at' => $sale->updated_at->format('Y-m-d H:i:s'),
-
-                    // 🔹 Process date saved into sales_history.Date column
                     'Date' => $dayStartDate->format('Y-m-d H:i:s'),
                 ];
             })->toArray();
@@ -592,6 +672,7 @@ class SalesEntryController extends Controller
         return redirect()->back();
     }
 }
+
 
     public function getLoanAmount(Request $request)
     {
@@ -627,40 +708,61 @@ class SalesEntryController extends Controller
         return view('dashboard', compact('codes'));
     }
 
-   public function showByCode($code)
-{
-    // Get all sales with that code
-    $sales = Sale::where('code', $code)->get();
+    public function showByCode($code)
+    {
+        // Get all sales with that code
+        $sales = Sale::where('code', $code)->get();
 
-    // Ensure at least one record exists
-    $firstRecord = $sales->first();
-    $itemCode = $firstRecord ? $firstRecord->item_code : null;
-    $supplierCode = $firstRecord ? $firstRecord->supplier_code : null;
+        // Ensure at least one record exists
+        $firstRecord = $sales->first();
+        $itemCode = $firstRecord ? $firstRecord->item_code : null;
+        $supplierCode = $firstRecord ? $firstRecord->supplier_code : null;
 
-    // Defaults
-    $packs_ratio_display = '0 / 0';
-    $weight_ratio_display = '0.00 / 0.00';
+        // Defaults
+        $packs_ratio_display = '0 / 0';
+        $weight_ratio_display = '0.00 / 0.00';
 
-    if ($firstRecord) {
-        // Sum GRN values based only on rn.code
-        $current_grn_packs = GrnEntry::where('code', $code)->sum('packs');
-        $original_packs_grn = GrnEntry::where('code', $code)->sum('original_packs');
-        $current_grn_weight = GrnEntry::where('code', $code)->sum('weight');
-        $original_weight_grn = GrnEntry::where('code', $code)->sum('original_weight');
+        if ($firstRecord) {
+            // Sum GRN values based only on rn.code
+            $current_grn_packs = GrnEntry::where('code', $code)->sum('packs');
+            $original_packs_grn = GrnEntry::where('code', $code)->sum('original_packs');
+            $current_grn_weight = GrnEntry::where('code', $code)->sum('weight');
+            $original_weight_grn = GrnEntry::where('code', $code)->sum('original_weight');
 
-        $packs_ratio_display = $current_grn_packs . ' / ' . $original_packs_grn;
-        $weight_ratio_display = number_format($current_grn_weight, 2) . ' / ' . number_format($original_weight_grn, 2);
+            $packs_ratio_display = $current_grn_packs . ' / ' . $original_packs_grn;
+            $weight_ratio_display = number_format($current_grn_weight, 2) . ' / ' . number_format($original_weight_grn, 2);
+        }
+
+        return view('dashboard.sales.by_code', compact(
+            'sales',
+            'code',
+            'supplierCode',
+            'itemCode',
+            'packs_ratio_display',
+            'weight_ratio_display'
+        ));
+    }
+    private function generateWeightBasedReport($grnCode = null, $startDate = null, $endDate = null)
+    {
+        if ($startDate && $endDate) {
+            $query = SalesHistory::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total')
+                ->whereBetween('Date', [
+                    Carbon::parse($startDate)->startOfDay(),
+                    Carbon::parse($endDate)->endOfDay()
+                ]);
+        } else {
+            $query = Sale::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total');
+        }
+
+        if (!empty($grnCode)) {
+            $query->where('code', $grnCode);
+        }
+
+        return $query->groupBy('item_name', 'item_code')
+            ->orderBy('item_name', 'asc')
+            ->get();
     }
 
-    return view('dashboard.sales.by_code', compact(
-        'sales',
-        'code',
-        'supplierCode',
-        'itemCode',
-        'packs_ratio_display',
-        'weight_ratio_display'
-    ));
-}
 
 
 
