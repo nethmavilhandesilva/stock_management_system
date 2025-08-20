@@ -47,8 +47,8 @@
       <div class="bg-light border rounded-3 p-3 my-4 summary-line-display d-flex flex-wrap align-items-center justify-content-between text-dark">
     <span class="me-3"><strong>GRN:</strong> {{ $code ?? 'N/A' }}</span>
     <span class="me-3"><strong>අයිතම කේතය:</strong> {{ $itemCode ?? 'N/A' }}</span>
-    <span class="me-3"><strong>මිලදීගැනීම:</strong> {{ $weight_ratio_display }}</span>
-    <span class="me-3"><strong>ඉතිරිය:</strong> {{ $packs_ratio_display }}</span>
+    <span class="me-3"><strong>බර:</strong> {{ $weight_ratio_display }}</span>
+    <span class="me-3"><strong>මලු:</strong> {{ $packs_ratio_display }}</span>
 </div>
 
 

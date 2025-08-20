@@ -145,12 +145,7 @@
                             මිල එක්කතුව
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal1"
-                            class="nav-link text-white px-2 py-1">
-                            විකුණුම්
-                        </a>
-                    </li>
+                    
                     <li class="nav-item">
                         <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9"
                             class="nav-link text-white px-2 py-1">
@@ -1027,7 +1022,34 @@
                                 <span id="mainTotalSalesValueBottom">{{ number_format($totalSum, 2) }}</span>
                             </h5>
                             <div id="itemSummary"></div>
-                            <button id="printButton">Print Receipt</button>
+                           <button id="printButton">Print Receipt</button>
+<button id="f5Button">Hold Receipt</button>
+
+<script>
+document.getElementById('f5Button').addEventListener('click', function (e) {
+    e.preventDefault(); // prevent any default behavior
+
+    if (confirm("Do you want to hold?")) {
+        // Create a KeyboardEvent simulating F5
+        const f5Event = new KeyboardEvent('keydown', {
+            key: 'F5',
+            code: 'F5',
+            keyCode: 116, // F5 key code
+            which: 116, // needed for some browsers
+            bubbles: true,
+            cancelable: true
+        });
+
+        // Dispatch the event on the document
+        document.dispatchEvent(f5Event);
+
+        console.log('F5 key simulated!');
+    } else {
+        console.log('Hold cancelled by user.');
+    }
+});
+</script>
+
 
                         </div>
                     </div>
@@ -1160,39 +1182,42 @@
         </script>
         <script>
             // These event listeners will only run when the buttons are clicked with a mouse
-            document.getElementById('f1Button').addEventListener('click', function () {
-                // Ask for confirmation
-                if (confirm("Do you want to print?")) {
-                    // Simulate the F1 key press
-                    const f1Event = new KeyboardEvent('keydown', {
-                        key: 'F1',
-                        code: 'F1',
-                        keyCode: 112, // F1 keyCode
-                        bubbles: true
-                    });
-                    document.dispatchEvent(f1Event);
-                    console.log('F1 key simulated!');
-                } else {
-                    console.log('Print cancelled by user.');
-                }
+          document.addEventListener('DOMContentLoaded', function() {
+    // These event listeners will only run when the buttons are clicked with a mouse
+    document.getElementById('f1Button').addEventListener('click', function () {
+        // Ask for confirmation
+        if (confirm("Do you want to print?")) {
+            // Simulate the F1 key press
+            const f1Event = new KeyboardEvent('keydown', {
+                key: 'F1',
+                code: 'F1',
+                keyCode: 112, // F1 keyCode
+                bubbles: true
             });
+            document.dispatchEvent(f1Event);
+            console.log('F1 key simulated!');
+        } else {
+            console.log('Print cancelled by user.');
+        }
+    });
 
-            document.getElementById('f5Button').addEventListener('click', function (e) {
-                e.preventDefault(); // stop form submission if inside a form
-                if (confirm("Do you want to hold?")) {
-                    // Simulate the F5 key press
-                    const f5Event = new KeyboardEvent('keydown', {
-                        key: 'F5',
-                        code: 'F5',
-                        keyCode: 116, // F5 keyCode
-                        bubbles: true
-                    });
-                    document.dispatchEvent(f5Event);
-                    console.log('F5 key simulated!');
-                } else {
-                    console.log('Hold cancelled by user.');
-                }
+    document.getElementById('f5Button').addEventListener('click', function (e) {
+        e.preventDefault(); // stop form submission if inside a form
+        if (confirm("Do you want to hold?")) {
+            // Simulate the F5 key press
+            const f5Event = new KeyboardEvent('keydown', {
+                key: 'F5',
+                code: 'F5',
+                keyCode: 116, // F5 keyCode
+                bubbles: true
             });
+            document.dispatchEvent(f5Event);
+            console.log('F5 key simulated!');
+        } else {
+            console.log('Hold cancelled by user.');
+        }
+    });
+});
 
         </script>
 
@@ -2232,7 +2257,7 @@
                     });
                 }
 
-                let globalLoanAmount = 0;
+              let globalLoanAmount = 0;
 
 // Reusable print function
 function printReceipt(html, customerName, callback) {
@@ -2371,6 +2396,12 @@ function handlePrint() {
             itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
         });
 
+        // Conditionally create the total amount row HTML for F1
+        let totalAmountRowHtmlF1 = '';
+        if (globalLoanAmount > 0) {
+            totalAmountRowHtmlF1 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
+        }
+        
         const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
             <div style="text-align:center;margin-bottom:5px;">
                 <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
@@ -2393,7 +2424,7 @@ function handlePrint() {
             <hr>
             <table style="width:100%;font-size:10px;border-collapse:collapse;">
                 <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td><td style="text-align:right;font-weight:bold;">${totalAmountSum.toFixed(2)}</td></tr>
-                <tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>
+                ${totalAmountRowHtmlF1}
             </table>
             <div>${itemSummaryHtml}</div>
             <hr>
@@ -2490,12 +2521,19 @@ document.addEventListener('keydown', e => {
             const date = new Date().toLocaleDateString();
             const time = new Date().toLocaleTimeString();
             const billNo = 'N/A';
+            
+            // Conditionally create the total amount row HTML for F5
+            let totalAmountRowHtmlF5 = '';
+            if (globalLoanAmount > 0) {
+                 totalAmountRowHtmlF5 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;">${(globalLoanAmount+totalAmountSum).toFixed(2)}</td></tr>`;
+            }
+
             const receiptHtml = `<div class="receipt-container" style="margin-left:-5px;">
                 <div style="text-align:center;margin-bottom:5px;"><h3>C11 TGK ට්‍රේඩර්ස්</h3><p>අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ  බෙදාහරින්නෝ</p><p>වි.ආ.ම. වේයන්ගොඩ</p></div>
                 <div><table><tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr><tr><td colspan="4">දුර : ${mobile}</td></tr><tr><td colspan="2">බිල් අංකය : ${billNo}</td><td colspan="2">${customerName}</td></tr></table></div><hr>
                 <table><tbody>${itemsHtml}</tbody></table><hr>
                 <table><tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)}</td><td style="text-align:right;">${totalAmountSum.toFixed(2)}</td></tr>
-                <tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;">${(globalLoanAmount+totalAmountSum).toFixed(2)}</td></tr></table>
+                ${totalAmountRowHtmlF5}</table>
                 <div>${itemSummaryHtml}</div></div>`;
             sendReceiptEmail(receiptHtml, customerName, customerEmail);
             saveReceiptToDDrive(receiptHtml, customerName, billNo);

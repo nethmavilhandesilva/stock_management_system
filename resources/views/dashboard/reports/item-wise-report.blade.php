@@ -66,6 +66,33 @@
     }
 </style>
 <style>
+    @media print {
+    /* Hide everything by default */
+    body * {
+        visibility: hidden;
+    }
+
+    /* Only show the card */
+    .custom-card, .custom-card * {
+        visibility: visible;
+    }
+
+    /* Position the card at the top-left of the page */
+    .custom-card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    /* Optional: hide print button in print */
+    .print-btn {
+        display: none !important;
+    }
+}
+
+</style>
+<style>
     @font-face {
         font-family: 'NotoSansSinhala';
         src: url('{{ public_path('fonts/NotoSansSinhala-Regular.ttf') }}') format('truetype');

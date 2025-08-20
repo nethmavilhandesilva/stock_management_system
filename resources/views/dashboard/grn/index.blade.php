@@ -137,8 +137,8 @@
                                 <td class="search-supplier-code d-none">{{ $entry->supplier_code }}</td>
                                 <td class="search-item-code d-none">{{ $entry->item_code }}</td>
                                 <td class="search-item-name">{{ $entry->item_name }}</td>
-                                <td>{{ $entry->packs }}</td>
-                                <td>{{ $entry->weight }}</td>
+                                <td>{{ $entry->original_packs }}</td>
+                                <td>{{ $entry->original_weight }}</td>
                                 <td>{{ $entry->txn_date }}</td>
                                 <td>{{ $entry->grn_no }}</td>
                                 <td class="total-grn-column">{{ $entry->total_grn }}</td>

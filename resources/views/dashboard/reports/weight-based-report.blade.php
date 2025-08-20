@@ -34,6 +34,33 @@
         padding: 4px 8px;
     }
 </style>
+<style>
+    @media print {
+    /* Hide everything by default */
+    body * {
+        visibility: hidden;
+    }
+
+    /* Only show the card */
+    .custom-card, .custom-card * {
+        visibility: visible;
+    }
+
+    /* Position the card at the top-left of the page */
+    .custom-card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    /* Optional: hide print button in print */
+    .print-btn {
+        display: none !important;
+    }
+}
+
+</style>
 
 <div class="container mt-4">
     <div class="card shadow border-0 rounded-3 p-4 custom-card">
