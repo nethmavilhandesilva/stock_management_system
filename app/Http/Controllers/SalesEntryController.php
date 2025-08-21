@@ -69,22 +69,22 @@ class SalesEntryController extends Controller
         return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay', 'codes'));
     }
 
-
-
-    public function store(Request $request)
+ public function store(Request $request)
     {
         // Add grn_entry_code to validation
         $validated = $request->validate([
             'supplier_code' => 'required',
             'customer_code' => 'required|string|max:255',
             'customer_name' => 'nullable',
-            'code' => 'required', // This is the GRN Code (e.g., ALA-SANJ-701)
+            // This 'code' is the GRN Code from the form, which might be a single value.
+            // We will use the GRN code from the fetched entry instead.
+            'code' => 'required', 
             'item_code' => 'required',
             'item_name' => 'required',
-            'weight' => 'required|numeric|min:0.01', // Ensure weight is positive for sale
+            'weight' => 'required|numeric|min:0.01',
             'price_per_kg' => 'required|numeric',
             'total' => 'required|numeric',
-            'packs' => 'required|integer|min:1', // Changed min:0 to min:1 if selling at least one pack
+            'packs' => 'required|integer|min:1',
             'grn_entry_code' => 'required|string|exists:grn_entries,code',
             'original_weight' => 'nullable',
             'original_packs' => 'nullable',
@@ -125,13 +125,16 @@ class SalesEntryController extends Controller
             // Calculate the new SellingKGTotal as the difference between the final sale price ($validated['total']) and the cost price ($perKgTotal).
             // This effectively calculates the profit or loss for the sale.
             $sellingKGTotal = $validated['total'] - $perKgTotal;
+
+            // Use the code from the fetched GRN entry, NOT the validated request data.
+            $saleCode = $grnEntry->code;
             // --- ADJUSTMENT END ---
 
             Sale::create([
                 'supplier_code' => $validated['supplier_code'],
                 'customer_code' => $validated['customer_code'],
                 'customer_name' => $validated['customer_name'],
-                'code' => $validated['code'],
+                'code' => $saleCode, // Use the GRN entry's code here
                 'item_code' => $validated['item_code'],
                 'item_name' => $validated['item_name'],
                 'weight' => $validated['weight'],
@@ -162,6 +165,7 @@ class SalesEntryController extends Controller
                 ->withInput($request->all());
         }
     }
+
     public function markAllAsProcessed(Request $request)
     {
         try {

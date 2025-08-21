@@ -497,7 +497,7 @@
         /* Header row styling */
         .grn-header-row {
             display: grid;
-            grid-template-columns: 120px 90px 90px 90px 90px 90px 140px;
+            grid-template-columns: 120px 10px 90px 90px 90px 120px 120px;
             gap: 2px;
             /* smaller gap for tighter layout */
             background-color: #fff !important;
@@ -531,8 +531,19 @@
             align-items: center;
             border-bottom: 1px solid #ddd;
         }
-
-
+        .grn-option-row > :nth-child(5) {
+    margin-left: 30px; /* push it slightly to the right */
+}
+ .grn-option-row > :nth-child(4) {
+    margin-left: 40px; /* push it slightly to the right */
+}
+ .grn-option-row > :nth-child(3) {
+    margin-left: 50px; /* push it slightly to the right */
+}
+ .grn-option-row > :nth-child(2) {
+    margin-left: 50px; /* push it slightly to the right */
+}
+        
         /* Make sure Code column text does not wrap and stays in one line */
         .grn-code {
             white-space: nowrap;

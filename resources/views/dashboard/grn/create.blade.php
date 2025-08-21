@@ -66,18 +66,21 @@
     <label for="supplier_name" class="form-label">සැපයුම්කරු <span class="text-danger">*</span></label>
     <input list="suppliers_list" id="supplier_name" name="supplier_name"
            class="form-control @error('supplier_name') is-invalid @enderror" required
-           value="{{ old('supplier_name') }}">
-    
+           value="{{ old('supplier_name') }}"
+           style="text-transform: uppercase;"
+           oninput="this.value = this.value.toUpperCase();">
+
     <datalist id="suppliers_list">
         @foreach($suppliers as $supplier)
-            <option value="{{ $supplier->name }}" data-code="{{ $supplier->code }}">
+            <option value="{{ $supplier->code }}" data-code="{{ $supplier->code }}">
         @endforeach
     </datalist>
-    
+
     @error('supplier_name')
         <div class="invalid-feedback">{{ $message }}</div>
     @enderror
 </div>
+
 
 {{-- This hidden input field will store the supplier's code from the datalist --}}
 <input type="hidden" id="supplier_code_input" name="supplier_code">
