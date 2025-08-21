@@ -12,6 +12,9 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CustomersLoanController;
 use App\Http\Controllers\EmailController;
 use App\Models\Sale;
+use App\Models\SalesHistory;
+use App\Http\Controllers\BillController;
+
 
 // New default route to redirect to login
 Route::get('/', function () {
@@ -105,4 +108,5 @@ Route::get('/get-customer-code', function () {
         'customer_code' => $sale ? $sale->customer_code : null,
     ]);
 });
+Route::get('/api/next-bill-no', [BillController::class, 'getNextBillNo']);
 require __DIR__.'/auth.php';

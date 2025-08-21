@@ -2268,12 +2268,13 @@
                     });
                 }
 
-                let globalLoanAmount = 0;
+              let globalLoanAmount = 0;
 
-                // Reusable print function
-                function printReceipt(html, customerName, callback) {
-                    const printWindow = window.open('', '_blank');
-                    printWindow.document.write(`
+// Reusable print function
+function printReceipt(html, customerName) {
+    return new Promise((resolve) => {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
             <!DOCTYPE html>
             <html>
             <head>
@@ -2284,282 +2285,308 @@
             </body>
             </html>
         `);
-                    printWindow.document.close();
-                    printWindow.focus();
-                    printWindow.print();
-                    printWindow.close();
-                    if (callback && typeof callback === 'function') callback();
-                }
+        printWindow.document.close();
+        printWindow.focus();
 
-                // Function to send receipt email
-                function sendReceiptEmail(html, customerName, customerEmail) {
-                    fetch('{{ route('send.receipt.email') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ receipt_html: html, customer_name: customerName, email: customerEmail })
-                    })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) console.log('Email sent:', data.message);
-                            else console.error('Email failed:', data.message);
-                        })
-                        .catch(err => console.error('Email error:', err));
-                }
+        // Trigger print
+        printWindow.print();
 
-                // Function to save receipt to D:\Receipts
-                function saveReceiptToDDrive(html, customerName, billNo) {
-                    fetch('{{ route("save.receipt.file") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ receipt_html: html, customer_name: customerName, bill_no: billNo })
-                    })
-                        .then(res => res.json())
-                        .then(data => console.log('Receipt saved:', data))
-                        .catch(err => console.error('Save error:', err));
-                }
+        // Wait a bit before closing
+        setTimeout(() => {
+            printWindow.close();
+            resolve(); // Resolve promise after window closes
+        }, 500); // adjust delay if needed
+    });
+}
 
-                // Core F1 print function
-                function handlePrint() {
-                    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-                    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
-                        alert('No sales records to print!');
-                        return;
-                    }
+// Function to send receipt email
+function sendReceiptEmail(html, customerName, customerEmail) {
+    return fetch('{{ route('send.receipt.email') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ receipt_html: html, customer_name: customerName, email: customerEmail })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) console.log('Email sent:', data.message);
+        else console.error('Email failed:', data.message);
+    })
+    .catch(err => console.error('Email error:', err));
+}
 
-                    const salesData = [];
-                    tableRows.forEach(row => {
-                        if (row.hasAttribute('data-sale-id')) {
-                            const cells = row.querySelectorAll('td');
-                            salesData.push({
-                                id: row.getAttribute('data-sale-id'),
-                                customer_code: row.getAttribute('data-customer-code'),
-                                customer_name: row.getAttribute('data-customer-name'),
-                                mobile: row.getAttribute('data-customer-mobile') || '',
-                                email: "nethmavilhan2005@gmail.com",
-                                code: cells[0]?.textContent.trim() || '',
-                                item_code: cells[1]?.textContent.trim() || '',
-                                item_name: cells[1]?.textContent.trim() || '',
-                                weight: parseFloat(cells[2]?.textContent) || 0,
-                                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                                total: parseFloat(cells[4]?.textContent) || 0,
-                                packs: parseInt(cells[5]?.textContent) || 0
-                            });
-                        }
-                    });
+// Function to save receipt to D:\Receipts
+function saveReceiptToDDrive(html, customerName, billNo) {
+    return fetch('{{ route("save.receipt.file") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ receipt_html: html, customer_name: customerName, bill_no: billNo })
+    })
+    .then(res => res.json())
+    .then(data => console.log('Receipt saved:', data))
+    .catch(err => console.error('Save error:', err));
+}
 
-                    if (!salesData.length) {
-                        alert('No printable sales records found!');
-                        return;
-                    }
+// Step 5: Fetch next bill number from backend
+async function getNextBillNo() {
+    try {
+        const response = await fetch('/api/next-bill-no', {
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        });
+        const data = await response.json();
+        return data.bill_no; // next bill number
+    } catch (error) {
+        console.error('Failed to fetch next bill number:', error);
+        return 'N/A'; // fallback
+    }
+}
 
-                    const salesKey = salesData.map(sale => sale.id).sort().join('_');
-                    let billNo = localStorage.getItem('billNo_' + salesKey);
+// Core F1 print function
+async function handlePrint() {
+    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+        alert('No sales records to print!');
+        return;
+    }
 
-                    if (!billNo) {
-                        let lastBillNo = parseInt(localStorage.getItem('lastBillNo')) || 1000;
-                        lastBillNo++;
-                        localStorage.setItem('lastBillNo', lastBillNo);
-                        billNo = lastBillNo.toString();
-                        localStorage.setItem('billNo_' + salesKey, billNo);
-                    }
+    const salesData = [];
+    tableRows.forEach(row => {
+        if (row.hasAttribute('data-sale-id')) {
+            const cells = row.querySelectorAll('td');
+            salesData.push({
+                id: row.getAttribute('data-sale-id'),
+                customer_code: row.getAttribute('data-customer-code'),
+                customer_name: row.getAttribute('data-customer-name'),
+                mobile: row.getAttribute('data-customer-mobile') || '',
+                email: "nethmavilhan2005@gmail.com",
+                code: cells[0]?.textContent.trim() || '',
+                item_code: cells[1]?.textContent.trim() || '',
+                item_name: cells[1]?.textContent.trim() || '',
+                weight: parseFloat(cells[2]?.textContent) || 0,
+                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
+                total: parseFloat(cells[4]?.textContent) || 0,
+                packs: parseInt(cells[5]?.textContent) || 0
+            });
+        }
+    });
 
-                    const salesByCustomer = salesData.reduce((acc, sale) => { (acc[sale.customer_code] ||= []).push(sale); return acc; }, {});
-                    const customerCode = Object.keys(salesByCustomer)[0];
-                    const customerSales = salesByCustomer[customerCode];
-                    const customerName = customerSales[0].customer_code || 'N/A';
-                    const mobile = customerSales[0]?.mobile || '-';
-                    const customerEmail = "nethmavilhan2005@gmail.com";
-                    const salesIds = customerSales.map(s => s.id);
+    if (!salesData.length) {
+        alert('No printable sales records found!');
+        return;
+    }
 
-                    // Fetch loan amount
-                    fetch('{{ route('get.loan.amount') }}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                        body: JSON.stringify({ customer_short_name: customerCode })
-                    })
-                        .then(res => res.json())
-                        .then(data => {
-                            globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
-                            const date = new Date().toLocaleDateString();
-                            const time = new Date().toLocaleTimeString();
-                            let totalAmountSum = 0;
-                            const itemGroups = {};
+    // Group sales by customer
+    const salesByCustomer = salesData.reduce((acc, sale) => { 
+        (acc[sale.customer_code] ||= []).push(sale); 
+        return acc; 
+    }, {});
+    
+    const customerCode = Object.keys(salesByCustomer)[0];
+    const customerSales = salesByCustomer[customerCode];
+    const customerName = customerSales[0].customer_code || 'N/A';
+    const mobile = customerSales[0]?.mobile || '-';
+    const customerEmail = customerSales[0]?.email || "nethmavilhan2005@gmail.com";
+    const salesIds = customerSales.map(s => s.id);
 
-                            const itemsHtml = customerSales.map(sale => {
-                                totalAmountSum += sale.total;
-                                const itemName = sale.item_name || '';
-                                const weight = parseFloat(sale.weight) || 0;
-                                const packs = parseInt(sale.packs) || 0;
-                                if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-                                itemGroups[itemName].totalWeight += weight;
-                                itemGroups[itemName].totalPacks += packs;
-                                return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
-                            }).join('');
+    // Step 5: Get next bill number
+    const billNo = await getNextBillNo();
+    console.log("Next bill number:", billNo);
 
-                            let itemSummaryHtml = '';
-                            Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
-                                itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
-                            });
+    // Fetch loan amount
+    fetch('{{ route('get.loan.amount') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ customer_short_name: customerCode })
+    })
+    .then(res => res.json())
+    .then(async data => {
+        globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
+        const date = new Date().toLocaleDateString();
+        const time = new Date().toLocaleTimeString();
+        let totalAmountSum = 0;
+        const itemGroups = {};
 
-                            // Conditionally create the total amount row HTML for F1
-                            let totalAmountRowHtmlF1 = '';
-                            if (globalLoanAmount > 0) {
-                                totalAmountRowHtmlF1 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
-                            }
+        const itemsHtml = customerSales.map(sale => {
+            totalAmountSum += sale.total;
+            const itemName = sale.item_name || '';
+            const weight = parseFloat(sale.weight) || 0;
+            const packs = parseInt(sale.packs) || 0;
+            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+            itemGroups[itemName].totalWeight += weight;
+            itemGroups[itemName].totalPacks += packs;
+            return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
+        }).join('');
 
-                            const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
-                <div style="text-align:center;margin-bottom:5px;">
-                    <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
-                    <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
-                    <p style="margin:0;font-size:0.8em;">වි.ආ.ම. වේයන්ගොඩ</p>
-                </div>
-                <div style="text-align:left;margin-bottom:5px;">
-                    <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                        <tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr>
-                        <tr><td colspan="4">දුර : ${mobile}</td></tr>
-                        <tr><td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td><td colspan="2" style="text-align:right;"><strong>${customerName.toUpperCase()}</strong></td>
-    </tr>
-                    </table>
-                </div>
-                <hr>
+        let itemSummaryHtml = '';
+        Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
+            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
+        });
+
+        let totalAmountRowHtmlF1 = '';
+        if (globalLoanAmount > 0) {
+            totalAmountRowHtmlF1 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
+        }
+
+        const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
+            <div style="text-align:center;margin-bottom:5px;">
+                <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
+                <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
+                <p style="margin:0;font-size:0.8em;">වි.ආ.ම. වේයන්ගොඩ</p>
+            </div>
+            <div style="text-align:left;margin-bottom:5px;">
                 <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                    <thead><tr><th>වර්ගය<br>මලු</th><th>කිලෝ</th><th>මිල</th><th>අගය</th></tr></thead>
-                    <tbody><tr><td colspan="4"><hr style="height:1px;background-color:#000;"></td></tr>${itemsHtml}</tbody>
+                    <tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr>
+                    <tr><td colspan="4">දුර : ${mobile}</td></tr>
+                    <tr><td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td><td colspan="2" style="text-align:right;"><strong>${customerName.toUpperCase()}</strong></td></tr>
                 </table>
-                <hr>
-                <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                    <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td><td style="text-align:right;font-weight:bold;">${totalAmountSum.toFixed(2)}</td></tr>
-                    ${totalAmountRowHtmlF1}
-                </table>
-                <div>${itemSummaryHtml}</div>
-                <hr>
-                <div style="text-align:center;margin-top:10px;">
-                    <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                    <p>නැවත භාර ගනු නොලැබේ</p>
-                </div>
-            </div>`;
+            </div>
+            <hr>
+            <table style="width:100%;font-size:10px;border-collapse:collapse;">
+                <thead><tr><th>වර්ගය<br>මලු</th><th>කිලෝ</th><th>මිල</th><th>අගය</th></tr></thead>
+                <tbody><tr><td colspan="4"><hr style="height:1px;background-color:#000;"></td></tr>${itemsHtml}</tbody>
+            </table>
+            <hr>
+            <table style="width:100%;font-size:10px;border-collapse:collapse;">
+                <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td><td style="text-align:right;font-weight:bold;">${totalAmountSum.toFixed(2)}</td></tr>
+                ${totalAmountRowHtmlF1}
+            </table>
+            <div>${itemSummaryHtml}</div>
+            <hr>
+            <div style="text-align:center;margin-top:10px;">
+                <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+                <p>නැවත භාර ගනු නොලැබේ</p>
+            </div>
+        </div>`;
 
-                            // F1: Print + Email + Save
-                            sendReceiptEmail(receiptHtml, customerName, customerEmail);
-                            saveReceiptToDDrive(receiptHtml, customerName, billNo);
-                            printReceipt(receiptHtml, customerName, () => {
-                                fetch("{{ route('sales.markAsPrinted') }}", {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                                    body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
-                                })
-                                    .then(res => res.json())
-                                    .then(data => {
-                                        console.log("Marked printed:", data);
-                                        sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                        window.location.reload();
-                                    })
-                                    .catch(err => console.error('Mark printed error:', err));
-                            });
+        // Step 6: Save bill number to sales table and mark as printed
+        await fetch("{{ route('sales.markAsPrinted') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            body: JSON.stringify({ sales_ids: salesIds, bill_no: billNo })
+        });
 
-                        }).catch(err => console.error('Loan fetch failed:', err));
-                }
+        // Wait for print, email, save to finish, then reload
+        await Promise.all([
+            sendReceiptEmail(receiptHtml, customerName, customerEmail),
+           
+            printReceipt(receiptHtml, customerName)
+        ]);
+        
+        // This will reload the page after all asynchronous operations are complete
+        window.location.reload(); 
 
-                // Keyboard events for F1 & F5
-                document.addEventListener('keydown', e => {
-                    if (e.key === "F1") { e.preventDefault(); handlePrint(); }
-                    else if (e.key === "F5") {
-                        e.preventDefault();
-                        const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-                        if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) return;
+    }).catch(err => console.error('Loan fetch failed:', err));
+}
 
-                        const salesData = [];
-                        tableRows.forEach(row => {
-                            if (row.hasAttribute('data-sale-id')) {
-                                const cells = row.querySelectorAll('td');
-                                salesData.push({
-                                    id: row.getAttribute('data-sale-id'),
-                                    customer_code: row.getAttribute('data-customer-code'),
-                                    customer_name: row.getAttribute('data-customer-name'),
-                                    mobile: row.getAttribute('data-customer-mobile') || '',
-                                    email: "nethmavilhan2005@gmail.com",
-                                    item_name: cells[1]?.textContent.trim() || '',
-                                    weight: parseFloat(cells[2]?.textContent) || 0,
-                                    price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                                    total: parseFloat(cells[4]?.textContent) || 0,
-                                    packs: parseInt(cells[5]?.textContent) || 0
-                                });
-                            }
-                        });
+// F5 function (no print, just email/save)
+async function handleF5() {
+    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) return;
 
-                        if (!salesData.length) return;
-                        const salesByCustomer = salesData.reduce((acc, sale) => { (acc[sale.customer_code] ||= []).push(sale); return acc; }, {});
-                        const customerCode = Object.keys(salesByCustomer)[0];
-                        const customerSales = salesByCustomer[customerCode];
-                        const customerName = customerSales[0].customer_code || 'N/A';
-                        const mobile = customerSales[0]?.mobile || '-';
-                        const customerEmail = "nethmavilhan2005@gmail.com";
-                        const salesIds = customerSales.map(s => s.id);
-                        let totalAmountSum = 0;
-                        const itemGroups = {};
+    const salesData = [];
+    tableRows.forEach(row => {
+        if (row.hasAttribute('data-sale-id')) {
+            const cells = row.querySelectorAll('td');
+            salesData.push({
+                id: row.getAttribute('data-sale-id'),
+                customer_code: row.getAttribute('data-customer-code'),
+                customer_name: row.getAttribute('data-customer-name'),
+                mobile: row.getAttribute('data-customer-mobile') || '',
+                email: "nethmavilhan2005@gmail.com",
+                item_name: cells[1]?.textContent.trim() || '',
+                weight: parseFloat(cells[2]?.textContent) || 0,
+                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
+                total: parseFloat(cells[4]?.textContent) || 0,
+                packs: parseInt(cells[5]?.textContent) || 0
+            });
+        }
+    });
 
-                        const itemsHtml = customerSales.map(sale => {
-                            totalAmountSum += sale.total;
-                            const itemName = sale.item_name || '';
-                            const weight = parseFloat(sale.weight) || 0;
-                            const packs = parseInt(sale.packs) || 0;
-                            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-                            itemGroups[itemName].totalWeight += weight;
-                            itemGroups[itemName].totalPacks += packs;
-                            return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
-                        }).join('');
+    if (!salesData.length) return;
+    const salesByCustomer = salesData.reduce((acc, sale) => { (acc[sale.customer_code] ||= []).push(sale); return acc; }, {});
+    const customerCode = Object.keys(salesByCustomer)[0];
+    const customerSales = salesByCustomer[customerCode];
+    const customerName = customerSales[0].customer_code || 'N/A';
+    const mobile = customerSales[0]?.mobile || '-';
+    const customerEmail = customerSales[0]?.email || "nethmavilhan2005@gmail.com";
+    const salesIds = customerSales.map(s => s.id);
+    let totalAmountSum = 0;
+    const itemGroups = {};
 
-                        let itemSummaryHtml = '';
-                        Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
-                            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
-                        });
+    const itemsHtml = customerSales.map(sale => {
+        totalAmountSum += sale.total;
+        const itemName = sale.item_name || '';
+        const weight = parseFloat(sale.weight) || 0;
+        const packs = parseInt(sale.packs) || 0;
+        if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+        itemGroups[itemName].totalWeight += weight;
+        itemGroups[itemName].totalPacks += packs;
+        return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
+    }).join('');
 
-                        // F5: Email + Save (no print, BillNo=N/A)
-                        fetch('{{ route('get.loan.amount') }}', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                            body: JSON.stringify({ customer_short_name: customerCode })
-                        })
-                            .then(res => res.json())
-                            .then(data => {
-                                globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
-                                const date = new Date().toLocaleDateString();
-                                const time = new Date().toLocaleTimeString();
-                                const billNo = 'N/A';
+    let itemSummaryHtml = '';
+    Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
+        itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
+    });
 
-                                // Conditionally create the total amount row HTML for F5
-                                let totalAmountRowHtmlF5 = '';
-                                if (globalLoanAmount > 0) {
-                                    totalAmountRowHtmlF5 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
-                                }
+    const billNo = 'N/A'; // F5 should not generate a bill number
 
-                                const receiptHtml = `<div class="receipt-container" style="margin-left:-5px;">
-                    <div style="text-align:center;margin-bottom:5px;"><h3>C11 TGK ට්‍රේඩර්ස්</h3><p>අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ  බෙදාහරින්නෝ</p><p>වි.ආ.ම. වේයන්ගොඩ</p></div>
-                    <div><table><tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr><tr><td colspan="4">දුර : ${mobile}</td></tr><tr><td colspan="2">බිල් අංකය : ${billNo}</td><td colspan="2">${customerName}</td></tr></table></div><hr>
-                    <table><tbody>${itemsHtml}</tbody></table><hr>
-                    <table><tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)}</td><td style="text-align:right;">${totalAmountSum.toFixed(2)}</td></tr>
-                    ${totalAmountRowHtmlF5}</table>
-                    <div>${itemSummaryHtml}</div></div>`;
-                                sendReceiptEmail(receiptHtml, customerName, customerEmail);
-                                saveReceiptToDDrive(receiptHtml, customerName, billNo);
+    // F5: Email + Save (no print, BillNo=N/A)
+    fetch('{{ route('get.loan.amount') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ customer_short_name: customerCode })
+    })
+    .then(res => res.json())
+    .then(data => {
+        globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
+        const date = new Date().toLocaleDateString();
+        const time = new Date().toLocaleTimeString();
 
-                                fetch('{{ route('sales.markAllAsProcessed') }}', {
-                                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                                }).then(res => res.json()).then(data => { console.log('F5 processed:', data); window.location.reload(); });
-                            }).catch(err => console.error('F5 error:', err));
-                    }
-                });
+        let totalAmountRowHtmlF5 = '';
+        if (globalLoanAmount > 0) {
+            totalAmountRowHtmlF5 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
+        }
 
-                // Optional print button
-                document.getElementById('printButton').addEventListener('click', function () {
-                    if (confirm("Do you want to print?")) handlePrint();
-                });
+        const receiptHtml = `<div class="receipt-container" style="margin-left:-5px;">
+            <div style="text-align:center;margin-bottom:5px;"><h3>C11 TGK ට්‍රේඩර්ස්</h3><p>අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ  බෙදාහරින්නෝ</p><p>වි.ආ.ම. වේයන්ගොඩ</p></div>
+            <div><table><tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr><tr><td colspan="4">දුර : ${mobile}</td></tr><tr><td colspan="2">බිල් අංකය : ${billNo}</td><td colspan="2">${customerName}</td></tr></table></div><hr>
+            <table><tbody>${itemsHtml}</tbody></table><hr>
+            <table><tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)}</td><td style="text-align:right;">${totalAmountSum.toFixed(2)}</td></tr>
+            ${totalAmountRowHtmlF5}</table>
+            <div>${itemSummaryHtml}</div></div>`;
+        
+        sendReceiptEmail(receiptHtml, customerName, customerEmail);
+       
+
+        fetch('{{ route('sales.markAllAsProcessed') }}', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        }).then(res => res.json()).then(data => { console.log('F5 processed:', data); window.location.reload(); });
+    }).catch(err => console.error('F5 error:', err));
+}
+
+// Keyboard events for F1 & F5
+document.addEventListener('keydown', e => {
+    if (e.key === "F1") { e.preventDefault(); handlePrint(); }
+    else if (e.key === "F5") {
+        e.preventDefault();
+        handleF5();
+    }
+});
+
+// Optional print button
+document.getElementById('printButton').addEventListener('click', function () {
+    if (confirm("Do you want to print?")) handlePrint();
+});
+
+
 
                 function printReceipt(salesContent, customerName, onCompleteCallback) {
                     const printWindow = window.open('', '', 'width=300,height=600');

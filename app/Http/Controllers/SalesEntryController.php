@@ -69,102 +69,99 @@ class SalesEntryController extends Controller
         return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay', 'codes'));
     }
 
- public function store(Request $request)
-    {
-        // Add grn_entry_code to validation
-        $validated = $request->validate([
-            'supplier_code' => 'required',
-            'customer_code' => 'required|string|max:255',
-            'customer_name' => 'nullable',
-            // This 'code' is the GRN Code from the form, which might be a single value.
-            // We will use the GRN code from the fetched entry instead.
-            'code' => 'required', 
-            'item_code' => 'required',
-            'item_name' => 'required',
-            'weight' => 'required|numeric|min:0.01',
-            'price_per_kg' => 'required|numeric',
-            'total' => 'required|numeric',
-            'packs' => 'required|integer|min:1',
-            'grn_entry_code' => 'required|string|exists:grn_entries,code',
-            'original_weight' => 'nullable',
-            'original_packs' => 'nullable',
+public function store(Request $request)
+{
+    // Add grn_entry_code to validation
+    $validated = $request->validate([
+        'supplier_code' => 'required',
+        'customer_code' => 'required|string|max:255',
+        'customer_name' => 'nullable',
+        'code' => 'required', 
+        'item_code' => 'required',
+        'item_name' => 'required',
+        'weight' => 'required|numeric|min:0.01',
+        'price_per_kg' => 'required|numeric',
+        'total' => 'required|numeric',
+        'packs' => 'required|integer|min:1',
+        'grn_entry_code' => 'required|string|exists:grn_entries,code',
+        'original_weight' => 'nullable',
+        'original_packs' => 'nullable',
+    ]);
+
+    try {
+        DB::beginTransaction(); // Start a database transaction
+
+        // 1. Find the original GRN record using the grn_entry_code
+        $grnEntry = GrnEntry::where('code', $validated['grn_entry_code'])->first();
+
+        if (!$grnEntry) {
+            throw new \Exception('Selected GRN entry not found for update.');
+        }
+
+        // 2. Get the PerKGPrice from the GRN entry and calculate PerKGTotal (the cost)
+        $perKgPrice = $grnEntry->PerKGPrice;
+        $perKgTotal = $perKgPrice * $validated['weight'];
+
+        // 3. Calculate the new weight and packs for the GRN entry
+        $weightToDeduct = $validated['weight'];
+        $packsToDeduct = $validated['packs'];
+
+        // Deduct from GRN entry
+        $grnEntry->weight = max(0, $grnEntry->weight - $weightToDeduct);
+        $grnEntry->packs = max(0, $grnEntry->packs - $packsToDeduct);
+
+        // 4. Update the GRN record in the database
+        $grnEntry->save();
+
+        // 5. Generate the bill number
+        $lastBillNoSale = Sale::max('bill_no');
+        $lastBillNoHistory = SalesHistory::max('bill_no');
+        $lastBillNo = max($lastBillNoSale ?? 0, $lastBillNoHistory ?? 0);
+        $newBillNo = $lastBillNo ? $lastBillNo + 1 : 1000;
+
+        // 6. Create the Sale record
+        $loggedInUserId = auth()->user()->user_id;
+        $uniqueCode = $validated['customer_code'] . '-' . $loggedInUserId;
+        $sellingKGTotal = $validated['total'] - $perKgTotal;
+        $saleCode = $grnEntry->code;
+
+        Sale::create([
+            'supplier_code' => $validated['supplier_code'],
+            'customer_code' => $validated['customer_code'],
+            'customer_name' => $validated['customer_name'],
+            'code' => $saleCode,
+            'item_code' => $validated['item_code'],
+            'item_name' => $validated['item_name'],
+            'weight' => $validated['weight'],
+            'price_per_kg' => $validated['price_per_kg'],
+            'total' => $validated['total'],
+            'packs' => $validated['packs'],
+            'original_weight' => $validated['original_weight'],
+            'original_packs' => $validated['original_packs'],
+            'Processed' => 'N',
+            'FirstTimeBillPrintedOn' => null,
+            'BillChangedOn' => null,
+            'CustomerBillEnteredOn' => now(),
+            'UniqueCode' => $uniqueCode,
+            'PerKGPrice' => $perKgPrice,
+            'PerKGTotal' => $perKgTotal,
+            'SellingKGTotal' => $sellingKGTotal,
+            'bill_no' => $newBillNo, // <-- Added bill number
         ]);
 
-        try {
-            DB::beginTransaction(); // Start a database transaction
+        DB::commit(); // Commit the transaction
 
-            // 1. Find the original GRN record using the grn_entry_code
-            $grnEntry = GrnEntry::where('code', $validated['grn_entry_code'])->first();
+        return redirect()->back()->withInput($request->only(['customer_code', 'customer_name']));
 
-            if (!$grnEntry) {
-                throw new \Exception('Selected GRN entry not found for update.');
-            }
-
-            // 2. Get the PerKGPrice from the GRN entry and calculate PerKGTotal (the cost)
-            $perKgPrice = $grnEntry->PerKGPrice;
-            $perKgTotal = $perKgPrice * $validated['weight'];
-
-            // 3. Calculate the new weight and packs for the GRN entry
-            $weightToDeduct = $validated['weight'];
-            $packsToDeduct = $validated['packs'];
-
-            // Deduct from GRN entry
-            $grnEntry->weight = max(0, $grnEntry->weight - $weightToDeduct);
-            $grnEntry->packs = max(0, $grnEntry->packs - $packsToDeduct);
-
-            // 4. Update the GRN record in the database
-            $grnEntry->save();
-
-            // 5. Create the Sale record
-            $loggedInUserId = auth()->user()->user_id;
-
-            // Create UniqueCode as: customer_code-user_id
-            $uniqueCode = $validated['customer_code'] . '-' . $loggedInUserId;
-
-            // --- ADJUSTMENT START ---
-            // Calculate the new SellingKGTotal as the difference between the final sale price ($validated['total']) and the cost price ($perKgTotal).
-            // This effectively calculates the profit or loss for the sale.
-            $sellingKGTotal = $validated['total'] - $perKgTotal;
-
-            // Use the code from the fetched GRN entry, NOT the validated request data.
-            $saleCode = $grnEntry->code;
-            // --- ADJUSTMENT END ---
-
-            Sale::create([
-                'supplier_code' => $validated['supplier_code'],
-                'customer_code' => $validated['customer_code'],
-                'customer_name' => $validated['customer_name'],
-                'code' => $saleCode, // Use the GRN entry's code here
-                'item_code' => $validated['item_code'],
-                'item_name' => $validated['item_name'],
-                'weight' => $validated['weight'],
-                'price_per_kg' => $validated['price_per_kg'],
-                'total' => $validated['total'],
-                'packs' => $validated['packs'],
-                'original_weight' => $validated['original_weight'],
-                'original_packs' => $validated['original_packs'],
-                'Processed' => 'N',
-                'FirstTimeBillPrintedOn' => null,
-                'BillChangedOn' => null,
-                'CustomerBillEnteredOn' => now(),
-                'UniqueCode' => $uniqueCode,
-                'PerKGPrice' => $perKgPrice, // Store the fetched PerKGPrice
-                'PerKGTotal' => $perKgTotal, // Store the calculated PerKGTotal
-                'SellingKGTotal' => $sellingKGTotal, // Store the newly calculated profit/loss
-            ]);
-
-            DB::commit(); // Commit the transaction
-
-            return redirect()->back()->withInput($request->only(['customer_code', 'customer_name']));
-
-        } catch (\Exception | \Illuminate\Database\QueryException $e) {
-            DB::rollBack(); // Rollback on any exception
-            Log::error('Failed to add sales entry and update GRN: ' . $e->getMessage());
-            return redirect()->back()
-                ->withErrors(['error' => 'Failed to add sales entry: ' . $e->getMessage()])
-                ->withInput($request->all());
-        }
+    } catch (\Exception | \Illuminate\Database\QueryException $e) {
+        DB::rollBack(); // Rollback on any exception
+        Log::error('Failed to add sales entry and update GRN: ' . $e->getMessage());
+        return redirect()->back()
+            ->withErrors(['error' => 'Failed to add sales entry: ' . $e->getMessage()])
+            ->withInput($request->all());
     }
+}
+
 
     public function markAllAsProcessed(Request $request)
     {
@@ -811,6 +808,22 @@ class SalesEntryController extends Controller
         'message' => "Receipt saved successfully! HTML: {$htmlFilePath}, PDF: {$pdfFilePath}"
     ]);
 }
+// SaleController.php
+public function getNextBillNo()
+{
+    // Get max bill_no from both tables
+    $maxSale = Sale::max('bill_no') ?? 0;
+    $maxHistory = SalesHistory::max('bill_no') ?? 0;
+    $nextBillNo = max($maxSale, $maxHistory) + 1;
+
+    // If no records exist, start from 1000
+    if ($nextBillNo < 1000) {
+        $nextBillNo = 1000;
+    }
+
+    return response()->json(['nextBillNo' => $nextBillNo]);
+}
+
 
 }
 
