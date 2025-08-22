@@ -31,17 +31,23 @@
             </select>
           </div>
 
-          {{-- Customer Dropdown --}}
-          <div class="mb-3">
-            <label for="customer_short_name" class="form-label">Customer</label>
-            <select name="customer_short_name" id="customer_short_name" class="form-select">
-              <option value="">-- Select Customer --</option>
-              @foreach($customers as $customer)
-                <option value="{{ $customer->short_name }}">{{ $customer->short_name }} - {{ $customer->name }}</option>
-              @endforeach
-            </select>
-          </div>
-        </div>
+        {{-- Customer Dropdown --}}
+<div class="mb-3">
+    <label for="filter_customer_code" class="form-label">පාරිභෝගික කේතය</label>
+    <select name="customer_code" id="filter_customer_code" class="form-select form-select-sm select2-customer">
+        <option value="">-- සියලුම පාරිභෝගිකයන් --</option>
+        @php
+            $customers = \App\Models\Sale::select('customer_code')->distinct()->get();
+        @endphp
+        @foreach($customers as $customer)
+            <option value="{{ $customer->customer_code }}"
+                {{ request('customer_code') == $customer->customer_code ? 'selected' : '' }}>
+                {{ $customer->customer_code }}
+            </option>
+        @endforeach
+    </select>
+</div>
+
 
         <div class="modal-footer">
           <button type="submit" class="btn btn-success">Filter</button>

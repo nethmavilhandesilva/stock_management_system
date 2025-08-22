@@ -69,98 +69,99 @@ class SalesEntryController extends Controller
         return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay', 'codes'));
     }
 
-public function store(Request $request)
-{
-    // Add grn_entry_code to validation
-    $validated = $request->validate([
-        'supplier_code' => 'required',
-        'customer_code' => 'required|string|max:255',
-        'customer_name' => 'nullable',
-        'code' => 'required', 
-        'item_code' => 'required',
-        'item_name' => 'required',
-        'weight' => 'required|numeric|min:0.01',
-        'price_per_kg' => 'required|numeric',
-        'total' => 'required|numeric',
-        'packs' => 'required|integer|min:1',
-        'grn_entry_code' => 'required|string|exists:grn_entries,code',
-        'original_weight' => 'nullable',
-        'original_packs' => 'nullable',
-    ]);
-
-    try {
-        DB::beginTransaction(); // Start a database transaction
-
-        // 1. Find the original GRN record using the grn_entry_code
-        $grnEntry = GrnEntry::where('code', $validated['grn_entry_code'])->first();
-
-        if (!$grnEntry) {
-            throw new \Exception('Selected GRN entry not found for update.');
-        }
-
-        // 2. Get the PerKGPrice from the GRN entry and calculate PerKGTotal (the cost)
-        $perKgPrice = $grnEntry->PerKGPrice;
-        $perKgTotal = $perKgPrice * $validated['weight'];
-
-        // 3. Calculate the new weight and packs for the GRN entry
-        $weightToDeduct = $validated['weight'];
-        $packsToDeduct = $validated['packs'];
-
-        // Deduct from GRN entry
-        $grnEntry->weight = max(0, $grnEntry->weight - $weightToDeduct);
-        $grnEntry->packs = max(0, $grnEntry->packs - $packsToDeduct);
-
-        // 4. Update the GRN record in the database
-        $grnEntry->save();
-
-        // 5. Generate the bill number
-        $lastBillNoSale = Sale::max('bill_no');
-        $lastBillNoHistory = SalesHistory::max('bill_no');
-        $lastBillNo = max($lastBillNoSale ?? 0, $lastBillNoHistory ?? 0);
-        $newBillNo = $lastBillNo ? $lastBillNo + 1 : 1000;
-
-        // 6. Create the Sale record
-        $loggedInUserId = auth()->user()->user_id;
-        $uniqueCode = $validated['customer_code'] . '-' . $loggedInUserId;
-        $sellingKGTotal = $validated['total'] - $perKgTotal;
-        $saleCode = $grnEntry->code;
-
-        Sale::create([
-            'supplier_code' => $validated['supplier_code'],
-            'customer_code' => $validated['customer_code'],
-            'customer_name' => $validated['customer_name'],
-            'code' => $saleCode,
-            'item_code' => $validated['item_code'],
-            'item_name' => $validated['item_name'],
-            'weight' => $validated['weight'],
-            'price_per_kg' => $validated['price_per_kg'],
-            'total' => $validated['total'],
-            'packs' => $validated['packs'],
-            'original_weight' => $validated['original_weight'],
-            'original_packs' => $validated['original_packs'],
-            'Processed' => 'N',
-            'FirstTimeBillPrintedOn' => null,
-            'BillChangedOn' => null,
-            'CustomerBillEnteredOn' => now(),
-            'UniqueCode' => $uniqueCode,
-            'PerKGPrice' => $perKgPrice,
-            'PerKGTotal' => $perKgTotal,
-            'SellingKGTotal' => $sellingKGTotal,
-            'bill_no' => $newBillNo, // <-- Added bill number
+    public function store(Request $request)
+    {
+        // Add grn_entry_code to validation
+        $validated = $request->validate([
+            'supplier_code' => 'required',
+            'customer_code' => 'required|string|max:255',
+            'customer_name' => 'nullable',
+            'code' => 'required',
+            'item_code' => 'required',
+            'item_name' => 'required',
+            'weight' => 'required|numeric|min:0.01',
+            'price_per_kg' => 'required|numeric',
+            'total' => 'required|numeric',
+            'packs' => 'required|integer|min:1',
+            'grn_entry_code' => 'required|string|exists:grn_entries,code',
+            'original_weight' => 'nullable',
+            'original_packs' => 'nullable',
         ]);
 
-        DB::commit(); // Commit the transaction
+        try {
+            DB::beginTransaction(); // Start a database transaction
 
-        return redirect()->back()->withInput($request->only(['customer_code', 'customer_name']));
+            // 1. Find the original GRN record using the grn_entry_code
+            $grnEntry = GrnEntry::where('code', $validated['grn_entry_code'])->first();
 
-    } catch (\Exception | \Illuminate\Database\QueryException $e) {
-        DB::rollBack(); // Rollback on any exception
-        Log::error('Failed to add sales entry and update GRN: ' . $e->getMessage());
-        return redirect()->back()
-            ->withErrors(['error' => 'Failed to add sales entry: ' . $e->getMessage()])
-            ->withInput($request->all());
+            if (!$grnEntry) {
+                throw new \Exception('Selected GRN entry not found for update.');
+            }
+
+            // 2. Get the PerKGPrice from the GRN entry and calculate PerKGTotal (the cost)
+            $perKgPrice = $grnEntry->PerKGPrice;
+            $perKgTotal = $perKgPrice * $validated['weight'];
+
+            // 3. Calculate the new weight and packs for the GRN entry
+            $weightToDeduct = $validated['weight'];
+            $packsToDeduct = $validated['packs'];
+
+            // Deduct from GRN entry
+            $grnEntry->weight = max(0, $grnEntry->weight - $weightToDeduct);
+            $grnEntry->packs = max(0, $grnEntry->packs - $packsToDeduct);
+
+            // 4. Update the GRN record in the database
+            $grnEntry->save();
+
+            // 5. Generate the bill number
+            $lastBillNoSale = (int) Sale::max('bill_no'); // cast to int
+            $lastBillNoHistory = (int) SalesHistory::max('bill_no'); // cast to int
+
+            $lastBillNo = max($lastBillNoSale, $lastBillNoHistory); // now both are ints
+            $newBillNo = $lastBillNo ? $lastBillNo + 1 : 1000;
+
+            // 6. Create the Sale record
+            $loggedInUserId = auth()->user()->user_id;
+            $uniqueCode = $validated['customer_code'] . '-' . $loggedInUserId;
+            $sellingKGTotal = $validated['total'] - $perKgTotal;
+            $saleCode = $grnEntry->code;
+
+            Sale::create([
+                'supplier_code' => $validated['supplier_code'],
+                'customer_code' => $validated['customer_code'],
+                'customer_name' => $validated['customer_name'],
+                'code' => $saleCode,
+                'item_code' => $validated['item_code'],
+                'item_name' => $validated['item_name'],
+                'weight' => $validated['weight'],
+                'price_per_kg' => $validated['price_per_kg'],
+                'total' => $validated['total'],
+                'packs' => $validated['packs'],
+                'original_weight' => $validated['original_weight'],
+                'original_packs' => $validated['original_packs'],
+                'Processed' => 'N',
+                'FirstTimeBillPrintedOn' => null,
+                'BillChangedOn' => null,
+                'CustomerBillEnteredOn' => now(),
+                'UniqueCode' => $uniqueCode,
+                'PerKGPrice' => $perKgPrice,
+                'PerKGTotal' => $perKgTotal,
+                'SellingKGTotal' => $sellingKGTotal,
+                'bill_no' => $newBillNo, // <-- Added bill number
+            ]);
+
+            DB::commit(); // Commit the transaction
+
+            return redirect()->back()->withInput($request->only(['customer_code', 'customer_name']));
+
+        } catch (\Exception | \Illuminate\Database\QueryException $e) {
+            DB::rollBack(); // Rollback on any exception
+            Log::error('Failed to add sales entry and update GRN: ' . $e->getMessage());
+            return redirect()->back()
+                ->withErrors(['error' => 'Failed to add sales entry: ' . $e->getMessage()])
+                ->withInput($request->all());
+        }
     }
-}
 
 
     public function markAllAsProcessed(Request $request)
@@ -191,45 +192,89 @@ public function store(Request $request)
             ], 500);
         }
     }
-    public function markAsPrinted(Request $request)
-    {
-        // Debugging step: Log the incoming request data
-        \Log::info('markAsPrinted Request Data:', $request->all());
+public function markAsPrinted(Request $request)
+{
+    \Log::info('markAsPrinted Request Data:', $request->all());
 
-        $salesIds = $request->input('sales_ids');
-        $billNo = $request->input('bill_no');
+    $salesIds = $request->input('sales_ids');
 
-        if (empty($salesIds)) {
-            return response()->json(['status' => 'error', 'message' => 'No sales IDs provided.'], 400);
-        }
-
-        try {
-            // This is the critical part to check for errors
-            Sale::whereIn('id', $salesIds)->update([
-                'bill_printed' => 'Y', // Ensure this column name is correct in your DB
-                'processed' => 'Y', // Ensure this column name is correct in your DB
-                'bill_no' => $billNo,
-                'FirstTimeBillPrintedOn' => now() // Ensure this column name is correct and can accept the value
-            ]);
-
-            // Debugging step: Log success
-            \Log::info('Sales records updated successfully for IDs:', $salesIds);
-
-            return response()->json(['status' => 'success', 'message' => 'Sales marked as printed and processed successfully!']);
-
-        } catch (\Exception $e) {
-            // Debugging step: Log the exception details
-            \Log::error('Error updating sales records:', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(), // This is very detailed, useful for debugging
-                'sales_ids' => $salesIds,
-                'bill_no' => $billNo
-            ]);
-            return response()->json(['status' => 'error', 'message' => 'Failed to update sales records.'], 500);
-        }
+    if (empty($salesIds)) {
+        return response()->json(['status' => 'error', 'message' => 'No sales IDs provided.'], 400);
     }
+
+    try {
+        // Step 1: Check for an existing bill number among the provided sales IDs.
+        // This is the key step. We query the database directly to find if any
+        // of the records have already been processed and assigned a bill number.
+        $existingBillNo =Sale::whereIn('id', $salesIds)
+                                          ->where('processed', 'Y')
+                                          ->whereNotNull('bill_no')
+                                          ->first()?->bill_no;
+
+        // Step 2: Determine the bill number to use.
+        // If an existing bill number was found, use it. Otherwise, generate a new one.
+        $billNoToUse = $existingBillNo;
+        if (empty($billNoToUse)) {
+            $billNoToUse = $this->generateNewBillNumber();
+        }
+
+        // Step 3: Update all sales records with the determined bill number.
+        // We do this in a single transaction for reliability.
+        \DB::transaction(function () use ($salesIds, $billNoToUse) {
+            $salesRecords = \App\Models\Sale::whereIn('id', $salesIds)->get();
+
+            foreach ($salesRecords as $sale) {
+                // If it's a reprint, update the timestamp for reprint history.
+                if ($sale->bill_printed === 'Y') {
+                    $sale->BillReprintAfterChanges = now();
+                }
+
+                // Update the main fields for all selected records.
+                $sale->bill_printed = 'Y';
+                $sale->processed = 'Y';
+                $sale->bill_no = $billNoToUse;
+                
+                // Set the first print date only if it hasn't been set before.
+                $sale->FirstTimeBillPrintedOn = $sale->FirstTimeBillPrintedOn ?? now();
+                
+                $sale->save();
+            }
+        });
+
+        \Log::info('Sales records updated successfully for IDs:', ['sales_ids' => $salesIds, 'bill_no' => $billNoToUse]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Sales marked as printed and reprint timestamp updated if needed!',
+            'bill_no' => $billNoToUse
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error updating sales records:', [
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString(),
+            'sales_ids' => $salesIds
+        ]);
+        return response()->json(['status' => 'error', 'message' => 'Failed to update sales records.'], 500);
+    }
+}
+
+// Helper method to generate a new bill number
+private function generateNewBillNumber()
+{
+    return \DB::transaction(function () {
+        $bill = \App\Models\BillNumber::lockForUpdate()->first();
+        if (!$bill) {
+            $bill = \App\Models\BillNumber::create(['last_bill_no' => 999]);
+        }
+        $bill->last_bill_no += 1;
+        $bill->save();
+        return $bill->last_bill_no;
+    });
+}
+
 
     public function update(Request $request, Sale $sale)
     {
@@ -766,63 +811,63 @@ public function store(Request $request)
             ->orderBy('item_name', 'asc')
             ->get();
     }
-   
-   public function saveReceiptFile(Request $request)
-{
-    $html = $request->receipt_html;
-    $customerName = $request->customer_name ?? 'customer';
-    $billNo = $request->bill_no ?? 'N/A';
 
-    // Folder path
-    $folder = 'D:\\Receipts';
+    public function saveReceiptFile(Request $request)
+    {
+        $html = $request->receipt_html;
+        $customerName = $request->customer_name ?? 'customer';
+        $billNo = $request->bill_no ?? 'N/A';
 
-    // Create folder if it doesn't exist
-    if (!file_exists($folder)) {
-        mkdir($folder, 0777, true);
+        // Folder path
+        $folder = 'D:\\Receipts';
+
+        // Create folder if it doesn't exist
+        if (!file_exists($folder)) {
+            mkdir($folder, 0777, true);
+        }
+
+        // Save HTML version as backup
+        $htmlFilePath = $folder . '\\' . "Receipt_{$billNo}_{$customerName}.html";
+        file_put_contents($htmlFilePath, $html);
+
+        // Save PDF version with exact size of bill
+        $pdfFilePath = $folder . '\\' . "Receipt_{$billNo}_{$customerName}.pdf";
+
+        $pdf = new \FPDF('P', 'mm', [80, 200]);
+        $pdf->AddPage();
+        $pdf->SetFont('Arial', '', 10);
+        $pdf->WriteHTML = function ($pdf, $htmlContent) {
+            // Simple HTML parser for FPDF (or use HTML2FPDF library)
+            // For now, just plain text conversion:
+            $text = strip_tags($htmlContent);
+            $pdf->MultiCell(0, 4, $text);
+        };
+        // Write HTML
+        $pdf->WriteHTML($pdf, $html);
+
+        // Output PDF to file
+        $pdf->Output('F', $pdfFilePath);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Receipt saved successfully! HTML: {$htmlFilePath}, PDF: {$pdfFilePath}"
+        ]);
     }
+    // SaleController.php
+    public function getNextBillNo()
+    {
+        // Get max bill_no from both tables
+        $maxSale = Sale::max('bill_no') ?? 0;
+        $maxHistory = SalesHistory::max('bill_no') ?? 0;
+        $nextBillNo = max($maxSale, $maxHistory) + 1;
 
-    // Save HTML version as backup
-    $htmlFilePath = $folder . '\\' . "Receipt_{$billNo}_{$customerName}.html";
-    file_put_contents($htmlFilePath, $html);
+        // If no records exist, start from 1000
+        if ($nextBillNo < 1000) {
+            $nextBillNo = 1000;
+        }
 
-    // Save PDF version with exact size of bill
-    $pdfFilePath = $folder . '\\' . "Receipt_{$billNo}_{$customerName}.pdf";
-
-     $pdf = new \FPDF('P', 'mm', [80, 200]);
-    $pdf->AddPage();
-    $pdf->SetFont('Arial', '', 10);
-    $pdf->WriteHTML = function($pdf, $htmlContent) {
-        // Simple HTML parser for FPDF (or use HTML2FPDF library)
-        // For now, just plain text conversion:
-        $text = strip_tags($htmlContent);
-        $pdf->MultiCell(0, 4, $text);
-    };
-    // Write HTML
-    $pdf->WriteHTML($pdf, $html);
-
-    // Output PDF to file
-    $pdf->Output('F', $pdfFilePath);
-
-    return response()->json([
-        'success' => true,
-        'message' => "Receipt saved successfully! HTML: {$htmlFilePath}, PDF: {$pdfFilePath}"
-    ]);
-}
-// SaleController.php
-public function getNextBillNo()
-{
-    // Get max bill_no from both tables
-    $maxSale = Sale::max('bill_no') ?? 0;
-    $maxHistory = SalesHistory::max('bill_no') ?? 0;
-    $nextBillNo = max($maxSale, $maxHistory) + 1;
-
-    // If no records exist, start from 1000
-    if ($nextBillNo < 1000) {
-        $nextBillNo = 1000;
+        return response()->json(['nextBillNo' => $nextBillNo]);
     }
-
-    return response()->json(['nextBillNo' => $nextBillNo]);
-}
 
 
 }

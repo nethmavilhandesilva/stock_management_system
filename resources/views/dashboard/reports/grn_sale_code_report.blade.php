@@ -50,14 +50,15 @@
                 <span class="ms-3"><strong>අවසන් දිනය:</strong> {{ $endDate }}</span>
             @endif
         </div>
-<table class="table table-bordered table-striped">
-    <thead>
+<table class="table table-bordered table-striped" style="font-size: 12px; line-height: 1.2; margin-bottom: 0;">
+    <thead class="table-light">
         <tr>
-            <th>අයිතම කේතය</th>
-            <th>අයිතමයේ නම</th>
-            <th>පැක්</th>
-            <th>බර</th>
-            <th>මුළු මුදල</th>
+            <th style="padding: 4px 6px;">අයිතම කේතය</th>
+            <th style="padding: 4px 6px;">අයිතමයේ නම</th>
+            <th style="padding: 4px 6px;">පැක්</th>
+            <th style="padding: 4px 6px;">මිල</th>
+            <th style="padding: 4px 6px;">බර</th>
+            <th style="padding: 4px 6px;">මුළු මුදල</th>
         </tr>
     </thead>
     <tbody>
@@ -69,11 +70,12 @@
 
         @forelse($sales as $sale)
             <tr>
-                <td>{{ $sale->item_code }}</td>
-                <td>{{ $sale->item_name }}</td>
-                <td>{{ $sale->packs }}</td>
-                <td>{{ number_format($sale->weight, 2) }}</td>
-                <td>{{ number_format($sale->total, 2) }}</td>
+                <td style="padding: 4px 6px;">{{ $sale->item_code }}</td>
+                <td style="padding: 4px 6px;">{{ $sale->item_name }}</td>
+                <td style="padding: 4px 6px; text-align: right;">{{ $sale->packs }}</td>
+                <td style="padding: 4px 6px; text-align: right;">{{ number_format($sale->price_per_kg, 2) }}</td>
+                <td style="padding: 4px 6px; text-align: right;">{{ number_format($sale->weight, 2) }}</td>
+                <td style="padding: 4px 6px; text-align: right;">{{ number_format($sale->total, 2) }}</td>
             </tr>
 
             @php
@@ -83,23 +85,21 @@
             @endphp
         @empty
             <tr>
-                {{-- Colspan should match the number of columns in the <thead> --}}
-                <td colspan="5" class="text-center text-white bg-secondary">වාර්තා නැත</td>
+                <td colspan="6" class="text-center text-white bg-secondary" style="padding: 4px 6px;">වාර්තා නැත</td>
             </tr>
         @endforelse
     </tbody>
-
     <tfoot>
         <tr class="table-secondary fw-bold">
-            {{-- Colspan for "මුළු එකතුව:" --}}
-            <td class="text-end" colspan="2">මුළු එකතුව:</td>
-            {{-- Totals for Packs, Weight, Total Amount --}}
-            <td>{{ $total_packs }}</td>
-            <td>{{ number_format($total_weight, 2) }}</td>
-            <td>{{ number_format($total_amount, 2) }}</td>
+            <td class="text-end" colspan="2" style="padding: 4px 6px;">මුළු එකතුව:</td>
+            <td style="padding: 4px 6px; text-align: right;">{{ $total_packs }}</td>
+            <td style="padding: 4px 6px; text-align: right;">-</td>
+            <td style="padding: 4px 6px; text-align: right;">{{ number_format($total_weight, 2) }}</td>
+            <td style="padding: 4px 6px; text-align: right;">{{ number_format($total_amount, 2) }}</td>
         </tr>
     </tfoot>
 </table>
+
     </div>
 <div>
     {{-- Excel Download Form --}}

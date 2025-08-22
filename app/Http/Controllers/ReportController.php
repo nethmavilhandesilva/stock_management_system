@@ -221,7 +221,7 @@ class ReportController extends Controller
         // Apply the GRN code filter to the selected query
         $query->where('code', $grnCode);
 
-        $sales = $query->orderBy('Date', 'asc')->get();
+        $sales = $query->orderBy('created_at', 'asc')->get();
         $selectedGrnEntry = GrnEntry::where('code', $grnCode)->first();
 
         return view('dashboard.reports.grn_sale_code_report', [
@@ -687,21 +687,23 @@ class ReportController extends Controller
             'totalDamages' // 🆕 New: Pass the total damages to the view
         ));
     }
- public function salesReport(Request $request)
+public function salesReport(Request $request)
 {
     $query = Sale::query()->whereNotNull('bill_no')->where('bill_no', '<>', '');
 
+    // Supplier filter
     if ($request->filled('supplier_code')) {
         $query->where('supplier_code', $request->supplier_code);
     }
 
+    // Item filter
     if ($request->filled('item_code')) {
         $query->where('item_code', $request->item_code);
     }
 
+    // Customer short name filter
     if ($request->filled('customer_short_name')) {
         $search = $request->customer_short_name;
-
         $query->where(function ($q) use ($search) {
             $q->where('customer_code', 'like', '%' . $search . '%')
               ->orWhereIn('customer_code', function ($sub) use ($search) {
@@ -712,10 +714,16 @@ class ReportController extends Controller
         });
     }
 
+    // Customer code filter (from dropdown)
+    if ($request->filled('customer_code')) {
+        $query->where('customer_code', $request->customer_code);
+    }
+
     $salesByBill = $query->get()->groupBy('bill_no');
 
     return view('dashboard.reports.new_sales_report', compact('salesByBill'));
 }
+
 
 
 public function grnReport(Request $request)

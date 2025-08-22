@@ -22,12 +22,14 @@
                                 $items = \App\Models\Item::all();
                             @endphp
                             @foreach($items as $item)
-                                <option value="{{ $item->no }}">{{ $item->no }}</option>
+                                <option value="{{ $item->no }}" data-supplier-code="{{ $item->supplier_code ?? '' }}">
+                                    {{ $item->no }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
 
-                    
+                   
 
                     <div id="item_date_range_container" style="display: none;">
                         <div class="mb-3">
@@ -52,18 +54,20 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const grnSelect = document.getElementById('item_grn_select');
+        const itemSelect = document.getElementById('item_code_select');
         const supplierCodeInput = document.getElementById('item_supplier_code');
         const passwordInput = document.getElementById('item_password');
         const dateRangeContainer = document.getElementById('item_date_range_container');
         const correctPassword = 'nethma123';
 
-        grnSelect.addEventListener('change', function () {
-            const selectedOption = grnSelect.options[grnSelect.selectedIndex];
+        // Auto-fill supplier code when selecting an item
+        itemSelect.addEventListener('change', function () {
+            const selectedOption = itemSelect.options[itemSelect.selectedIndex];
             const supplierCode = selectedOption.getAttribute('data-supplier-code');
             supplierCodeInput.value = supplierCode || '';
         });
 
+        // Show/hide date range when password is correct
         passwordInput.addEventListener('input', function () {
             if (passwordInput.value === correctPassword) {
                 dateRangeContainer.style.display = 'block';

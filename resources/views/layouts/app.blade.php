@@ -39,11 +39,7 @@
         </div>
     @endif
 
-    {{-- Floating Report Button --}}
-    <button class="btn btn-secondary position-fixed bottom-0 end-0 m-4 rounded-circle"
-            data-bs-toggle="modal" data-bs-target="#reportFilterModal" title="Open Report Filter">
-        <i class="material-icons">assessment</i>
-    </button>
+   
 
     <div class="main-wrapper container-fluid">
         <div class="row">

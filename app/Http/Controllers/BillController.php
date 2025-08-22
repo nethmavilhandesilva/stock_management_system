@@ -106,42 +106,40 @@ public function finalizeAndPrint(Request $request)
         'message' => 'Bill finalized and sales moved to history.'
     ]);
 }
-    public function getNextBillNo()
-    {
-        // Check if both Sale and SalesHistory tables are empty
-        $salesEmpty = Sale::count() === 0;
-        $salesHistoryEmpty = SalesHistory::count() === 0;
+    public function getNextBillNo(Request $request)
+{
+    $saleId = $request->input('sale_id'); // pass sale ID from front-end
 
-        if ($salesEmpty && $salesHistoryEmpty) {
-            // Start from 1000 if no records
-            $billNo = 1000;
+    if ($saleId) {
+        $sale = Sale::find($saleId);
 
-            // Make sure BillNumber table has a record
-            $bill = BillNumber::first();
-            if (!$bill) {
-                BillNumber::create(['last_bill_no' => $billNo]);
-            } else {
-                $bill->last_bill_no = $billNo;
-                $bill->save();
-            }
+        if ($sale && $sale->bill_printed === 'Y') {
+            // Already printed → return existing bill number
+            return response()->json([
+                'bill_no' => $sale->bill_no,
+                'reprint' => true
+            ]);
+        }
+    }
 
-            return response()->json(['bill_no' => $billNo]);
+    // Normal flow to generate new bill number
+    $billNo = DB::transaction(function () {
+        $bill = BillNumber::lockForUpdate()->first();
+
+        if (!$bill) {
+            $bill = BillNumber::create(['last_bill_no' => 999]);
         }
 
-        // Use transaction to prevent race conditions
-        $billNo = DB::transaction(function () {
-            $bill = BillNumber::lockForUpdate()->first();
+        $bill->last_bill_no += 1;
+        $bill->save();
 
-            if (!$bill) {
-                $bill = BillNumber::create(['last_bill_no' => 999]);
-            }
+        return $bill->last_bill_no;
+    });
 
-            $bill->last_bill_no += 1;
-            $bill->save();
+    return response()->json([
+        'bill_no' => $billNo,
+        'reprint' => false
+    ]);
+}
 
-            return $bill->last_bill_no;
-        });
-
-        return response()->json(['bill_no' => $billNo]);
-    }
 }

@@ -1,7 +1,37 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-4">
+<style>
+    /* Print ONLY header + report table */
+    @media print {
+        /* Hide everything by default */
+        body * {
+            visibility: hidden;
+        }
+
+        /* Show only the report card and its content */
+        .printable-area, .printable-area * {
+            visibility: visible;
+        }
+
+        /* Position printable content at top left */
+        .printable-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+
+        /* Hide print/download buttons */
+        .print-btn,
+        .btn-success,
+        .btn-danger {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="container-fluid py-4 printable-area">
     <div class="card shadow-sm mb-4">
         <div class="card-header text-center" style="background-color: #004d00 !important;">
             <div class="report-title-bar">
@@ -29,7 +59,6 @@
                             <th>මලු</th>
                             <th>බර</th>
                             <th>මලු</th>
-                           
                         </tr>
                     </thead>
                     <tbody>
@@ -38,7 +67,6 @@
                             $grandTotalOriginalWeight = 0;
                             $grandTotalSoldPacks = 0;
                             $grandTotalSoldWeight = 0;
-                            $grandTotalSalesValue = 0;
                             $grandTotalRemainingPacks = 0;
                             $grandTotalRemainingWeight = 0;
                         @endphp
@@ -63,10 +91,10 @@
                                 <td>{{ $data['item_name'] }}</td>
                                 <td>{{ number_format($originalWeight, 2) }}</td>
                                 <td>{{ number_format($originalPacks) }}</td>
-                                 <td>{{ number_format($soldWeight, 2) }}</td>
+                                <td>{{ number_format($soldWeight, 2) }}</td>
                                 <td>{{ number_format($soldPacks) }}</td>
                                 <td>{{ number_format($remainingWeight, 2) }}</td>
-                                <td>{{ number_format($remainingPacks) }}</td>              
+                                <td>{{ number_format($remainingPacks) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -77,24 +105,23 @@
                         {{-- Totals Row --}}
                         <tr class="total-row">
                             <td class="text-end"><strong>සමස්ත එකතුව:</strong></td>
-                              <td><strong>{{ number_format($grandTotalOriginalWeight, 2) }}</strong></td>
+                            <td><strong>{{ number_format($grandTotalOriginalWeight, 2) }}</strong></td>
                             <td><strong>{{ number_format($grandTotalOriginalPacks) }}</strong></td>
-                             <td><strong>{{ number_format($grandTotalSoldWeight, 2) }}</strong></td>
+                            <td><strong>{{ number_format($grandTotalSoldWeight, 2) }}</strong></td>
                             <td><strong>{{ number_format($grandTotalSoldPacks) }}</strong></td>
-                           <td><strong>{{ number_format($grandTotalRemainingWeight, 2) }}</strong></td>
+                            <td><strong>{{ number_format($grandTotalRemainingWeight, 2) }}</strong></td>
                             <td><strong>{{ number_format($grandTotalRemainingPacks) }}</strong></td>
-                            
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
-     <div>
-       
-        <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'excel']) }}" class="btn btn-success me-2">Download Excel</a>
-        <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'pdf']) }}" class="btn btn-danger">Download PDF</a>
-    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'excel']) }}" class="btn btn-success me-2">Download Excel</a>
+    <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'pdf']) }}" class="btn btn-danger">Download PDF</a>
 </div>
 
 {{-- Custom Styles --}}
@@ -112,8 +139,6 @@
         text-align: center;
         padding: 15px 0;
         position: relative;
-        background-color: #004d00;
-        color: white;
     }
 
     .report-title-bar .company-name {
@@ -182,62 +207,6 @@
 
     .text-muted {
         color: lightgray !important;
-    }
-
-    @media print {
-        body {
-            background-color: white !important;
-            color: black !important;
-        }
-
-        .container-fluid, .card, .card-header, .card-body,
-        .report-title-bar, .filter-summary.alert, .table,
-        .table thead th, .table tbody tr, .table tbody td,
-        .total-row {
-            background-color: white !important;
-            color: black !important;
-            border-color: #dee2e6 !important;
-        }
-
-        .card {
-            box-shadow: none !important;
-            border: none !important;
-        }
-
-        .report-title-bar {
-            text-align: center;
-            padding: 10px 0;
-            position: static;
-        }
-
-        .report-title-bar .print-btn {
-            display: none !important;
-        }
-
-        .report-title-bar .right-info {
-            position: static;
-            display: block;
-            margin-top: 5px;
-        }
-
-        .print-button, .btn-secondary {
-            display: none !important;
-        }
-
-        .table-striped tbody tr:nth-of-type(odd),
-        .table-striped tbody tr:nth-of-type(even),
-        .total-row {
-            background-color: #f8f9fa !important;
-            color: black !important;
-        }
-
-        .table-bordered th, .table-bordered td {
-            border: 1px solid #dee2e6 !important;
-        }
-
-        .text-end strong {
-            color: black !important;
-        }
     }
 </style>
 @endsection

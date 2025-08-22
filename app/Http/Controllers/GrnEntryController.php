@@ -110,60 +110,57 @@ class GrnEntryController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $request->validate([
-            'item_code' => 'required',
-            'item_name' => 'required|string',
-            'supplier_code' => 'required',
-            'packs' => 'required|integer|min:1',
-            'weight' => 'required|numeric|min:0.01',
-            'txn_date' => 'required|date',
-            'grn_no' => 'required|string',
-            'warehouse_no' => 'required|string',
-            'total_grn' => 'nullable|numeric|min:0',
-            'per_kg_price' => 'nullable|numeric|min:0',
-        ]);
+{
+    $request->validate([
+        'item_code' => 'required',
+        'item_name' => 'required|string',
+        'supplier_code' => 'required',
+        'packs' => 'required|integer|min:1',
+        'weight' => 'required|numeric|min:0.01',
+        'txn_date' => 'required|date',
+        'grn_no' => 'required|string',
+        'warehouse_no' => 'required|string',
+        'total_grn' => 'nullable|numeric|min:0',
+        'per_kg_price' => 'nullable|numeric|min:0',
+    ]);
 
-        $entry = GrnEntry::findOrFail($id);
+    $entry = GrnEntry::findOrFail($id);
 
-        $updateData = [
-            'item_code' => $request->item_code,
-            'item_name' => $request->item_name,
-            'supplier_code' => $request->supplier_code,
-            'packs' => $request->packs,
-            'weight' => $request->weight,
-            'txn_date' => $request->txn_date,
-            'grn_no' => $request->grn_no,
-            'warehouse_no' => $request->warehouse_no,
-        ];
+    $updateData = [
+        'item_code' => $request->item_code,
+        'item_name' => $request->item_name,
+        'supplier_code' => $request->supplier_code,
+        'packs' => $request->packs,
+        'weight' => $request->weight,
+        'txn_date' => $request->txn_date,
+        'grn_no' => $request->grn_no,
+        'warehouse_no' => $request->warehouse_no,
+    ];
 
-        if ($request->has('total_grn')) {
-            $updateData['total_grn'] = $request->total_grn;
-        }
-
-        if ($request->has('per_kg_price')) {
-            $updateData['PerKGPrice'] = $request->per_kg_price;
-        }
-
-        // 1️⃣ Update the GRN entry
-        $entry->update($updateData);
-
-        // 2️⃣ Update matching Sale rows based on 'code'
-        if ($request->has('per_kg_price')) {
-            $newPerKgPrice = $request->per_kg_price;
-
-            Sale::where('code', $entry->code)
-                ->get()
-                ->each(function ($sale) use ($newPerKgPrice) {
-                    $sale->PerKGPrice = $newPerKgPrice;
-                    $sale->PerKGTotal = $sale->weight * $newPerKgPrice;
-                    $sale->SellingKGTotal = $sale->total - $sale->PerKGTotal;
-                    $sale->save();
-                });
-        }
-
-        return redirect()->route('grn.index')->with('success', 'Entry updated successfully.');
+    if ($request->filled('total_grn')) {
+        $updateData['total_grn'] = $request->total_grn;
     }
+
+    if ($request->filled('per_kg_price')) {
+        $updateData['PerKGPrice'] = $request->per_kg_price;
+    }
+
+    $entry->update($updateData);
+
+    // Update matching Sale rows
+    if ($request->filled('per_kg_price') && !empty($entry->code)) {
+        $newPerKgPrice = $request->per_kg_price;
+
+        Sale::where('code', $entry->code)->get()->each(function ($sale) use ($newPerKgPrice) {
+            $sale->PerKGPrice = $newPerKgPrice;
+            $sale->PerKGTotal = $sale->weight * $newPerKgPrice;
+            $sale->SellingKGTotal = $sale->total - $sale->PerKGTotal;
+            $sale->save();
+        });
+    }
+
+    return redirect()->route('grn.index')->with('success', 'Entry updated successfully.');
+}
 
 
 
