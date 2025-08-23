@@ -1,36 +1,27 @@
-{{-- resources/views/reports/grn_sales_overview_report.blade.php --}}
-
 @extends('layouts.app')
 
 @section('content')
 <style>
     /* Print ONLY header + report table */
     @media print {
-        /* Hide everything by default */
-        body * {
-            visibility: hidden;
-        }
-
-        /* Show only the report card and its content */
-        .printable-area, .printable-area * {
-            visibility: visible;
-        }
-
-        /* Position printable content at top left */
-        .printable-area {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-        }
-
-        /* Hide print/download buttons */
-        .print-btn,
-        .btn-success,
-        .btn-danger {
-            display: none !important;
-        }
+        body * { visibility: hidden; }
+        .printable-area, .printable-area * { visibility: visible; }
+        .printable-area { position: absolute; top: 0; left: 0; width: 100%; }
+        .print-btn, .btn-success, .btn-danger { display: none !important; }
     }
+
+    body { background-color: #99ff99 !important; }
+    .card { background-color: #004d00 !important; color: white !important; }
+    .report-title-bar { text-align: center; padding: 15px 0; position: relative; }
+    .report-title-bar .company-name { font-size: 1.8em; margin-bottom: 5px; }
+    .report-title-bar .right-info { position: absolute; top: 15px; right: 15px; font-size: 0.9em; }
+    .print-btn { position: absolute; top: 15px; left: 15px; background-color: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+
+    /* Table styling */
+    .table { color: white; font-size: 0.85em; }
+    .table thead th { background-color: #003300 !important; color: white !important; }
+    .item-summary-row { background-color: #005a00 !important; font-weight: bold; }
+    .total-row { background-color: #008000 !important; font-weight: bold; }
 </style>
 
 <div class="container-fluid py-4 printable-area">
@@ -73,12 +64,10 @@
                             $grandTotalSalesValue = 0;
                             $grandTotalRemainingPacks = 0;
                             $grandTotalRemainingWeight = 0;
-                            $groupedByCode = collect($reportData)->groupBy('grn_code');
                         @endphp
 
-                        @forelse($groupedByCode as $grnCode => $items)
-                            @php $itemsByName = $items->groupBy('item_name'); @endphp
-                            @foreach($itemsByName as $itemName => $itemRecords)
+                        @forelse(collect($reportData)->groupBy('grn_code') as $grnCode => $items)
+                            @foreach($items->groupBy('item_name') as $itemName => $itemRecords)
                                 @php
                                     $subTotalOriginalPacks = $itemRecords->sum('original_packs');
                                     $subTotalOriginalWeight = $itemRecords->sum('original_weight');
@@ -86,7 +75,7 @@
                                     $subTotalSoldWeight = $itemRecords->sum('sold_weight');
                                     $subTotalSalesValue = $itemRecords->sum('total_sales_value');
                                     $subTotalRemainingPacks = $itemRecords->sum('remaining_packs');
-                                    $subTotalRemainingWeight = $itemRecords->sum(fn($item) => floatval(str_replace(',', '', $item['remaining_weight'])));
+                                    $subTotalRemainingWeight = $itemRecords->sum('remaining_weight');
 
                                     $grandTotalOriginalPacks += $subTotalOriginalPacks;
                                     $grandTotalOriginalWeight += $subTotalOriginalWeight;
@@ -134,22 +123,4 @@
     <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'excel']) }}" class="btn btn-success me-2">Download Excel</a>
     <a href="{{ route('report.download', ['reportType' => 'supplier-sales', 'format' => 'pdf']) }}" class="btn btn-danger">Download PDF</a>
 </div>
-
-<style>
-    body { background-color: #99ff99 !important; }
-    .card { background-color: #004d00 !important; color: white !important; }
-    .report-title-bar { text-align: center; padding: 15px 0; position: relative; }
-    .report-title-bar .company-name { font-size: 1.8em; margin-bottom: 5px; }
-    .report-title-bar .right-info { position: absolute; top: 15px; right: 15px; font-size: 0.9em; }
-    .print-btn { position: absolute; top: 15px; left: 15px; background-color: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
-
-    /* Table styling */
-    .table { color: white; font-size: 0.85em; }
-    .table thead th { 
-        background-color: #003300 !important; 
-        color: white !important; /* <--- Add this line */
-    }
-    .item-summary-row { background-color: #005a00 !important; font-weight: bold; }
-    .total-row { background-color: #008000 !important; font-weight: bold; }
-</style>
 @endsection

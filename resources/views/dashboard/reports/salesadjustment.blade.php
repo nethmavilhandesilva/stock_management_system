@@ -109,9 +109,9 @@
                                 <td>{{ number_format($original->price_per_kg, 2) }}</td>
                                 <td>{{ number_format($original->total, 2) }}</td>
                                 <td>{{ $original->bill_no }}</td>
-                                <td>{{ $original->customer_code }}</td>
+                                <td>{{ strtoupper($original->customer_code) }}</td>
                                 <td>{{ $original->type }}</td>
-                             <td>{{ $original->created_at->timezone('Asia/Colombo')->format('Y-m-d H:i') }}</td>
+                                <td>{{ $original->original_created_at->timezone('Asia/Colombo')->format('Y-m-d H:i') }}</td>
 
                             </tr>
                         @endif
@@ -120,15 +120,23 @@
                         @if ($updated)
                             <tr class="table-warning">
                                 <td>{{ $updated->code }}</td>
-                                <td class="{{ $original && $updated->packs != $original->packs ? 'changed' : '' }}">{{ $updated->packs }}</td>
-                                <td class="{{ $original && $updated->item_name != $original->item_name ? 'changed' : '' }}">{{ $updated->item_name }}</td>
-                                <td class="{{ $original && $updated->weight != $original->weight ? 'changed' : '' }}">{{ $updated->weight }}</td>
-                                <td class="{{ $original && $updated->price_per_kg != $original->price_per_kg ? 'changed' : '' }}">{{ number_format($updated->price_per_kg, 2) }}</td>
-                                <td class="{{ $original && $updated->total != $original->total ? 'changed' : '' }}">{{ number_format($updated->total, 2) }}</td>
+                                <td class="{{ $original && $updated->packs != $original->packs ? 'changed' : '' }}">
+                                    {{ $updated->packs }}</td>
+                                <td class="{{ $original && $updated->item_name != $original->item_name ? 'changed' : '' }}">
+                                    {{ $updated->item_name }}</td>
+                                <td class="{{ $original && $updated->weight != $original->weight ? 'changed' : '' }}">
+                                    {{ $updated->weight }}</td>
+                                <td class="{{ $original && $updated->price_per_kg != $original->price_per_kg ? 'changed' : '' }}">
+                                    {{ number_format($updated->price_per_kg, 2) }}</td>
+                                <td class="{{ $original && $updated->total != $original->total ? 'changed' : '' }}">
+                                    {{ number_format($updated->total, 2) }}</td>
                                 <td>{{ $updated->bill_no }}</td>
-                                <td class="{{ $original && $updated->customer_code != $original->customer_code ? 'changed' : '' }}">{{ $updated->customer_code }}</td>
+                                <td class="{{ $original && $updated->customer_code != $original->customer_code ? 'changed' : '' }}">
+                                    {{ strtoupper($updated->customer_code) }}
+                                </td>
+
                                 <td>{{ $updated->type }}</td>
-                               <td>{{ $original->created_at->timezone('Asia/Colombo')->format('Y-m-d H:i') }}</td>
+                                <td>{{ $original->created_at->timezone('Asia/Colombo')->format('Y-m-d H:i') }}</td>
 
                             </tr>
                         @endif
@@ -137,15 +145,23 @@
                         @if ($deleted)
                             <tr class="table-danger">
                                 <td>{{ $deleted->code }}</td>
-                                <td class="{{ $original && $deleted->packs != $original->packs ? 'changed' : '' }}">{{ $deleted->packs }}</td>
-                                <td class="{{ $original && $deleted->item_name != $original->item_name ? 'changed' : '' }}">{{ $deleted->item_name }}</td>
-                                <td class="{{ $original && $deleted->weight != $original->weight ? 'changed' : '' }}">{{ $deleted->weight }}</td>
-                                <td class="{{ $original && $deleted->price_per_kg != $original->price_per_kg ? 'changed' : '' }}">{{ number_format($deleted->price_per_kg, 2) }}</td>
-                                <td class="{{ $original && $deleted->total != $original->total ? 'changed' : '' }}">{{ number_format($deleted->total, 2) }}</td>
+                                <td class="{{ $original && $deleted->packs != $original->packs ? 'changed' : '' }}">
+                                    {{ $deleted->packs }}</td>
+                                <td class="{{ $original && $deleted->item_name != $original->item_name ? 'changed' : '' }}">
+                                    {{ $deleted->item_name }}</td>
+                                <td class="{{ $original && $deleted->weight != $original->weight ? 'changed' : '' }}">
+                                    {{ $deleted->weight }}</td>
+                                <td class="{{ $original && $deleted->price_per_kg != $original->price_per_kg ? 'changed' : '' }}">
+                                    {{ number_format($deleted->price_per_kg, 2) }}</td>
+                                <td class="{{ $original && $deleted->total != $original->total ? 'changed' : '' }}">
+                                    {{ number_format($deleted->total, 2) }}</td>
                                 <td>{{ $deleted->bill_no }}</td>
-                                <td class="{{ $original && $deleted->customer_code != $original->customer_code ? 'changed' : '' }}">{{ $deleted->customer_code }}</td>
+                               <td class="{{ $original && $deleted->customer_code != $original->customer_code ? 'changed' : '' }}">
+    {{ strtoupper($deleted->customer_code) }}
+</td>
+
                                 <td>{{ $deleted->type }}</td>
-                               <td>{{ $original->created_at->timezone('Asia/Colombo')->format('Y-m-d H:i') }}</td>
+                                <td>{{ $deleted->created_at->timezone('Asia/Colombo')->format('Y-m-d H:i') }}</td>
 
                             </tr>
                         @endif

@@ -112,7 +112,7 @@
         <td>ඇතැති මුදල්</td>
         <td colspan="2">
             @php
-                $diff = $totalCr - $totalDr;
+                $diff =   $totalDr-$totalCr;
             @endphp
             @if($diff < 0)
                 <span class="text-danger">{{ number_format($diff, 2) }}</span>

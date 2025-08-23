@@ -115,17 +115,19 @@
             <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
         </div>
 
-       <table class="table table-bordered table-striped table-sm" style="font-size: 0.85rem; white-space: nowrap;">
-    <thead>
+     <table class="table table-bordered table-striped table-sm text-center align-middle" style="font-size: 0.9rem; white-space: nowrap;">
+    <thead class="table-dark">
         <tr>
             <th>බිල් අංකය</th>
             <th>වර්ගය</th>
+            <th>භාණ්ඩ කේතය</th>
             <th>මලු</th>
-            <th>බර</th>
-            <th>මිල</th>
-            <th>එකතුව</th>
+            <th>පැකට්</th>
+            <th>බර (kg)</th>
+            <th>මිල (Rs/kg)</th>
+            <th>එකතුව (Rs)</th>
             <th>ගෙණුම්කරු</th>
-            <th>GRN NO:</th>
+            <th>GRN අංකය</th>
         </tr>
     </thead>
     <tbody>
@@ -139,6 +141,8 @@
             <tr>
                 <td>{{ $sale->bill_no }}</td>
                 <td>{{ $sale->item_name }}</td>
+                <td>{{ $sale->item_code }}</td>
+                <td class="text-end">{{ $sale->packs }}</td>
                 <td class="text-end">{{ $sale->packs }}</td>
                 <td class="text-end">{{ number_format($sale->weight, 2) }}</td>
                 <td class="text-end">{{ number_format($sale->price_per_kg, 2) }}</td>
@@ -157,7 +161,7 @@
 
     <tfoot>
         <tr class="table-secondary fw-bold">
-            <td class="text-end" colspan="2">මුළු එකතුව:</td>
+            <td colspan="4" class="text-end">මුළු එකතුව:</td>
             <td class="text-end">{{ $total_packs }}</td>
             <td class="text-end">{{ number_format($total_weight, 2) }}</td>
             <td></td>
@@ -166,6 +170,7 @@
         </tr>
     </tfoot>
 </table>
+
 
     </div>
       <div class="page-utility-bar">

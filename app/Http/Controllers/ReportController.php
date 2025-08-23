@@ -320,52 +320,56 @@ class ReportController extends Controller
         // Pass data to the report view
         return view('dashboard.reports.sales_filter_report', compact('sales', 'grandTotal', 'request'));
     }
-    public function getGrnSalesOverviewReport()
-    {
-        // Fetch all GRN entries
-        $grnEntries = GrnEntry::all();
+   public function getGrnSalesOverviewReport()
+{
+    // Fetch all GRN entries
+    $grnEntries = GrnEntry::all();
 
-        $reportData = [];
+    $reportData = [];
 
-        foreach ($grnEntries->groupBy('code') as $code => $entries) {
-            // --- Sales ---
-            $currentSales = Sale::where('code', $code)->get();
-            $historicalSales = SalesHistory::where('code', $code)->get();
-            $relatedSales = $currentSales->merge($historicalSales);
+    foreach ($grnEntries->groupBy('code') as $code => $entries) {
 
-            $totalSoldPacks = $relatedSales->sum('packs');
-            $totalSoldWeight = $relatedSales->sum('weight');
-            $totalSalesValueForGrn = $relatedSales->sum('total');
+        // --- GRN Totals ---
+        $totalOriginalPacks = $entries->sum('original_packs');
+        $totalOriginalWeight = $entries->sum('original_weight');
 
-            // --- GRN Totals (for grouped entries) ---
-            $totalOriginalPacks = $entries->sum('original_packs');
-            $totalOriginalWeight = $entries->sum('original_weight');
+        $remainingPacks = $entries->sum('packs');
+        $remainingWeight = $entries->sum('weight');
 
-            $remainingPacks = $totalOriginalPacks - $totalSoldPacks;
-            $remainingWeight = $totalOriginalWeight - $totalSoldWeight;
+        // --- Sold quantities ---
+        $totalSoldPacks = $totalOriginalPacks - $remainingPacks;
+        $totalSoldWeight = $totalOriginalWeight - $remainingWeight;
 
-            $reportData[] = [
-                'date' => Carbon::parse($entries->first()->created_at)
-                    ->timezone('Asia/Colombo')
-                    ->format('Y-m-d H:i:s'),
-                'grn_code' => $code,
-                'item_name' => $entries->first()->item_name, // If multiple items per code, adjust this
-                'original_packs' => $totalOriginalPacks,
-                'original_weight' => $totalOriginalWeight,
-                'sold_packs' => $totalSoldPacks,
-                'sold_weight' => $totalSoldWeight,
-                'total_sales_value' => $totalSalesValueForGrn,
-                'remaining_packs' => $remainingPacks,
-                'remaining_weight' => number_format($remainingWeight, 2),
-            ];
-        }
+        // --- Total sales value ---
+        $currentSales = Sale::where('code', $code)->get();
+        $historicalSales = SalesHistory::where('code', $code)->get();
+        $relatedSales = $currentSales->merge($historicalSales);
+        $totalSalesValueForGrn = $relatedSales->sum('total');
 
-        return view('dashboard.reports.grn_sales_overview_report', [
-            'reportData' => collect($reportData)
-        ]);
+        $reportData[] = [
+            'date' => Carbon::parse($entries->first()->created_at)
+                ->timezone('Asia/Colombo')
+                ->format('Y-m-d H:i:s'),
+            'grn_code' => $code,
+            'item_name' => $entries->first()->item_name,
+            'original_packs' => $totalOriginalPacks,
+            'original_weight' => $totalOriginalWeight,
+            'sold_packs' => $totalSoldPacks,
+            'sold_weight' => $totalSoldWeight, // keep numeric
+            'total_sales_value' => $totalSalesValueForGrn,
+            'remaining_packs' => $remainingPacks,
+            'remaining_weight' => $remainingWeight, // keep numeric
+        ];
     }
 
-    public function getGrnSalesOverviewReport2()
+    return view('dashboard.reports.grn_sales_overview_report', [
+        'reportData' => collect($reportData)
+    ]);
+}
+
+
+
+   public function getGrnSalesOverviewReport2()
 {
     // Fetch all GRN entries
     $grnEntries = GrnEntry::all();
@@ -381,25 +385,34 @@ class ReportController extends Controller
         $soldPacks = 0;
         $soldWeight = 0;
         $totalSalesValue = 0;
+        $remainingPacks = 0;
+        $remainingWeight = 0;
 
         foreach ($entries as $grnEntry) {
+            // Fetch current and historical sales for this GRN code
             $currentSales = Sale::where('code', $grnEntry->code)->get();
             $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
             $relatedSales = $currentSales->merge($historicalSales);
 
-            $totalSoldPacks = $relatedSales->sum('packs');
+            // Total weight sold and total sales value for this GRN
             $totalSoldWeight = $relatedSales->sum('weight');
             $totalSalesValueForGrn = $relatedSales->sum('total');
 
+            // Sum original packs and weight
             $originalPacks += $grnEntry->original_packs;
             $originalWeight += $grnEntry->original_weight;
-            $soldPacks += $totalSoldPacks;
-            $soldWeight += $totalSoldWeight;
+
+            // Sum sold packs and weight
+            $soldPacks += $grnEntry->original_packs - $grnEntry->packs;
+            $soldWeight += $grnEntry->original_weight - $grnEntry->weight;
+
+            // Sum remaining packs and weight (direct from GRN entry)
+            $remainingPacks += $grnEntry->packs;
+            $remainingWeight += $grnEntry->weight;
+
+            // Sum total sales value
             $totalSalesValue += $totalSalesValueForGrn;
         }
-
-        $remainingPacks = $originalPacks - $soldPacks;
-        $remainingWeight = $originalWeight - $soldWeight;
 
         $reportData[] = [
             'item_name' => $itemName,
@@ -409,7 +422,7 @@ class ReportController extends Controller
             'sold_weight' => $soldWeight,
             'total_sales_value' => $totalSalesValue,
             'remaining_packs' => $remainingPacks,
-            'remaining_weight' => number_format($remainingWeight, 2),
+            'remaining_weight' => $remainingWeight,
         ];
     }
 
@@ -417,6 +430,7 @@ class ReportController extends Controller
         'reportData' => collect($reportData)
     ]);
 }
+
     public function downloadReport(Request $request, $reportType, $format)
     {
         list($reportData, $headings, $reportTitle) = $this->getReportData($reportType, $request->all());
@@ -714,17 +728,20 @@ public function salesReport(Request $request)
         });
     }
 
-    // Customer code filter (from dropdown)
+    // Customer code filter
     if ($request->filled('customer_code')) {
         $query->where('customer_code', $request->customer_code);
+    }
+
+    // Bill No filter
+    if ($request->filled('bill_no')) {
+        $query->where('bill_no', $request->bill_no);
     }
 
     $salesByBill = $query->get()->groupBy('bill_no');
 
     return view('dashboard.reports.new_sales_report', compact('salesByBill'));
 }
-
-
 
 public function grnReport(Request $request)
 {
