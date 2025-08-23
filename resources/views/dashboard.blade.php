@@ -114,68 +114,135 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
     </nav>
 
 
-    {{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav small">
-        <div class="container-fluid">
-            <!-- Toggler -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
-                aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+  {{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav small">
+    <div class="container-fluid">
+        <!-- Toggler -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
+            aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <!-- Links -->
-            <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
-                <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row gap-2">
+        <!-- Links -->
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
+            <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row gap-2">
 
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
-                            class="nav-link text-white px-2 py-1">
-                            එළවළු
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
-                            class="nav-link text-white px-2 py-1">
-                            බර මත
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
-                            class="nav-link text-white px-2 py-1">
-                            මිල එක්කතුව
-                        </a>
-                    </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-target="#itemReportModal"
+                        class="nav-link text-white px-2 py-1 protected-link">
+                        එළවළු
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-target="#weight_modal"
+                        class="nav-link text-white px-2 py-1 protected-link">
+                        බර මත
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-target="#grnSaleReportModal"
+                        class="nav-link text-white px-2 py-1 protected-link">
+                        මිල එක්කතුව
+                    </a>
+                </li>
 
-                    <li class="nav-item">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9"
-                            class="nav-link text-white px-2 py-1">
-                            වෙනස් කිරීම
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('report.grn.sales.overview') }}" target="_blank"
-                            class="nav-link text-white px-2 py-1">
-                            ඉතිරි වාර්තාව 1
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('report.grn.sales.overview2') }}" target="_blank"
-                            class="nav-link text-white px-2 py-1">
-                            ඉතිරි වාර්තාව 2
-                        </a>
-                    </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-target="#reportFilterModal9"
+                        class="nav-link text-white px-2 py-1 protected-link">
+                        වෙනස් කිරීම
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('report.grn.sales.overview') }}" target="_blank"
+                        class="nav-link text-white px-2 py-1 protected-link">
+                        ඉතිරි වාර්තාව 1
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('report.grn.sales.overview2') }}" target="_blank"
+                        class="nav-link text-white px-2 py-1 protected-link">
+                        ඉතිරි වාර්තාව 2
+                    </a>
+                </li>
 
-                    <li class="nav-item">
-                        <a href="#" class="nav-link text-white px-2 py-1" data-bs-toggle="modal"
-                            data-bs-target="#filterModal">
-                            විකුණුම් වාර්තාව
-                        </a>
-                    </li>
+                <li class="nav-item">
+                    <a href="#" data-bs-target="#filterModal"
+                        class="nav-link text-white px-2 py-1 protected-link">
+                        විකුණුම් වාර්තාව
+                    </a>
+                </li>
 
-                </ul>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+{{-- Password Modal --}}
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="passwordModalLabel">Enter Password</h5>
+            </div>
+            <div class="modal-body">
+                <input type="password" id="passwordInput" class="form-control" placeholder="Enter password">
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="unlockBtn" class="btn btn-success">Unlock</button>
             </div>
         </div>
-    </nav>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const protectedLinks = document.querySelectorAll(".protected-link");
+    let isUnlocked = false;
+
+    protectedLinks.forEach(link => {
+        // Store original target / href
+        const originalTarget = link.getAttribute("data-bs-target") || link.getAttribute("href");
+
+        // Remove default modal trigger
+        link.removeAttribute("data-bs-toggle");
+        link.removeAttribute("data-bs-target");
+
+        link.style.pointerEvents = "auto";
+        link.style.opacity = "0.5"; // faded initially
+
+        link.addEventListener("click", function(e) {
+            if (!isUnlocked) {
+                e.preventDefault();
+
+                // Show password modal
+                const passwordModal = new bootstrap.Modal(document.getElementById("passwordModal"));
+                passwordModal.show();
+
+                // Unlock button click
+                document.getElementById("unlockBtn").onclick = function() {
+                    const enteredPassword = document.getElementById("passwordInput").value;
+                    if (enteredPassword === "nethma123") {
+                        isUnlocked = true;
+                        protectedLinks.forEach(l => l.style.opacity = "1");
+
+                        passwordModal.hide();
+
+                        // Open the original modal or navigate
+                        if (originalTarget.startsWith("#")) {
+                            const targetModal = new bootstrap.Modal(document.querySelector(originalTarget));
+                            targetModal.show();
+                        } else {
+                            window.open(originalTarget, "_blank");
+                        }
+                    } else {
+                        alert("Incorrect password! Try again.");
+                    }
+                };
+            }
+        });
+    });
+});
+</script>
 
     <style>
         /* Custom CSS to push content up if fixed-bottom nav bar covers it */
