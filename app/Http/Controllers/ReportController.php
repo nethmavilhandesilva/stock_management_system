@@ -430,38 +430,95 @@ class ReportController extends Controller
         'reportData' => collect($reportData)
     ]);
 }
+public function downloadReport(Request $request, $reportType, $format)
+{
+    // Fetch report data
+    list($reportData, $headings, $reportTitle) = $this->getReportData($reportType, $request->all());
 
-    public function downloadReport(Request $request, $reportType, $format)
-    {
-        list($reportData, $headings, $reportTitle) = $this->getReportData($reportType, $request->all());
+    // ------------------ EXCEL ------------------
+    if ($format === 'excel') {
+        $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.xlsx';
+        return Excel::download(new DynamicReportExport($reportData, $headings), $filename);
+    }
 
-        if ($format === 'excel') {
-            $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.xlsx';
-            return Excel::download(new DynamicReportExport($reportData, $headings), $filename);
+    // ------------------ PDF ------------------
+    if ($format === 'pdf') {
+        $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
+
+        $fontDir = public_path('fonts');
+        $fontCache = storage_path('fonts/dompdf');
+
+        // Check and create the font cache directory
+        if (!file_exists($fontCache)) {
+            mkdir($fontCache, 0775, true);
         }
 
-        if ($format === 'pdf') {
-            $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
+        Log::info('PDF generation process started.', [
+            'fontDir' => $fontDir,
+            'fontCache' => $fontCache
+        ]);
+
+        try {
+            // Check if font files exist and are readable
+            $regularFont = $fontDir . '/NotoSansSinhala-Regular.ttf';
+            $boldFont    = $fontDir . '/NotoSansSinhala-Bold.ttf';
+
+            if (!file_exists($regularFont) || !is_readable($regularFont)) {
+                throw new \Exception("Regular Sinhala font file not found or is not readable: " . $regularFont);
+            }
+            if (!file_exists($boldFont) || !is_readable($boldFont)) {
+                throw new \Exception("Bold Sinhala font file not found or is not readable: " . $boldFont);
+            }
+
+            Log::info('Sinhala font files found and are readable.', [
+                'regularFont' => $regularFont,
+                'boldFont' => $boldFont
+            ]);
 
             $pdf = Pdf::loadView('reports.generic_report_pdf', compact('reportData', 'headings', 'reportTitle'))
                 ->setPaper('a4', 'portrait')
                 ->setOptions([
+                    'fontCache' => $fontCache,
                     'isHtml5ParserEnabled' => true,
                     'isRemoteEnabled' => true,
-                    'defaultFont' => 'NotoSansSinhala',
+                    'enable_font_subsetting' => false,
+                    'defaultFont' => 'NotoSansSinhala', // Set default font upfront
                 ]);
 
-            return $pdf->download($filename);
-        }
+            $dompdf = $pdf->getDomPDF();
+            $fontMetrics = $dompdf->getFontMetrics();
 
-        abort(404, 'Invalid report format.');
+            // Register the fonts
+            $fontMetrics->registerFont([
+                'family' => 'NotoSansSinhala',
+                'style'  => 'normal',
+                'weight' => 'normal',
+            ], $regularFont);
+
+            $fontMetrics->registerFont([
+                'family' => 'NotoSansSinhala',
+                'style'  => 'normal',
+                'weight' => 'bold',
+            ], $boldFont);
+
+            Log::info('Sinhala fonts registered with Dompdf successfully.');
+
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error("PDF generation failed: " . $e->getMessage(), [
+                'reportType' => $reportType,
+                'filename' => $filename,
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+            ]);
+
+            return back()->with('error', 'PDF generation failed: ' . $e->getMessage());
+        }
     }
 
-
-    /**
-     * This function fetches and formats the data for a given report type.
-     * You will need to customize this based on your report logic.
-     */
+    abort(404, 'Invalid report format.');
+}
     protected function getReportData($reportType, $filters = [])
     {
         $reportData = collect();

@@ -1,35 +1,48 @@
-{{-- In resources/views/reports/generic_report_pdf.blade.php --}}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>{{ $reportTitle ?? 'Report' }}</title>
+
     <style>
-        body { font-family: 'Sinhala', 'Helvetica Neue', 'Helvetica', Arial, sans-serif; font-size: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid black; padding: 5px; text-align: left; }
-        .text-end { text-align: right; }
+        /*
+         * The @font-face rules are removed here because they are handled
+         * directly by Dompdf's font registration in the controller.
+         * This avoids issues with relative paths during PDF generation.
+         */
+
+        body, table, th, td, h2, h4, p {
+            font-family: 'NotoSansSinhala', sans-serif;
+            font-size: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: left;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        h2, h4 {
+            text-align: center;
+            margin: 0;
+        }
     </style>
-   <style>
-    @font-face {
-        font-family: 'NotoSansSinhala';
-        src: url("{{ public_path('fonts/NotoSansSinhala-Regular.ttf') }}") format("truetype");
-        font-weight: normal;
-        font-style: normal;
-    }
-
-    body {
-        font-family: 'NotoSansSinhala', DejaVu Sans, sans-serif;
-        font-size: 12px;
-    }
-</style>
-
 </head>
 <body>
-    <h2 style="text-align: center;">TGK ට්‍රේඩර්ස්</h2>
-    <h4 style="text-align: center;">{{ $reportTitle ?? 'Report' }}</h4>
+    <h2>TGK ට්‍රේඩර්ස්</h2>
+    <h4>{{ $reportTitle ?? 'Report' }}</h4>
     <p>Report Date: {{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</p>
-    
+
     <table>
         <thead>
             <tr>

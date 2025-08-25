@@ -8,7 +8,7 @@ use App\Models\CustomersLoan;
 use App\Models\IncomeExpenses; // This is the correct model name
 use Carbon\Carbon;
 use App\Models\GrnEntry;
-use Illuminate\Support\Facades\DB;
+use App\Models\Setting;
 
 
 class CustomersLoanController extends Controller
@@ -20,38 +20,44 @@ class CustomersLoanController extends Controller
      * @return \Illuminate\View\View
      */
     public function index(Request $request)
-    {
-        // Fetch all customers for the dropdown/search
-        $customers = Customer::all();
+{
+    // Fetch all customers for the dropdown/search
+    $customers = Customer::all();
 
-        // Fetch distinct codes from GrnEntry for the wasted dropdown
-        $grnCodes = GrnEntry::distinct()->pluck('code');
+    // Fetch distinct codes from GrnEntry for the wasted dropdown
+    $grnCodes = GrnEntry::distinct()->pluck('code');
 
-        // Start the query to fetch loans with related customers, ordered by latest
-        $query = IncomeExpenses::with('customer');
+    // Get the date from Setting model or use today as fallback
+    $settingDate = Setting::value('value') ?? now()->toDateString();
 
-        // If a filter_customer query param exists and is not empty, filter the loans by that customer
-        if ($request->filled('filter_customer')) {
-            $query->where('customer_id', $request->filter_customer);
-        }
+    // Start the query to fetch loans with related customers
+    $query = IncomeExpenses::with('customer');
 
-        // Execute the query to get the loans
-        $loans = $query->orderBy('created_at', 'desc')->get();
-
-        // Return the view with customers and filtered loans, and the GRN codes
-        return view('dashboard.customers_loans.index', compact('customers', 'loans', 'grnCodes'));
+    // Apply customer filter if provided
+    if ($request->filled('filter_customer')) {
+        $query->where('customer_id', $request->filter_customer);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     * This method has been updated to link the CustomersLoan and IncomeExpenses records.
-     * We first save the CustomersLoan, then use its ID to link to IncomeExpenses.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function store(Request $request)
+    // Only show records where Date column equals $settingDate
+    $query->whereDate('Date', $settingDate);
+
+    // Execute the query
+    $loans = $query->orderBy('created_at', 'desc')->get();
+
+    // Return the view
+    return view('dashboard.customers_loans.index', compact('customers', 'loans', 'grnCodes'));
+}
+
+
+   
+     public function store(Request $request)
     {
+        // Get the date from the Setting model or use the current date as a fallback
+        $settingDate = Setting::value('value');
+        if (!$settingDate) {
+            $settingDate = now()->toDateString();
+        }
+
         // Base validation rules
         $rules = [
             'loan_type' => 'required|string|in:old,today,ingoing,outgoing,grn_damage',
@@ -78,31 +84,31 @@ class CustomersLoanController extends Controller
             $rules['bank'] = 'nullable';
             $rules['cheque_date'] = 'nullable';
         } elseif ($request->input('loan_type') === 'grn_damage') {
-             $rules['wasted_code'] = 'required|string';
-             $rules['wasted_packs'] = 'required|numeric';
-             $rules['wasted_weight'] = 'required|numeric';
-             $rules['amount'] = 'nullable';
-             $rules['customer_id'] = 'nullable';
-             $rules['settling_way'] = 'nullable';
-             $rules['bill_no'] = 'nullable';
-             $rules['cheque_no'] = 'nullable';
-             $rules['bank'] = 'nullable';
-             $rules['cheque_date'] = 'nullable';
-             $rules['description'] = 'nullable|string|max:255';
+            $rules['wasted_code'] = 'required|string';
+            $rules['wasted_packs'] = 'required|numeric';
+            $rules['wasted_weight'] = 'required|numeric';
+            $rules['amount'] = 'nullable';
+            $rules['customer_id'] = 'nullable';
+            $rules['settling_way'] = 'nullable';
+            $rules['bill_no'] = 'nullable';
+            $rules['cheque_no'] = 'nullable';
+            $rules['bank'] = 'nullable';
+            $rules['cheque_date'] = 'nullable';
+            $rules['description'] = 'nullable|string|max:255';
         } else {
-             $rules['amount'] = 'required|numeric|min:0.01';
-             $rules['customer_id'] = 'required|exists:customers,id';
-             if ($request->input('settling_way') === 'cheque') {
-                 $rules['cheque_no'] = 'required|string|max:255';
-                 $rules['bank'] = 'required|string|max:255';
-                 $rules['cheque_date'] = 'required|date';
-                 $rules['bill_no'] = 'nullable';
-             } else {
-                 $rules['bill_no'] = 'nullable|string|max:255';
-                 $rules['cheque_no'] = 'nullable';
-                 $rules['bank'] = 'nullable';
-                 $rules['cheque_date'] = 'nullable';
-             }
+            $rules['amount'] = 'required|numeric|min:0.01';
+            $rules['customer_id'] = 'required|exists:customers,id';
+            if ($request->input('settling_way') === 'cheque') {
+                $rules['cheque_no'] = 'required|string|max:255';
+                $rules['bank'] = 'required|string|max:255';
+                $rules['cheque_date'] = 'required|date';
+                $rules['bill_no'] = 'nullable';
+            } else {
+                $rules['bill_no'] = 'nullable|string|max:255';
+                $rules['cheque_no'] = 'nullable';
+                $rules['bank'] = 'nullable';
+                $rules['cheque_date'] = 'nullable';
+            }
         }
         $validated = $request->validate($rules);
         $customerShortName = null;
@@ -127,6 +133,7 @@ class CustomersLoanController extends Controller
             $loan->cheque_no = $validated['cheque_no'] ?? null;
             $loan->bank = $validated['bank'] ?? null;
             $loan->cheque_date = $validated['cheque_date'] ?? null;
+            $loan->date = $settingDate; // Add date to CustomersLoan table
 
             if ($validated['loan_type'] === 'grn_damage') {
                 $loan->grn_code = $validated['wasted_code'];
@@ -149,6 +156,7 @@ class CustomersLoanController extends Controller
         $incomeExpense->cheque_date = $validated['cheque_date'] ?? null;
         $incomeExpense->settling_way = $validated['settling_way'] ?? null;
         $incomeExpense->customer_short_name = $customerShortName;
+        $incomeExpense->date = $settingDate; // Add date to IncomeExpenses table
 
         if ($validated['loan_type'] === 'ingoing') {
             $incomeExpense->amount = $validated['amount'];
@@ -172,16 +180,7 @@ class CustomersLoanController extends Controller
 
         return redirect()->route('customers-loans.index')->with('success', 'Loan and income/expense record created successfully!');
     }
-
-    /**
-     * Update the specified resource in storage.
-     * This method has been updated to find the correct records using the loan ID
-     * and update them in both tables.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
+ 
     public function update(Request $request, $id)
     {
         // Base validation rules
@@ -295,34 +294,23 @@ class CustomersLoanController extends Controller
         return response()->json(['message' => 'Loan record updated successfully!']);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     * This method is now updated to use the loan ID to ensure the correct records are deleted.
-     *
-     * @param CustomersLoan $loan
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function destroy(CustomersLoan $loan)
-    {
-        try {
-            // Find and delete the corresponding IncomeExpenses record using the loan_id
-            IncomeExpenses::where('loan_id', $loan->id)->delete();
-            
-            // Now, delete the CustomersLoan record itself.
-            $loan->delete();
-            
-            return redirect()->back()->with('success', 'Loan and associated income/expense record deleted successfully!');
-        } catch (\Exception $e) {
-            return redirect()->back()->withErrors('Failed to delete loan: ' . $e->getMessage());
-        }
-    }
+    
+  public function destroy(CustomersLoan $loan)
+{
+    try {
+        // Delete related income/expense(s)
+        $loan->incomeExpenses()->delete();
 
-    /**
-     * Get the total loan amount for a given customer.
-     *
-     * @param int $customerId
-     * @return \Illuminate\Http\JsonResponse
-     */
+        // Delete loan
+        $loan->delete();
+
+        return redirect()->back()->with('success', 'Loan and associated income/expense record deleted successfully!');
+    } catch (\Exception $e) {
+        return redirect()->back()->withErrors('Failed to delete loan: ' . $e->getMessage());
+    }
+}
+
+  
     public function getTotalLoanAmount($customerId)
     {
         $oldSum = CustomersLoan::where('customer_id', $customerId)
@@ -339,27 +327,42 @@ class CustomersLoanController extends Controller
         return response()->json(['total_amount' => $totalAmount]);
     }
 
-    /**
-     * Show loan report results.
-     *
-     * @param Request $request
-     * @return \Illuminate\View\View
-     */
-    public function loanReportResults(Request $request)
+   
+   public function loanReportResults(Request $request)
     {
+        // Get the date from the Setting model or use the current date as a fallback
+        $settingDate = Setting::value('value');
+        if (!$settingDate) {
+            $settingDate = now()->toDateString();
+        }
+
         $query = CustomersLoan::query();
+
+        // Apply customer filter if it's filled
         if ($request->filled('customer_short_name')) {
             $query->where('customer_short_name', $request->customer_short_name);
         }
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
+
+        // Conditionally apply date filtering
+        if ($request->filled('start_date') || $request->filled('end_date')) {
+            // Apply date range filter if start_date and/or end_date are provided
+            if ($request->filled('start_date')) {
+                $query->whereDate('Date', '>=', $request->start_date);
+            }
+            if ($request->filled('end_date')) {
+                $query->whereDate('Date', '<=', $request->end_date);
+            }
+        } else {
+            // If no date range is selected, filter by the specific date from the setting
+            $query->whereDate('Date', $settingDate);
         }
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
-        $loans = $query->orderBy('created_at', 'desc')->get();
+
+        // Get the results, ordered by created_at in descending order
+        $loans = $query->orderBy('Date', 'desc')->get();
+
         return view('dashboard.reports.loan-results', compact('loans'));
     }
+
 
     /**
      * Show loan report.

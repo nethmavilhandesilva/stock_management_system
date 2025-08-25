@@ -22,6 +22,7 @@ class IncomeExpenses extends Model
         'customer_short_name',
         'unique_code',
         'user_id',
+        'Date',
     ];
 
     public function customer()

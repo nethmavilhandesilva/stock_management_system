@@ -23,7 +23,7 @@
                             @endphp
                             @foreach($items as $item)
                                 <option value="{{ $item->no }}" data-supplier-code="{{ $item->supplier_code ?? '' }}">
-                                    {{ $item->no }}
+                                    {{ $item->no }}-  {{ $item->type }}
                                 </option>
                             @endforeach
                         </select>

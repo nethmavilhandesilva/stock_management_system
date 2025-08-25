@@ -114,7 +114,7 @@
         <div class="card custom-card shadow border-0 rounded-3 p-4">
             <div class="report-title-bar">
                 <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
-                <h4 class="fw-bold text-white">📦 අයිතමය අනුව වාර්තාව</h4>
+                <h4 class="fw-bold text-white">ණය වාර්තාව</h4>
                @php
     $settingDate = \App\Models\Setting::value('value');
 @endphp
