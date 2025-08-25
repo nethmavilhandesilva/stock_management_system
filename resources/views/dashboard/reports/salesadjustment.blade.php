@@ -64,7 +64,13 @@
                     <h4 class="fw-bold text-white">📦 වෙනස් කිරීම</h4>
                 </div>
                 <div>
-                    <span class="right-info">{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span><br>
+                   @php
+    $settingDate = \App\Models\Setting::value('value');
+@endphp
+
+<span class="right-info">
+    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
+</span>
                     <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
                 </div>
             </div>

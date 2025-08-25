@@ -30,7 +30,13 @@
             <div class="report-title-bar">
                 <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
                 <h4 class="fw-bold text-white">📦 විකිුණුම්/බර මත්තෙහි ඉතිරි වාර්තාව</h4>
-                <span class="right-info">{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
+                            @php
+    $settingDate = \App\Models\Setting::value('value');
+@endphp
+
+<span class="right-info">
+    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
+</span>
                 <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
             </div>
         </div>

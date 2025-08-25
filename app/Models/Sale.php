@@ -34,7 +34,8 @@ class Sale extends Model
         'UniqueCode',
         'PerKGPrice',
         'PerKGTotal',
-        'SellingKGTotal'
+        'SellingKGTotal',
+        'Date',
 
     ];
 
