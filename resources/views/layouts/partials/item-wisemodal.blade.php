@@ -45,11 +45,15 @@
                 </div>
 
                 <div class="modal-footer">
+                     <a href="{{ route('report.email.daily') }}" class="btn btn-info">
+            📧 Daily Email Report
+        </a>
                     <button type="submit" class="btn btn-primary w-100">වාර්තාව ලබාගන්න</button>
                 </div>
             </div>
         </form>
     </div>
+    
 </div>
 
 <script>

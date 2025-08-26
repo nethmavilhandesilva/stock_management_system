@@ -36,6 +36,9 @@
                 </div>
 
                 <div class="modal-footer" style="border-top: 1px solid #dee2e6;">
+                      <a href="{{ route('report.changes.email') }}" class="btn btn-info">
+                      📧 Daily Email Report
+                      </a>
                     <button type="submit" class="btn btn-primary w-100">
                         ඉදිරිපත් කරන්න (Submit)
                     </button>

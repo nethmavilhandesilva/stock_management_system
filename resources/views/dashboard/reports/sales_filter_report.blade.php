@@ -298,5 +298,8 @@
             }
         }
     </style>
+    <a href="{{ route('report.total_sales.email') }}" class="btn btn-primary me-2">
+    📧 Email Report
+</a>
 
 @endsection

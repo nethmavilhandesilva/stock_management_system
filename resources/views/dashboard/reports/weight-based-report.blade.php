@@ -163,19 +163,7 @@
                 <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
             </div>
 
-            {{-- Display selected GRN Code and Date Range --}}
-            <div class="mb-3 text-white">
-                <strong>තෝරාගත් GRN කේතය:</strong> {{ $selectedGrnCode }}
-
-
-                @if($startDate && $endDate)
-                    <span class="ms-3"><strong>දිනයන්:</strong> {{ $startDate }} සිට {{ $endDate }} දක්වා</span>
-                @elseif($startDate)
-                    <span class="ms-3"><strong>ආරම්භ දිනය:</strong> {{ $startDate }}</span>
-                @elseif($endDate)
-                    <span class="ms-3"><strong>අවසන් දිනය:</strong> {{ $endDate }}</span>
-                @endif
-            </div>
+        
             <table class="table table-sm table-bordered table-striped compact-table">
                 <thead>
                     <tr>
@@ -244,6 +232,15 @@
                 @endforeach
                 <button type="submit" class="btn btn-danger">Download PDF</button>
             </form>
+          
         </div>
+        <div class="container mt-4">
+    <div class="mt-3">
+        {{-- New button to send the daily report --}}
+        <a href="{{ route('report.email.daily') }}" class="btn btn-info">
+            📧 Daily Email Report
+        </a>
+    </div>
+</div>
     </div>
 @endsection

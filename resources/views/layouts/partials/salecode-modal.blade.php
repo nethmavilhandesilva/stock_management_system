@@ -56,6 +56,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary w-100">වාර්තාව ලබාගන්න</button>
+                       <a href="{{ route('report.email.grn-sales') }}" class="btn btn-info">
+            📧 Daily Email Report
+        </a>
                 </div>
             </div>
         </form>

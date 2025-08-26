@@ -109,4 +109,15 @@ Route::get('/get-customer-code', function () {
     ]);
 });
 Route::get('/api/next-bill-no', [BillController::class, 'getNextBillNo']);
+//Emails
+Route::get('/email-report-daily', [ReportController::class, 'sendDailyReport'])->name('report.email.daily');
+Route::post('/send-changes-report', [ReportController::class, 'emailChangesReport'])->name('report.changes.email');
+Route::get('/send-total-sales-report', [ReportController::class, 'emailTotalSalesReport'])->name('report.total_sales.email');
+Route::get('/send-bill-summary-report', [ReportController::class, 'emailBillSummaryReport'])->name('report.bill_summary.email');
+Route::get('/send-credit-report', [ReportController::class, 'emailCreditReport'])->name('report.credit.email');
+Route::post('/send-item-wise-report', [ReportController::class, 'emailItemWiseReport'])->name('report.itemwise.email');
+Route::get('/email-grn-sales-report', [ReportController::class, 'emailGrnSalesReport'])->name('report.email.grn-sales');
+Route::post('/email-supplier-sales-report', [ReportController::class, 'emailSupplierSalesReport'])->name('report.email.supplier-sales');
+Route::post('/email-overview-report', [ReportController::class, 'emailOverviewReport'])->name('report.email.overview-report');
+Route::get('/sales/report', [ReportController::class, 'salesfinalReport'])->name('sales.report');
 require __DIR__.'/auth.php';

@@ -188,6 +188,8 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                 <input type="password" id="passwordInput" class="form-control" placeholder="Enter password">
             </div>
             <div class="modal-footer">
+                {{-- Exit button added here --}}
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Exit</button>
                 <button type="button" id="unlockBtn" class="btn btn-success">Unlock</button>
             </div>
         </div>
@@ -198,6 +200,21 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
 document.addEventListener("DOMContentLoaded", function () {
     const protectedLinks = document.querySelectorAll(".protected-link");
     let isUnlocked = false;
+
+    // Get a reference to the password modal and a new instance
+    const passwordModalElement = document.getElementById("passwordModal");
+    const passwordModal = new bootstrap.Modal(passwordModalElement);
+
+    // Listen for when the password modal is hidden
+    passwordModalElement.addEventListener('hidden.bs.modal', function () {
+        // This function will execute when the password modal is fully closed.
+        // It helps to clean up the page state.
+        document.body.classList.remove('modal-open');
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    });
 
     protectedLinks.forEach(link => {
         // Store original target / href
@@ -215,7 +232,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 e.preventDefault();
 
                 // Show password modal
-                const passwordModal = new bootstrap.Modal(document.getElementById("passwordModal"));
                 passwordModal.show();
 
                 // Unlock button click
@@ -243,7 +259,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
-
     <style>
         /* Custom CSS to push content up if fixed-bottom nav bar covers it */
         body {
@@ -1027,7 +1042,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                         placeholder="බර (kg)" required
                                         style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
                                     <small id="remaining_weight_display" class="form-text text-danger fw-bold"
-                                        style="font-size: 0.85rem;">
+                                        style="font-size: 1.3rem;">
                                         BW: 0.00 kg
                                     </small>
                                 </div>
@@ -1045,7 +1060,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                         placeholder="ඇසුරුම් (Packs)" required
                                         style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
                                     <small id="remaining_packs_display" class="form-text text-danger fw-bold"
-                                        style="font-size: 0.85rem;">
+                                        style="font-size: 1.3rem;">
                                         BP: 0
                                     </small>
                                 </div>
@@ -2071,131 +2086,109 @@ document.addEventListener("DOMContentLoaded", function () {
                 calculateTotal(); // Initial calculation on page load
 
                 $(document).ready(function () {
-                    // Initialize Select2 for GRN with custom templateResult and templateSelection
-                    $('#grn_select').select2({
-                        dropdownParent: $('#grn_select').parent(),
-                        placeholder: "-- Select GRN Entry --",
-                        width: '100%',
-                        allowClear: true,
-                        minimumResultsForSearch: 0, // Set to 0 to enable search but still use templateResult
-                        templateResult: function (data, container) {
-                            // If it's the placeholder, loading message, or has no ID, just return the text
-                            if (data.loading || !data.id) {
-                                return data.text;
-                            }
+                 // Initialize Select2 for GRN with custom templateResult and templateSelection
+$('#grn_select').select2({
+    dropdownParent: $('#grn_select').parent(),
+    placeholder: "-- Select GRN Entry --",
+    width: '100%',
+    allowClear: true,
+    minimumResultsForSearch: 0, // Set to 0 to enable search but still use templateResult
+    templateResult: function (data, container) {
+        // If it's the placeholder, loading message, or has no ID, just return the text
+        if (data.loading || !data.id) {
+            return data.text;
+        }
 
-                            // Get the raw option element to access data-attributes
-                            const option = $(data.element);
+        // Get the raw option element to access data-attributes
+        const option = $(data.element);
 
-                            // Extract data from data-attributes
-                            const code = option.data('code');
-                            const supplierCode = option.data('supplierCode');
-                            const itemCode = option.data('itemCode');
-                            const itemName = option.data('itemName');
-                            const packs = option.data('packs');
-                            const grnNo = option.data('grnNo');
-                            const weight = option.data('weight');
-                            const originalWeight = option.data('originalWeight');
-                            const originalPacks = option.data('originalPacks');
+        // Extract data from data-attributes
+        const code = option.data('code');
+        const itemName = option.data('itemName');
+        const packs = option.data('packs');
+        const weight = option.data('weight');
+        const originalWeight = option.data('originalWeight');
+        const originalPacks = option.data('originalPacks');
+        const txnDate = option.data('txnDate');
 
-                            const txnDate = option.data('txnDate');
-                            let formattedDate = '';
-if (txnDate) {
-    const d = new Date(txnDate);
-    if (!isNaN(d)) {
-        // Get month (0-based so +1) and day
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        formattedDate = `${month}-${day}`;
+        let formattedDate = '';
+        if (txnDate) {
+            const d = new Date(txnDate);
+            if (!isNaN(d)) {
+                // Get month (0-based so +1) and day
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                formattedDate = `${month}-${day}`;
+            }
+        }
+
+        const $result = $(`
+            <div class="grn-option-row">
+                <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
+                <div class="grn-column grn-item">${itemName || ''}</div>
+                <div class="grn-column grn-ow">${originalWeight || ''}</div>
+                <div class="grn-column grn-op">${originalPacks || ''}</div>
+                <div class="grn-column grn-bw">${weight || ''}</div>
+                <div class="grn-column grn-bp">${packs || 0}</div>
+                <div class="grn-column grn-txn-date">${formattedDate}</div>
+            </div>
+        `);
+
+        return $result;
+    },
+    templateSelection: function (data) {
+        if (!data.id) {
+            return data.text;
+        }
+        const option = $(data.element);
+        const code = option.data('code');
+        const originalWeight = option.data('originalWeight');
+        const originalPacks = option.data('originalPacks');
+        const txnDate = option.data('txnDate');
+
+        var $selection = $('<span></span>');
+        $selection.addClass('select2-black-text');
+        $selection.css('text-align', 'center');
+
+        $selection.html(`${code || ''}(කිලෝ,: ${originalWeight || 0} /මලු: ${originalPacks || ''} /දිනය: ${txnDate || ''})`);
+
+        return $selection;
     }
-}
-
-
-                            const $result = $(`
-<div class="grn-option-row">
-    <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
-    <div class="grn-column grn-item">${itemName || ''}</div>
-    <div class="grn-column grn-ow">${originalWeight || ''}</div>
-    <div class="grn-column grn-op">${originalPacks || ''}</div>
-    <div class="grn-column grn-bw">${weight || ''}</div>
-    <div class="grn-column grn-bp">${packs || 0}</div>
-    <div class="grn-column grn-txn-date">${formattedDate}</div>
-</div>
-                                                                                                                            `);
-
-                            return $result;
-                        },
-                        templateSelection: function (data) {
-                            if (!data.id) {
-                                return data.text;
-                            }
-                            const option = $(data.element);
-                            const code = option.data('code');
-                            const supplierCode = option.data('supplierCode');
-                            const itemCode = option.data('itemCode');
-                            const itemName = option.data('itemName');
-                            const packs = option.data('packs');
-                            const grnNo = option.data('grnNo');
-                            const weight = option.data('weight');
-                            const txnDate = option.data('txnDate');
-                            const originalWeight = option.data('originalWeight');
-                            const originalPacks = option.data('originalPacks');
-
-                            var $selection = $('<span></span>');
-                            $selection.addClass('select2-black-text');
-                            $selection.css('text-align', 'center');
-
-                            $selection.html(`${code || ''}(කිලෝ,: ${originalWeight || 0} /මලු: ${originalPacks || ''} /දිනය: ${txnDate || ''})         `);
-
-                            return $selection;
-                        }
-                    });
-                    // Listen for when the Select2 dropdown is opened
-$('#grn_select').on('select2:open', function() {
-    // Find the search input element created by Select2
-    const searchInput = $('.select2-search__field');
-    
-    // Add an event listener to this search input
-    searchInput.on('input', function() {
-        // Convert the typed value to uppercase and update the input field
-        this.value = this.value.toUpperCase();
-    });
 });
 
-                    // Add an event listener for when the Select2 dropdown opens
-                    $('#grn_select').on('select2:open', function () {
-                        console.log("Select2 dropdown opened. Attempting to add header...");
-                        const $dropdown = $('.select2-dropdown');
-                        const $resultsContainer = $dropdown.find('.select2-results__options');
+// Listen for when the Select2 dropdown is opened to add the header and handle search input
+$('#grn_select').on('select2:open', function () {
+    const $dropdown = $('.select2-dropdown');
+    
+    // Add an event listener to the search input to convert to uppercase
+    const searchInput = $dropdown.find('.select2-search__field');
+    searchInput.on('input', function() {
+        this.value = this.value.toUpperCase();
+    });
 
-                        if ($dropdown.find('.grn-header-row-wrapper').length === 0) {
-                            console.log("Header not found, creating and prepending.");
+    // Check if the header already exists before adding it
+    if ($dropdown.find('.grn-header-row').length === 0) {
+        console.log("Header not found, creating and prepending.");
 
-                            const $headerWrapper = $(`
-                                                                                                                                    <div class="grn-header-row">
-    <div class="grn-column grn-code">Code</div>
-    <div class="grn-column grn-item">Item</div>
-    <div class="grn-column grn-ow">OW</div>
-    <div class="grn-column grn-op">OP</div>
-    <div class="grn-column grn-bw">BW</div>
-    <div class="grn-column grn-bp">BP</div>
-    <div class="grn-column grn-txn-date">Date</div>
-</div>
-                                                                                                                                    `);
+        const $header = $(`
+            <div class="grn-header-row">
+                <div class="grn-column grn-code">Code</div>
+                <div class="grn-column grn-item">Item</div>
+                <div class="grn-column grn-ow">OW</div>
+                <div class="grn-column grn-op">OP</div>
+                <div class="grn-column grn-bw">BW</div>
+                <div class="grn-column grn-bp">BP</div>
+                <div class="grn-column grn-txn-date">Date</div>
+            </div>
+        `);
 
-                            // Prepend the header wrapper to the .select2-results element
-                            // This puts it before the <ul> which contains the actual options
-                            $dropdown.find('.select2-results').prepend($headerWrapper);
-
-                            // Add a class to the results options UL to give it padding at the top,
-                            // so options don't hide behind the sticky header.
-
-
-                        } else {
-                            console.log("Header already exists, not re-adding."); // Debugging log
-                        }
-                    });
-
+        // Prepend the header to the results container before the options list
+        const $resultsContainer = $dropdown.find('.select2-results');
+        $resultsContainer.prepend($header);
+    } else {
+        console.log("Header already exists, not re-adding.");
+    }
+});
 
                     $('#customer_code_select').select2({
                         dropdownParent: $('#customer_code_select').parent(),

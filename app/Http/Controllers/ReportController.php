@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomersLoan;
 use App\Models\IncomeExpenses;
 use App\Models\SalesHistory;
 use Illuminate\Http\Request;
@@ -15,6 +16,18 @@ use App\Exports\DynamicReportExport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Salesadjustment;
+use App\Mail\DailyReportMail;
+use Illuminate\Support\Facades\Mail;
+use App\Models\Setting;
+use App\Mail\ChangeReportMail;
+use App\Mail\TotalSalesReportMail;
+use App\Mail\BillSummaryReportMail;
+use App\Mail\CreditReportMail;
+use App\Mail\ItemWiseReportMail;
+use App\Mail\GrnSalesReportMail;
+use App\Mail\SupplierSalesReportMail;
+use App\Mail\GrnSalesOverviewMail;
+use App\Mail\SalesReportMail;
 
 
 class ReportController extends Controller
@@ -366,8 +379,6 @@ class ReportController extends Controller
         'reportData' => collect($reportData)
     ]);
 }
-
-
 
    public function getGrnSalesOverviewReport2()
 {
@@ -870,9 +881,315 @@ public function grnReport(Request $request)
         'reportData' => collect($reportData)
     ]);
 }
+    public function sendDailyReport()
+{
+    // Fetch your data here
+    $sales = Sale::select('item_code', 'item_name', 'packs', 'weight', 'total')->get();
 
+    // The data you want to pass to the email view
+    $reportData = [
+        'sales' => $sales,
+        'settingDate' => now()->format('Y-m-d')
+    ];
 
+    // Send the email
+    Mail::to('nethmavilhan@gmail.com')->send(new DailyReportMail($reportData));
 
+    return "Daily report email sent successfully!";
+}
+public function emailChangesReport()
+{
+    // Fetch the data. You need to get the same data as your web report.
+    $entries = Sale::orderBy('created_at', 'desc')->get();
+
+    Mail::to('nethmavilhan@gmail.com')->send(new ChangeReportMail($entries->groupBy('code')));
+
+    return redirect()->back()->with('success', 'Changes report email sent successfully!');
+}
+public function emailTotalSalesReport()
+{
+    // Fetch the same data you would for your web report.
+    $sales = Sale::all(); // Or your filtered query
+    $grandTotal = $sales->sum('total');
+
+    // Send the email
+    Mail::to('nethmavilhan@gmail.com')->send(new TotalSalesReportMail($sales, $grandTotal));
+
+    // Redirect back with a success message
+    return redirect()->back()->with('success', 'Total sales report email sent successfully!');
+}
+  public function emailBillSummaryReport(Request $request)
+    {
+        // Start with the base query, exactly as in your salesReport method
+        $query = Sale::query()->whereNotNull('bill_no')->where('bill_no', '<>', '');
+
+        // Apply all the same filters from the salesReport method
+        if ($request->filled('supplier_code')) {
+            $query->where('supplier_code', $request->supplier_code);
+        }
+
+        if ($request->filled('item_code')) {
+            $query->where('item_code', $request->item_code);
+        }
+
+        if ($request->filled('customer_short_name')) {
+            $search = $request->customer_short_name;
+            $query->where(function ($q) use ($search) {
+                $q->where('customer_code', 'like', '%' . $search . '%')
+                  ->orWhereIn('customer_code', function ($sub) use ($search) {
+                      $sub->select('short_name')
+                          ->from('customers')
+                          ->where('name', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+
+        if ($request->filled('customer_code')) {
+            $query->where('customer_code', $request->customer_code);
+        }
+
+        if ($request->filled('bill_no')) {
+            $query->where('bill_no', $request->bill_no);
+        }
+
+        // Fetch the filtered sales data and group it by bill number
+        $salesByBill = $query->get()->groupBy('bill_no');
+
+        // Calculate the grand total
+        $grandTotal = $salesByBill->sum(function ($sales) {
+            return $sales->sum('total');
+        });
+
+        // Send the email with the filtered data
+        Mail::to('nethmavilhan@gmail.com')->send(new BillSummaryReportMail($salesByBill, $grandTotal));
+
+        // Redirect back with a success message
+        return redirect()->back()->with('success', 'Bill summary report email sent successfully!');
+    }
+     public function emailCreditReport(Request $request)
+        {
+            // Fetch loans. You can add filtering logic here if your original report page has filters.
+            // For now, it fetches all loans as the original Blade file does not show filtering.
+            $loans = CustomersLoan::query()->get();
+
+            // Calculate totals, replicating the logic from your Blade file
+            $receivedTotal = 0;
+            $paidTotal = 0;
+            foreach ($loans as $loan) {
+                if ($loan->description === 'වෙළෙන්දාගේ ලාද පරණ නය') {
+                    $receivedTotal += $loan->amount;
+                } elseif ($loan->description === 'වෙළෙන්දාගේ අද දින නය ගැනීම') {
+                    $paidTotal += $loan->amount;
+                }
+            }
+
+            $netBalance = $paidTotal - $receivedTotal;
+
+            // Send the email with the filtered data and calculated totals
+            Mail::to('nethmavilhan@gmail.com')->send(new CreditReportMail($loans, $receivedTotal, $paidTotal, $netBalance));
+
+            // Redirect back with a success message
+            return redirect()->back()->with('success', 'Credit report email sent successfully!');
+        }
+         public function emailItemWiseReport(Request $request)
+    {
+        // This method is designed to be triggered by a POST request from a form.
+        // The "MethodNotAllowed" error indicates that the frontend is trying to use a GET request.
+        // Make sure the "Email" button is inside a <form> with method="POST" and its action
+        // attribute set to the correct route for this method.
+
+        // Start with the base query, replicating the logic from your itemWiseReport method
+        $query = Sale::query();
+
+        // Apply any filters from the request to the query
+        if ($request->filled('item_code')) {
+            $query->where('item_code', $request->item_code);
+        }
+        
+        $sales = $query->get();
+
+        // Calculate totals
+        $total_packs = $sales->sum('packs');
+        $total_weight = $sales->sum('weight');
+        $total_amount = $sales->sum('total');
+
+        // Send the email with the filtered data and calculated totals
+        Mail::to('nethmavilhan@gmail.com')->send(new ItemWiseReportMail($sales, $total_packs, $total_weight, $total_amount));
+
+        // Redirect back with a success message
+        return redirect()->back()->with('success', 'Item-wise report email sent successfully!');
+    }
+   public function emailGrnSalesReport(Request $request)
+{
+    // Fetch all sales as there are no filters
+    $sales = Sale::all();
+
+    // Calculate totals
+    $total_packs = $sales->sum('packs');
+    $total_weight = $sales->sum('weight');
+    $total_amount = $sales->sum('total');
+    
+    // Send the email with the data
+    Mail::to('nethmavilhan@gmail.com')->send(new GrnSalesReportMail($sales, $total_packs, $total_weight, $total_amount));
+
+    // Redirect back with a success message
+    return back()->with('success', 'GRN sales report email sent successfully!');
+}
+public function emailSupplierSalesReport(Request $request)
+{
+    // Fetch all GRN entries
+    $grnEntries = GrnEntry::all();
+    $reportData = [];
+
+    foreach ($grnEntries->groupBy('code') as $code => $entries) {
+        // --- GRN Totals ---
+        $totalOriginalPacks = $entries->sum('original_packs');
+        $totalOriginalWeight = $entries->sum('original_weight');
+
+        $remainingPacks = $entries->sum('packs');
+        $remainingWeight = $entries->sum('weight');
+
+        // --- Sold quantities ---
+        $totalSoldPacks = $totalOriginalPacks - $remainingPacks;
+        $totalSoldWeight = $totalOriginalWeight - $remainingWeight;
+
+        // --- Total sales value ---
+        $currentSales = Sale::where('code', $code)->get();
+        $historicalSales = SalesHistory::where('code', $code)->get();
+        $relatedSales = $currentSales->merge($historicalSales);
+        $totalSalesValueForGrn = $relatedSales->sum('total');
+
+        $reportData[] = [
+            'grn_code' => $code,
+            'item_name' => $entries->first()->item_name,
+            'original_packs' => $totalOriginalPacks,
+            'original_weight' => $totalOriginalWeight,
+            'sold_packs' => $totalSoldPacks,
+            'sold_weight' => $totalSoldWeight,
+            'total_sales_value' => $totalSalesValueForGrn,
+            'remaining_packs' => $remainingPacks,
+            'remaining_weight' => $remainingWeight,
+        ];
+    }
+    
+    // Send the email with the collected data
+    Mail::to('nethmavilhan@gmail.com')->send(new SupplierSalesReportMail(collect($reportData)));
+
+    return back()->with('success', 'Supplier sales report email sent successfully!');
+}
+// Example method to get report data (adjust based on your logic)
+private function getSupplierReportData()
+{
+  
+    $reportData = []; // Replace with your actual data fetching logic.
+    return $reportData;
+}
+public function emailOverviewReport(Request $request)
+{
+    // Fetch all GRN entries
+    $grnEntries = GrnEntry::all();
+    $reportData = [];
+
+    // Group by item_name
+    $grouped = $grnEntries->groupBy('item_name');
+
+    foreach ($grouped as $itemName => $entries) {
+        $originalPacks = 0;
+        $originalWeight = 0;
+        $soldPacks = 0;
+        $soldWeight = 0;
+        $remainingPacks = 0;
+        $remainingWeight = 0;
+
+        foreach ($entries as $grnEntry) {
+            // Fetch current and historical sales for this GRN code
+            $currentSales = Sale::where('code', $grnEntry->code)->get();
+            $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
+            $relatedSales = $currentSales->merge($historicalSales);
+
+            // Sum original packs and weight
+            $originalPacks += $grnEntry->original_packs;
+            $originalWeight += $grnEntry->original_weight;
+
+            // Sum sold packs and weight
+            $soldPacks += $grnEntry->original_packs - $grnEntry->packs;
+            $soldWeight += $grnEntry->original_weight - $grnEntry->weight;
+
+            // Sum remaining packs and weight (direct from GRN entry)
+            $remainingPacks += $grnEntry->packs;
+            $remainingWeight += $grnEntry->weight;
+        }
+
+        $reportData[] = [
+            'item_name' => $itemName,
+            'original_packs' => $originalPacks,
+            'original_weight' => $originalWeight,
+            'sold_packs' => $soldPacks,
+            'sold_weight' => $soldWeight,
+            'remaining_packs' => $remainingPacks,
+            'remaining_weight' => $remainingWeight,
+        ];
+    }
+    
+    // Send the email with the collected data
+    Mail::to('nethmavilhan@gmail.com')->send(new GrnSalesOverviewMail(collect($reportData)));
+
+    return back()->with('success', 'Overview report email sent successfully!');
+}
+ public function salesfinalReport(Request $request)
+{
+    $query = Sale::query()->whereNotNull('bill_no')->where('bill_no', '<>', '');
+
+    // Supplier filter
+    if ($request->filled('supplier_code')) {
+        $query->where('supplier_code', $request->supplier_code);
+    }
+
+    // Item filter
+    if ($request->filled('item_code')) {
+        $query->where('item_code', $request->item_code);
+    }
+
+    // Customer short name filter
+    if ($request->filled('customer_short_name')) {
+        $search = $request->customer_short_name;
+        $query->where(function ($q) use ($search) {
+            $q->where('customer_code', 'like', '%' . $search . '%')
+              ->orWhereIn('customer_code', function ($sub) use ($search) {
+                  $sub->select('short_name')
+                      ->from('customers')
+                      ->where('name', 'like', '%' . $search . '%');
+              });
+        });
+    }
+
+    // Customer code filter
+    if ($request->filled('customer_code')) {
+        $query->where('customer_code', $request->customer_code);
+    }
+
+    // Bill No filter
+    if ($request->filled('bill_no')) {
+        $query->where('bill_no', $request->bill_no);
+    }
+
+    $salesByBill = $query->get()->groupBy('bill_no');
+
+    // Calculate grand total here so you can pass it to both the view and the email.
+    $grandTotal = $salesByBill->sum(function ($billSales) {
+        return $billSales->sum('total');
+    });
+
+    // Send the email directly to your address
+    try {
+        Mail::to('nethmavilhan@gmail.com')
+            ->send(new SalesReportMail($salesByBill, $grandTotal));
+
+        return back()->with('success', 'Sales report email sent successfully!');
+    } catch (\Exception $e) {
+        return back()->with('error', 'Failed to send email. ' . $e->getMessage());
+    }
+}
 }
 
 

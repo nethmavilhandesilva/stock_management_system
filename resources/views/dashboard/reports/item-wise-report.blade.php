@@ -5,21 +5,22 @@
     body {
         background-color: #99ff99;
     }
+
     .custom-card {
         background-color: #006400 !important;
-        color: white; /* for text readability */
+        color: white;
     }
-    .custom-card table thead, 
+
+    .custom-card table thead,
     .custom-card table tfoot {
         background-color: #004d00 !important;
         color: white;
     }
-    /* Optional: style table rows for better contrast */
+
     .custom-card table tbody tr:nth-child(odd) {
-        background-color: #00800033; /* translucent green */
+        background-color: #00800033;
     }
 
-    /* Title bar - flex container for inline layout */
     .report-title-bar {
         display: flex;
         align-items: center;
@@ -49,7 +50,6 @@
         white-space: nowrap;
     }
 
-    /* Print button style */
     .print-btn {
         background-color: #004d00;
         color: white;
@@ -61,48 +61,16 @@
         white-space: nowrap;
         transition: background-color 0.3s ease;
     }
+
     .print-btn:hover {
         background-color: #003300;
     }
-</style>
-<style>
+
     @media print {
-    /* Hide everything by default */
-    body * {
-        visibility: hidden;
-    }
-
-    /* Only show the card */
-    .custom-card, .custom-card * {
-        visibility: visible;
-    }
-
-    /* Position the card at the top-left of the page */
-    .custom-card {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
-
-    /* Optional: hide print button in print */
-    .print-btn {
-        display: none !important;
-    }
-}
-
-</style>
-<style>
-    @font-face {
-        font-family: 'NotoSansSinhala';
-        src: url('{{ public_path('fonts/NotoSansSinhala-Regular.ttf') }}') format('truetype');
-        font-weight: normal;
-        font-style: normal;
-    }
-
-    body {
-        font-family: 'NotoSansSinhala', DejaVu Sans, sans-serif;
-        font-size: 12px;
+        body * { visibility: hidden; }
+        .custom-card, .custom-card * { visibility: visible; }
+        .custom-card { position: absolute; left: 0; top: 0; width: 100%; }
+        .print-btn { display: none !important; }
     }
 </style>
 
@@ -111,93 +79,91 @@
         <div class="report-title-bar">
             <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
             <h4 class="fw-bold text-white">📦 අයිතමය අනුව වාර්තාව</h4>
-                       @php
-    $settingDate = \App\Models\Setting::value('value');
-@endphp
-
-<span class="right-info">
-    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
-</span>
+            @php
+                $settingDate = \App\Models\Setting::value('value');
+            @endphp
+            <span class="right-info">
+                {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
+            </span>
             <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
         </div>
 
-     <table class="table table-bordered table-striped table-sm text-center align-middle" style="font-size: 0.9rem; white-space: nowrap;">
-    <thead class="table-dark">
-        <tr>
-            <th>බිල් අංකය</th>
-            <th>වර්ගය</th>
-            <th>භාණ්ඩ කේතය</th>
-            <th>මලු</th>
-            <th>පැකට්</th>
-            <th>බර (kg)</th>
-            <th>මිල (Rs/kg)</th>
-            <th>එකතුව (Rs)</th>
-            <th>ගෙණුම්කරු</th>
-            <th>GRN අංකය</th>
-        </tr>
-    </thead>
-    <tbody>
-        @php
-            $total_packs = 0;
-            $total_weight = 0;
-            $total_amount = 0;
-        @endphp
+        <table class="table table-bordered table-striped table-sm text-center align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>බිල් අංකය</th>
+                    <th>වර්ගය</th>
+                    <th>භාණ්ඩ කේතය</th>
+                    <th>මලු</th>
+                    <th>පැකට්</th>
+                    <th>බර (kg)</th>
+                    <th>මිල (Rs/kg)</th>
+                    <th>එකතුව (Rs)</th>
+                    <th>ගෙණුම්කරු</th>
+                    <th>GRN අංකය</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $total_packs = 0;
+                    $total_weight = 0;
+                    $total_amount = 0;
+                @endphp
 
-        @foreach($sales as $sale)
-            <tr>
-                <td>{{ $sale->bill_no }}</td>
-                <td>{{ $sale->item_name }}</td>
-                <td>{{ $sale->item_code }}</td>
-                <td class="text-end">{{ $sale->packs }}</td>
-                <td class="text-end">{{ $sale->packs }}</td>
-                <td class="text-end">{{ number_format($sale->weight, 2) }}</td>
-                <td class="text-end">{{ number_format($sale->price_per_kg, 2) }}</td>
-                <td class="text-end">{{ number_format($sale->total, 2) }}</td>
-                <td>{{ $sale->customer_code }}</td>
-                <td>{{ $sale->code }}</td>
-            </tr>
+                @foreach($sales as $sale)
+                    <tr>
+                        <td>{{ $sale->bill_no }}</td>
+                        <td>{{ $sale->item_name }}</td>
+                        <td>{{ $sale->item_code }}</td>
+                        <td class="text-end">{{ $sale->packs }}</td>
+                        <td class="text-end">{{ $sale->packs }}</td>
+                        <td class="text-end">{{ number_format($sale->weight, 2) }}</td>
+                        <td class="text-end">{{ number_format($sale->price_per_kg, 2) }}</td>
+                        <td class="text-end">{{ number_format($sale->total, 2) }}</td>
+                        <td>{{ $sale->customer_code }}</td>
+                        <td>{{ $sale->code }}</td>
+                    </tr>
+                    @php
+                        $total_packs += $sale->packs;
+                        $total_weight += $sale->weight;
+                        $total_amount += $sale->total;
+                    @endphp
+                @endforeach
+            </tbody>
 
-            @php
-                $total_packs += $sale->packs;
-                $total_weight += $sale->weight;
-                $total_amount += $sale->total;
-            @endphp
-        @endforeach
-    </tbody>
+            <tfoot>
+                <tr class="table-secondary fw-bold">
+                    <td colspan="4" class="text-end">මුළු එකතුව:</td>
+                    <td class="text-end">{{ $total_packs }}</td>
+                    <td class="text-end">{{ number_format($total_weight, 2) }}</td>
+                    <td></td>
+                    <td class="text-end">{{ number_format($total_amount, 2) }}</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
 
-    <tfoot>
-        <tr class="table-secondary fw-bold">
-            <td colspan="4" class="text-end">මුළු එකතුව:</td>
-            <td class="text-end">{{ $total_packs }}</td>
-            <td class="text-end">{{ number_format($total_weight, 2) }}</td>
-            <td></td>
-            <td class="text-end">{{ number_format($total_amount, 2) }}</td>
-            <td colspan="2"></td>
-        </tr>
-    </tfoot>
-</table>
+        <div class="mt-3 d-flex gap-2">
+            {{-- Excel Download --}}
+            <form action="{{ route('report.download', ['reportType' => 'item-wise-report', 'format' => 'excel']) }}" method="POST">
+                @csrf
+                @foreach ($filters as $key => $value)
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endforeach
+                <button type="submit" class="btn btn-success">⬇️ Download Excel</button>
+            </form>
 
+            {{-- PDF Download --}}
+            <form action="{{ route('report.download', ['reportType' => 'item-wise-report', 'format' => 'pdf']) }}" method="POST">
+                @csrf
+                @foreach ($filters as $key => $value)
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endforeach
+                <button type="submit" class="btn btn-danger">⬇️ Download PDF</button>
+            </form>
 
+            
+        </div>
     </div>
-      <div class="page-utility-bar">
-    <span class="page-number">Page 1</span>
-   <form action="{{ route('report.download', ['reportType' => 'item-wise-report', 'format' => 'excel']) }}" method="POST" class="d-inline">
-    @csrf
-    {{-- Add the hidden inputs here --}}
-    @foreach ($filters as $key => $value)
-        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-    @endforeach
-    <button type="submit" class="btn btn-success me-2">Download Excel</button>
-</form>
-
-{{-- PDF Download Form --}}
-<form action="{{ route('report.download', ['reportType' => 'item-wise-report', 'format' => 'pdf']) }}" method="POST" class="d-inline">
-    @csrf
-    {{-- Add the hidden inputs here --}}
-    @foreach ($filters as $key => $value)
-        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-    @endforeach
-    <button type="submit" class="btn btn-danger">Download PDF</button>
-</form>
 </div>
 @endsection

@@ -183,5 +183,6 @@
         <div class="d-flex justify-content-center">
             {{ $entries->links() }}
         </div>
+      
     </div>
 @endsection

@@ -53,4 +53,5 @@ class Sale extends Model
 {
     return $this->belongsTo(Item::class, 'item_code', 'id');
 }
+
 }
