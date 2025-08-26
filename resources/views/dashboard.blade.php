@@ -35,229 +35,159 @@
     </style>
 
     <nav
-        class="navbar navbar-expand-lg navbar-light shadow-sm rounded-bottom px-3 py-1 custom-dark-green-bg navbar-compact">
-        <div class="container-fluid d-flex justify-content-between align-items-center">
-            {{-- Navbar links --}}
-            <div class="collapse navbar-collapse" id="navbarNavHorizontal">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    {{-- Dashboard --}}
-                    <li class="nav-item">
-                        <a href="{{ route('dashboard') }}" class="nav-link d-flex align-items-center small">
-                            <span class="material-icons me-1 text-primary" style="font-size:1.1em;">dashboard</span>
-                            <span class="text-white">Dashboard</span>
-                        </a>
-                    </li>
+    class="navbar navbar-expand-lg navbar-light shadow-sm rounded-bottom px-3 py-1 custom-dark-green-bg navbar-compact">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        {{-- Navbar links --}}
+        <div class="collapse navbar-collapse" id="navbarNavHorizontal">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {{-- Dashboard --}}
+                <li class="nav-item">
+                    <a href="{{ route('dashboard') }}" class="nav-link d-flex align-items-center small">
+                        <span class="material-icons me-1 text-primary" style="font-size:1.1em;">dashboard</span>
+                        <span class="text-white">Dashboard</span>
+                    </a>
+                </li>
 
-                    {{-- Master Dropdown --}}
-                    <li class="nav-item dropdown">
-                        <a href="#" class="nav-link d-flex align-items-center small text-white">
-                            <span class="material-icons me-1">storage</span>
-                            Master
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ route('items.index') }}">භාණ්ඩ</a></li>
-                            <li><a class="dropdown-item" href="{{ route('customers.index') }}">ගනුදෙනුකරුවන්</a></li>
-                            <li><a class="dropdown-item" href="{{ route('suppliers.index') }}">සැපයුම්කරුවන්</a></li>
-                            <li><a class="dropdown-item" href="{{ route('grn.index') }}">GRN</a></li>
-                            <li><a class="dropdown-item" href="{{ route('customers-loans.report') }}"> ණය වාර්තාව දැකීම</a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#codeSelectModal">
-                                    GRN වාර්තාව
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+                {{-- Master Dropdown --}}
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center small text-white">
+                        <span class="material-icons me-1">storage</span>
+                        Master
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('items.index') }}">භාණ්ඩ</a></li>
+                        <li><a class="dropdown-item" href="{{ route('customers.index') }}">ගනුදෙනුකරුවන්</a></li>
+                        <li><a class="dropdown-item" href="{{ route('suppliers.index') }}">සැපයුම්කරුවන්</a></li>
+                        <li><a class="dropdown-item" href="{{ route('grn.index') }}">GRN</a></li>
+                        <li><a class="dropdown-item" href="{{ route('customers-loans.report') }}"> ණය වාර්තාව දැකීම</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#codeSelectModal">
+                                GRN වාර්තාව
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
-                    {{-- Income / Expense --}}
-                    <li class="nav-item">
-                        <a href="{{ route('customers-loans.index') }}"
-                            class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('customers-loans.index') ? 'active' : '' }}">
-                            <span class="material-icons me-1" style="font-size:1.1em;">payments</span>
-                            <span class="text-white">ආදායම් / වියදම්</span>
-                        </a>
-                    </li>
+                {{-- Income / Expense --}}
+                <li class="nav-item">
+                    <a href="{{ route('customers-loans.index') }}"
+                        class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('customers-loans.index') ? 'active' : '' }}">
+                        <span class="material-icons me-1" style="font-size:1.1em;">payments</span>
+                        <span class="text-white">ආදායම් / වියදම්</span>
+                    </a>
+                </li>
 
+                {{-- Day Start Process --}}
+                <li class="nav-item">
+                    <a href="#" class="nav-link d-flex align-items-center small" data-bs-toggle="modal"
+                        data-bs-target="#dayStartModal">
+                        <span class="material-icons me-1 text-blue-600"
+                            style="font-size:1.1em;">play_circle_filled</span>
+                        <span class="text-white">Day Start Process</span>
+                    </a>
+                </li>
 
-                    {{-- Day Start Process --}}
-                    <li class="nav-item">
-                        <a href="#" class="nav-link d-flex align-items-center small" data-bs-toggle="modal"
-                            data-bs-target="#dayStartModal">
-                            <span class="material-icons me-1 text-blue-600"
-                                style="font-size:1.1em;">play_circle_filled</span>
-                            <span class="text-white">Day Start Process</span>
-                        </a>
-                    </li>
-
-                    {{-- Logout --}}
-                    <li class="nav-item">
-                        <form action="{{ route('logout') }}" method="POST" style="display: inline;">
-                            @csrf
-                            <button type="submit" class="nav-link d-flex align-items-center small"
-                                style="background:none; border:none; padding:0; cursor:pointer;">
-                                <span class="material-icons me-1 text-red-600" style="font-size:1.1em;">logout</span>
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-
-            {{-- Next Day Info --}}
-            <div class="ms-3 fw-bold text-danger" style="white-space: nowrap;">
-                @php
-$lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
-$nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
-                @endphp
-                {{ $nextDay }}
-            </div>
+                {{-- Logout --}}
+                <li class="nav-item">
+                    <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+                        @csrf
+                        <button type="submit" class="nav-link d-flex align-items-center small"
+                            style="background:none; border:none; padding:0; cursor:pointer;">
+                            <span class="material-icons me-1 text-red-600" style="font-size:1.1em;">logout</span>
+                        </button>
+                    </form>
+                </li>
+            </ul>
         </div>
-    </nav>
 
+        {{-- Next Day Info --}}
+        <div class="ms-3 fw-bold text-danger" style="white-space: nowrap;">
+            @php
+                $lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
+                $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
+            @endphp
+            {{ $nextDay }}
+        </div>
+    </div>
+</nav>
 
-  {{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
+{{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav small">
     <div class="container-fluid">
-        <!-- Toggler -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
             aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Links -->
         <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
             <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row gap-2">
 
                 <li class="nav-item">
-                    <a href="#" data-bs-target="#itemReportModal"
-                        class="nav-link text-white px-2 py-1 protected-link">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
+                        class="nav-link text-white px-2 py-1">
                         එළවළු
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" data-bs-target="#weight_modal"
-                        class="nav-link text-white px-2 py-1 protected-link">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
+                        class="nav-link text-white px-2 py-1">
                         බර මත
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" data-bs-target="#grnSaleReportModal"
-                        class="nav-link text-white px-2 py-1 protected-link">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
+                        class="nav-link text-white px-2 py-1">
                         මිල එක්කතුව
                     </a>
                 </li>
-
                 <li class="nav-item">
-                    <a href="#" data-bs-target="#reportFilterModal9"
-                        class="nav-link text-white px-2 py-1 protected-link">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9"
+                        class="nav-link text-white px-2 py-1">
                         වෙනස් කිරීම
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('report.grn.sales.overview') }}" target="_blank"
-                        class="nav-link text-white px-2 py-1 protected-link">
+                        class="nav-link text-white px-2 py-1">
                         ඉතිරි වාර්තාව 1
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('report.grn.sales.overview2') }}" target="_blank"
-                        class="nav-link text-white px-2 py-1 protected-link">
+                        class="nav-link text-white px-2 py-1">
                         ඉතිරි වාර්තාව 2
                     </a>
                 </li>
-
                 <li class="nav-item">
-                    <a href="#" data-bs-target="#filterModal"
-                        class="nav-link text-white px-2 py-1 protected-link">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#filterModal"
+                        class="nav-link text-white px-2 py-1">
                         විකුණුම් වාර්තාව
                     </a>
                 </li>
-
             </ul>
         </div>
     </div>
 </nav>
 
-{{-- Password Modal --}}
-<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-white">
-            <div class="modal-header">
-                <h5 class="modal-title" id="passwordModalLabel">Enter Password</h5>
-            </div>
-            <div class="modal-body">
-                <input type="password" id="passwordInput" class="form-control" placeholder="Enter password">
-            </div>
-            <div class="modal-footer">
-                {{-- Exit button added here --}}
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Exit</button>
-                <button type="button" id="unlockBtn" class="btn btn-success">Unlock</button>
-            </div>
-        </div>
-    </div>
-</div>
+{{-- Removed the Password Modal from here --}}
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const protectedLinks = document.querySelectorAll(".protected-link");
-    let isUnlocked = false;
-
-    // Get a reference to the password modal and a new instance
-    const passwordModalElement = document.getElementById("passwordModal");
-    const passwordModal = new bootstrap.Modal(passwordModalElement);
-
-    // Listen for when the password modal is hidden
-    passwordModalElement.addEventListener('hidden.bs.modal', function () {
-        // This function will execute when the password modal is fully closed.
-        // It helps to clean up the page state.
-        document.body.classList.remove('modal-open');
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-            backdrop.remove();
-        }
-    });
-
-    protectedLinks.forEach(link => {
-        // Store original target / href
-        const originalTarget = link.getAttribute("data-bs-target") || link.getAttribute("href");
-
-        // Remove default modal trigger
-        link.removeAttribute("data-bs-toggle");
-        link.removeAttribute("data-bs-target");
-
-        link.style.pointerEvents = "auto";
-        link.style.opacity = "0.5"; // faded initially
-
-        link.addEventListener("click", function(e) {
-            if (!isUnlocked) {
-                e.preventDefault();
-
-                // Show password modal
-                passwordModal.show();
-
-                // Unlock button click
-                document.getElementById("unlockBtn").onclick = function() {
-                    const enteredPassword = document.getElementById("passwordInput").value;
-                    if (enteredPassword === "nethma123") {
-                        isUnlocked = true;
-                        protectedLinks.forEach(l => l.style.opacity = "1");
-
-                        passwordModal.hide();
-
-                        // Open the original modal or navigate
-                        if (originalTarget.startsWith("#")) {
-                            const targetModal = new bootstrap.Modal(document.querySelector(originalTarget));
-                            targetModal.show();
-                        } else {
-                            window.open(originalTarget, "_blank");
-                        }
-                    } else {
-                        alert("Incorrect password! Try again.");
-                    }
-                };
+    document.addEventListener("DOMContentLoaded", function () {
+        // The script now simply adds the modal attributes back, 
+        // effectively disabling the password protection.
+        const protectedLinks = document.querySelectorAll(".protected-link");
+        
+        protectedLinks.forEach(link => {
+            const target = link.getAttribute("data-bs-target") || link.getAttribute("href");
+            if (target && target.startsWith("#")) {
+                link.setAttribute("data-bs-toggle", "modal");
             }
+            // Remove the custom class and any opacity changes
+            link.classList.remove("protected-link");
+            link.style.opacity = ""; 
         });
     });
-});
 </script>
     <style>
         /* Custom CSS to push content up if fixed-bottom nav bar covers it */

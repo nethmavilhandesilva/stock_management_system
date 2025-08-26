@@ -28,6 +28,8 @@ use App\Mail\GrnSalesReportMail;
 use App\Mail\SupplierSalesReportMail;
 use App\Mail\GrnSalesOverviewMail;
 use App\Mail\SalesReportMail;
+use App\Mail\FinancialReportMail;
+use App\Mail\LoanReportMail;
 
 
 class ReportController extends Controller
@@ -895,7 +897,8 @@ public function grnReport(Request $request)
     // Send the email
     Mail::to('nethmavilhan@gmail.com')->send(new DailyReportMail($reportData));
 
-    return "Daily report email sent successfully!";
+    // Redirect the user back to the previous page with a success message
+    return back()->with('success', 'Daily report email sent successfully!');
 }
 public function emailChangesReport()
 {
@@ -1190,6 +1193,91 @@ public function emailOverviewReport(Request $request)
         return back()->with('error', 'Failed to send email. ' . $e->getMessage());
     }
 }
+  public function sendFinancialReportEmail()
+    {
+        // Initialize all variables at the start
+        $reportData = [];
+        $totalDr = 0;
+        $totalCr = 0;
+
+        // Fetch records from the database
+        $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
+            ->whereDate('created_at', Carbon::today())
+            ->get();
+
+        // The foreach loop will be skipped if $records is empty
+        foreach ($records as $record) {
+            $dr = null;
+            $cr = null;
+
+            // Use null coalescing to provide default values for potentially null fields
+            $customerShortName = $record->customer_short_name ?? 'N/A';
+            $billNo = $record->bill_no ?? '';
+            $itemDescription = $record->description ?? 'No Description';
+            $amount = $record->amount ?? 0;
+            $loanType = $record->loan_type ?? '';
+
+            $desc = $customerShortName;
+            if (!empty($billNo)) {
+                $desc .= " ({$billNo})";
+            }
+            $desc .= " - {$itemDescription}";
+
+            if (in_array($loanType, ['old', 'ingoing'])) {
+                $dr = $amount;
+                $totalDr += $amount;
+            } elseif (in_array($loanType, ['today', 'outgoing'])) {
+                $cr = $amount;
+                $totalCr += $amount;
+            }
+
+            $reportData[] = [
+                'description' => $desc,
+                'dr' => $dr,
+                'cr' => $cr
+            ];
+        }
+
+        // Add Sales total
+        $salesTotal = Sale::sum('total') ?? 0;
+        $totalDr += $salesTotal;
+        $reportData[] = [
+            'description' => 'Sales Total',
+            'dr' => $salesTotal,
+            'cr' => null
+        ];
+
+        // Get Profit and Damages, with fallbacks
+        $profitTotal = Sale::sum('SellingKGTotal') ?? 0;
+        $totalDamages = GrnEntry::sum(DB::raw('wasted_weight * PerKGPrice')) ?? 0;
+
+        // Log the data to find the problematic array entry
+        Log::info('Report Data for Email:', ['data' => $reportData]);
+
+        $data = compact('reportData', 'totalDr', 'totalCr', 'salesTotal', 'profitTotal', 'totalDamages');
+
+        // Send the email
+        Mail::to('nethmavilhan@gmail.com')->send(new FinancialReportMail($data));
+
+        return back()->with('success', 'Financial report emailed successfully!');
+    }
+     // NEW: Method to send the email without filters
+    public function sendLoanReportEmail()
+    {
+        $settingDate = Setting::value('value');
+        if (!$settingDate) {
+            $settingDate = now()->toDateString();
+        }
+
+        // Fetch all loans for the specified date without additional filters
+        $loans = CustomersLoan::whereDate('Date', $settingDate)
+                                ->orderBy('Date', 'desc')
+                                ->get();
+
+        Mail::to('nethmavilhan@gmail.com','cdesilva2005@gmail.com')->send(new LoanReportMail($loans));
+
+        return back()->with('success', 'Loan report emailed successfully!');
+    }
 }
 
 

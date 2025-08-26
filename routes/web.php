@@ -120,4 +120,6 @@ Route::get('/email-grn-sales-report', [ReportController::class, 'emailGrnSalesRe
 Route::post('/email-supplier-sales-report', [ReportController::class, 'emailSupplierSalesReport'])->name('report.email.supplier-sales');
 Route::post('/email-overview-report', [ReportController::class, 'emailOverviewReport'])->name('report.email.overview-report');
 Route::get('/sales/report', [ReportController::class, 'salesfinalReport'])->name('sales.report');
+Route::get('/send-financial-report', [ReportController::class, 'sendFinancialReportEmail'])->name('send.financial.report');
+Route::get('/report/loans/email-simple', [ReportController::class, 'sendLoanReportEmail'])->name('report.loans.email-simple');
 require __DIR__.'/auth.php';

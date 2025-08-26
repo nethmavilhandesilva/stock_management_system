@@ -138,8 +138,13 @@
                     <td colspan="2" class="text-danger">
                         {{ number_format($totalDamages, 2) }}
                     </td>
+                   
                 </tr>
+              
             </tfoot>
         </table>
+          <a href="{{ route('send.financial.report') }}" class="print-btn" style="text-decoration: none;">
+                    📧 Send Email
+                </a>
     </div>
 @endsection

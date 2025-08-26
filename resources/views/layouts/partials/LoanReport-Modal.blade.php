@@ -40,9 +40,9 @@
         </div>
 
         <div class="modal-footer">
-           <a href="{{ route('report.credit.email') }}" class="btn btn-info">
-            📧 Daily Email Report
-        </a>
+            <a href="{{ route('report.loans.email-simple') }}" class="print-btn" style="text-decoration: none;">
+        📧 Email Report
+    </a>
           <button type="submit" class="btn btn-primary w-100">ඉදිරිපත් කරන්න</button>
         </div>
       </div>
