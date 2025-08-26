@@ -44,7 +44,8 @@ class SalesEntryController extends Controller
         $totalSum = $sales->sum('total'); // Sum will now be for all displayed sales
         $unprocessedSales = Sale::whereIn('Processed', ['Y', 'N']) // Include both processed and unprocessed
             ->get();
-
+        $billDate = Setting::value('value');
+    
         $salesPrinted = Sale::where('bill_printed', 'Y')
             ->orderBy('created_at', 'desc')
             ->orderBy('bill_no') // Or ->orderBy('created_at') for chronological order
@@ -66,7 +67,7 @@ class SalesEntryController extends Controller
             ->distinct()
             ->orderBy('code')
             ->get();
-        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay', 'codes'));
+        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay', 'codes','billDate'));
     }
 
     public function store(Request $request)

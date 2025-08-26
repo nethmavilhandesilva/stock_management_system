@@ -30,6 +30,7 @@ use App\Mail\GrnSalesOverviewMail;
 use App\Mail\SalesReportMail;
 use App\Mail\FinancialReportMail;
 use App\Mail\LoanReportMail;
+use Mpdf\Mpdf;
 
 
 class ReportController extends Controller
@@ -454,69 +455,40 @@ public function downloadReport(Request $request, $reportType, $format)
         return Excel::download(new DynamicReportExport($reportData, $headings), $filename);
     }
 
-    // ------------------ PDF ------------------
+    // ------------------ PDF (mPDF) ------------------
     if ($format === 'pdf') {
         $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
 
-        $fontDir = public_path('fonts');
-        $fontCache = storage_path('fonts/dompdf');
-
-        // Check and create the font cache directory
-        if (!file_exists($fontCache)) {
-            mkdir($fontCache, 0775, true);
-        }
-
-        Log::info('PDF generation process started.', [
-            'fontDir' => $fontDir,
-            'fontCache' => $fontCache
-        ]);
-
         try {
-            // Check if font files exist and are readable
-            $regularFont = $fontDir . '/NotoSansSinhala-Regular.ttf';
-            $boldFont    = $fontDir . '/NotoSansSinhala-Bold.ttf';
+            // Configure mPDF
+            $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
 
-            if (!file_exists($regularFont) || !is_readable($regularFont)) {
-                throw new \Exception("Regular Sinhala font file not found or is not readable: " . $regularFont);
-            }
-            if (!file_exists($boldFont) || !is_readable($boldFont)) {
-                throw new \Exception("Bold Sinhala font file not found or is not readable: " . $boldFont);
-            }
+            $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
 
-            Log::info('Sinhala font files found and are readable.', [
-                'regularFont' => $regularFont,
-                'boldFont' => $boldFont
+            $mpdf = new Mpdf([
+                'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
+                'fontdata' => $fontData + [
+                    'notosanssinhala' => [
+                        'R' => 'NotoSansSinhala-Regular.ttf',
+                        'B' => 'NotoSansSinhala-Bold.ttf',
+                    ]
+                ],
+                'default_font' => 'notosanssinhala',
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'margin_top' => 15,
+                'margin_bottom' => 15,
+                'margin_left' => 10,
+                'margin_right' => 10,
             ]);
 
-            $pdf = Pdf::loadView('reports.generic_report_pdf', compact('reportData', 'headings', 'reportTitle'))
-                ->setPaper('a4', 'portrait')
-                ->setOptions([
-                    'fontCache' => $fontCache,
-                    'isHtml5ParserEnabled' => true,
-                    'isRemoteEnabled' => true,
-                    'enable_font_subsetting' => false,
-                    'defaultFont' => 'NotoSansSinhala', // Set default font upfront
-                ]);
+            // Render Blade as HTML
+            $html = view('reports.generic_report_pdf', compact('reportData', 'headings', 'reportTitle'))->render();
 
-            $dompdf = $pdf->getDomPDF();
-            $fontMetrics = $dompdf->getFontMetrics();
-
-            // Register the fonts
-            $fontMetrics->registerFont([
-                'family' => 'NotoSansSinhala',
-                'style'  => 'normal',
-                'weight' => 'normal',
-            ], $regularFont);
-
-            $fontMetrics->registerFont([
-                'family' => 'NotoSansSinhala',
-                'style'  => 'normal',
-                'weight' => 'bold',
-            ], $boldFont);
-
-            Log::info('Sinhala fonts registered with Dompdf successfully.');
-
-            return $pdf->download($filename);
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($filename, 'D'); // Download PDF
 
         } catch (\Exception $e) {
             Log::error("PDF generation failed: " . $e->getMessage(), [
@@ -525,7 +497,6 @@ public function downloadReport(Request $request, $reportType, $format)
                 'error_file' => $e->getFile(),
                 'error_line' => $e->getLine(),
             ]);
-
             return back()->with('error', 'PDF generation failed: ' . $e->getMessage());
         }
     }
@@ -897,8 +868,7 @@ public function grnReport(Request $request)
     // Send the email
     Mail::to('nethmavilhan@gmail.com')->send(new DailyReportMail($reportData));
 
-    // Redirect the user back to the previous page with a success message
-    return back()->with('success', 'Daily report email sent successfully!');
+    return "Daily report email sent successfully!";
 }
 public function emailChangesReport()
 {
