@@ -72,6 +72,12 @@
     {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
 </span>
                     <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
+                      <a href="{{ route('sales-adjustment.export.excel', request()->all()) }}" class="print-btn">
+            📥 Excel
+        </a>
+       <a href="{{ route('sales-adjustment.export.pdf', request()->all()) }}" class="print-btn" style="background-color: #f44336; color: white;">
+    📥 PDF
+</a>
                 </div>
             </div>
         </div>

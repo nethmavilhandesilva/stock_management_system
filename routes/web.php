@@ -122,4 +122,10 @@ Route::post('/email-overview-report', [ReportController::class, 'emailOverviewRe
 Route::get('/sales/report', [ReportController::class, 'salesfinalReport'])->name('salesemail.report');
 Route::get('/send-financial-report', [ReportController::class, 'sendFinancialReportEmail'])->name('send.financial.report');
 Route::get('/report/loans/email-simple', [ReportController::class, 'sendLoanReportEmail'])->name('report.loans.email-simple');
+//exports
+Route::get('/sales-adjustment-report/excel', [ReportController::class, 'exportToExcel'])->name('sales-adjustment.export.excel');
+Route::get('/sales-adjustment-report/pdf', [ReportController::class, 'exportToPdf'])->name('sales-adjustment.export.pdf');
+Route::get('/grn-sales-overview/download', [ReportController::class, 'downloadGrnSalesOverviewReport'])->name('grn-sales.download');
+Route::get('/grn-overview/download2', [ReportController::class, 'downloadGrnOverviewReport2'])->name('grn-overview.download2');
+Route::get('/sales-report/download', [ReportController::class, 'downloadSalesReport'])->name('sales.report.download');   
 require __DIR__.'/auth.php';

@@ -31,7 +31,9 @@ use App\Mail\SalesReportMail;
 use App\Mail\FinancialReportMail;
 use App\Mail\LoanReportMail;
 use Mpdf\Mpdf;
-
+use App\Exports\SalesAdjustmentsExport;
+use Mpdf\Config\ConfigVariables;
+use Mpdf\Config\FontVariables;
 
 class ReportController extends Controller
 {
@@ -581,7 +583,7 @@ public function downloadReport(Request $request, $reportType, $format)
 
                 $records = $query->get();
 
-                $headings = ['Bill No', 'Item Code', 'Item Name', 'Packs', 'Weight (kg)', 'Price per kg', 'Total', 'Customer Code', 'Supplier Code'];
+                $headings = ['බිල් අංකය', 'භාණ්ඩ කේතය', 'වර්ගය', 'මලු', 'බර', 'මිල', 'එකතුව', 'ගෙණුම්කරු', 'GRN අංකය'];
                 $reportData = $records->map(function ($row) {
                     return [
                         $row->bill_no,
@@ -592,7 +594,7 @@ public function downloadReport(Request $request, $reportType, $format)
                         $row->price_per_kg,
                         $row->total,
                         $row->customer_code,
-                        $row->supplier_code,
+                        $row->code,
                     ];
                 });
                 break;
@@ -613,7 +615,7 @@ public function downloadReport(Request $request, $reportType, $format)
 
                 $records = $query->orderBy('created_at', 'asc')->get();
 
-                $headings = ['Item Code', 'Item Name', 'Packs', 'Weight (kg)', 'Total'];
+                $headings = ['භාණ්ඩ කේතය', 'වර්ගය', 'මලු', 'බර', 'එකතුව'];
                 $reportData = $records->map(function ($row) {
                     return [
                         $row->item_code,
@@ -641,12 +643,14 @@ public function downloadReport(Request $request, $reportType, $format)
 
                 $records = $query->orderBy('created_at', 'asc')->get();
 
-                $headings = ['Item Code', 'Item Name', 'Packs', 'Weight (kg)', 'Total'];
+                $headings = ['දිනය', 'බිල් අංකය', 'ගෙණුම්කරු කේතය', 'මලු', 'මිල (1kg)', 'බර ', 'මුළු මුදල'];
                 $reportData = $records->map(function ($row) {
                     return [
-                        $row->item_code,
-                        $row->item_name,
+                        $row->Date,
+                        $row->bill_no,
+                        $row->customer_code,
                         $row->packs,
+                        $row->price_per_kg,
                         $row->weight,
                         $row->total,
                     ];
@@ -1261,6 +1265,296 @@ public function emailOverviewReport(Request $request)
 
         return back()->with('success', 'Loan report emailed successfully!');
     }
+
+    // salesadjustment exports
+    public function exportToExcel(Request $request)
+{
+    $code = $request->input('code');
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+
+    return Excel::download(new SalesAdjustmentsExport($code, $startDate, $endDate), 'sales-adjustments.xlsx');
+}
+
+ public function exportToPdf(Request $request)
+    {
+        $code = $request->input('code');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $query = Salesadjustment::query();
+
+        if ($code) {
+            $query->where('code', $code);
+        }
+        if ($startDate) {
+            $query->whereDate('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+
+        // Fetch all data for the PDF (not paginated)
+        $entries = $query->orderBy('created_at', 'desc')->get();
+        $grouped = $entries->groupBy('code');
+
+        $reportTitle = 'විකුණුම් වෙනස් කිරීම් වාර්තාව'; // Sales Adjustment Report
+
+        try {
+            // Configure mPDF
+            $defaultConfig = (new ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
+
+            $defaultFontConfig = (new FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
+
+            $mpdf = new Mpdf([
+                'fontDir' => array_merge($fontDirs, [
+                    public_path('fonts')
+                ]),
+                'fontdata' => $fontData + [
+                    'notosanssinhala' => [
+                        'R' => 'NotoSansSinhala-Regular.ttf',
+                        'B' => 'NotoSansSinhala-Bold.ttf',
+                    ]
+                ],
+                'default_font' => 'notosanssinhala',
+                'mode' => 'utf-8',
+                'format' => 'A4-L', // A4 Landscape for more columns
+                'margin_top' => 15,
+                'margin_bottom' => 15,
+                'margin_left' => 10,
+                'margin_right' => 10,
+            ]);
+
+            // Render Blade view as HTML
+            $html = view('dashboard.reports.salesadjustment_pdf', compact('grouped', 'reportTitle'))->render();
+            
+            $mpdf->WriteHTML($html);
+            $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
+
+            return $mpdf->Output($filename, 'D'); // 'D' for download
+
+        } catch (\Exception $e) {
+            Log::error("PDF generation failed: " . $e->getMessage(), [
+                'filename' => $filename ?? 'N/A',
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+            ]);
+            return back()->with('error', 'PDF generation failed: ' . $e->getMessage());
+        }
+    }
+   
+
+private function prepareGrnSalesOverviewData()
+{
+    $grnEntries = GrnEntry::all();
+    $reportData = [];
+
+    foreach ($grnEntries->groupBy('code') as $code => $entries) {
+        $totalOriginalPacks = $entries->sum('original_packs');
+        $totalOriginalWeight = $entries->sum('original_weight');
+        $remainingPacks = $entries->sum('packs');
+        $remainingWeight = $entries->sum('weight');
+        $totalSoldPacks = $totalOriginalPacks - $remainingPacks;
+        $totalSoldWeight = $totalOriginalWeight - $remainingWeight;
+
+        $currentSales = Sale::where('code', $code)->get();
+        $historicalSales = SalesHistory::where('code', $code)->get();
+        $relatedSales = $currentSales->merge($historicalSales);
+        $totalSalesValueForGrn = $relatedSales->sum('total');
+
+        $reportData[] = [
+            'date' => Carbon::parse($entries->first()->created_at)->timezone('Asia/Colombo')->format('Y-m-d H:i:s'),
+            'grn_code' => $code,
+            'item_name' => $entries->first()->item_name,
+            'original_packs' => $totalOriginalPacks,
+            'original_weight' => $totalOriginalWeight,
+            'sold_packs' => $totalSoldPacks,
+            'sold_weight' => $totalSoldWeight,
+            'total_sales_value' => $totalSalesValueForGrn,
+            'remaining_packs' => $remainingPacks,
+            'remaining_weight' => $remainingWeight,
+        ];
+    }
+
+    return $reportData;
+}
+
+public function downloadGrnSalesOverviewReport(Request $request)
+{
+    $reportData = $this->prepareGrnSalesOverviewData();
+    $reportTitle = 'විකිණුම්/බර මත්තෙහි ඉතිරි වාර්තාව';
+
+    // Handle PDF format
+    if ($request->get('format') === 'pdf') {
+        $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
+
+        try {
+            $defaultConfig = (new ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
+            $defaultFontConfig = (new FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
+
+            $mpdf = new Mpdf([
+                'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
+                'fontdata' => $fontData + [
+                    'notosanssinhala' => [
+                        'R' => 'NotoSansSinhala-Regular.ttf',
+                        'B' => 'NotoSansSinhala-Bold.ttf',
+                    ]
+                ],
+                'default_font' => 'notosanssinhala',
+                'mode' => 'utf-8',
+                'format' => 'A4-L',
+                'margin_top' => 15,
+                'margin_bottom' => 15,
+                'margin_left' => 10,
+                'margin_right' => 10,
+            ]);
+
+            $html = view('dashboard.reports.grn_sales_overview_pdf', compact('reportData', 'reportTitle'))->render();
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($filename, 'D');
+
+        } catch (\Exception $e) {
+            Log::error("PDF generation failed: " . $e->getMessage());
+            return back()->with('error', 'PDF generation failed: ' . $e->getMessage());
+        }
+    }
+
+    // Handle Excel format
+    if ($request->get('format') === 'excel') {
+        return Excel::download(new \App\Exports\GrnSalesOverviewExport($reportData), 'grn-sales-overview.xlsx');
+    }
+
+    return back()->with('error', 'Invalid export format.');
+}
+public function downloadGrnOverviewReport2(Request $request)
+{
+    // Re-use the existing data preparation logic
+    $reportData = (new \App\Http\Controllers\ReportController)->getGrnSalesOverviewReport2()->getData()['reportData']->toArray();
+    $reportTitle = 'ඉතිරි වාර්තාව';
+
+    // Handle Excel format
+    if ($request->get('format') === 'excel') {
+        return Excel::download(new \App\Exports\GrnOverviewExport($reportData), 'stock-overview.xlsx');
+    }
+
+    // Handle PDF format
+    if ($request->get('format') === 'pdf') {
+        $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
+
+        try {
+            $defaultConfig = (new ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
+            $defaultFontConfig = (new FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
+
+            $mpdf = new Mpdf([
+                'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
+                'fontdata' => $fontData + [
+                    'notosanssinhala' => [
+                        'R' => 'NotoSansSinhala-Regular.ttf',
+                        'B' => 'NotoSansSinhala-Bold.ttf',
+                    ]
+                ],
+                'default_font' => 'notosanssinhala',
+                'mode' => 'utf-8',
+                'format' => 'A4-L',
+                'margin_top' => 15,
+                'margin_bottom' => 15,
+                'margin_left' => 10,
+                'margin_right' => 10,
+            ]);
+
+            $html = view('dashboard.reports.grn_sales_overview_pdf2', compact('reportData', 'reportTitle'))->render();
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($filename, 'D');
+
+        } catch (\Exception $e) {
+            Log::error("PDF generation failed: " . $e->getMessage());
+            return back()->with('error', 'PDF generation failed: ' . $e->getMessage());
+        }
+    }
+    return back()->with('error', 'Invalid export format.');
+}
+public function downloadSalesReport(Request $request)
+{
+    // Replicate the data-fetching logic from your salesReport method
+    $query = Sale::query()->whereNotNull('bill_no')->where('bill_no', '<>', '');
+
+    // Apply all filters from the original request
+    if ($request->filled('supplier_code')) {
+        $query->where('supplier_code', $request->supplier_code);
+    }
+    if ($request->filled('item_code')) {
+        $query->where('item_code', $request->item_code);
+    }
+    if ($request->filled('customer_short_name')) {
+        $search = $request->customer_short_name;
+        $query->where(function ($q) use ($search) {
+            $q->where('customer_code', 'like', '%' . $search . '%')
+              ->orWhereIn('customer_code', function ($sub) use ($search) {
+                  $sub->select('short_name')
+                      ->from('customers')
+                      ->where('name', 'like', '%' . $search . '%');
+              });
+        });
+    }
+    if ($request->filled('customer_code')) {
+        $query->where('customer_code', $request->customer_code);
+    }
+    if ($request->filled('bill_no')) {
+        $query->where('bill_no', $request->bill_no);
+    }
+
+    $salesByBill = $query->get()->groupBy('bill_no');
+    $reportTitle = 'Sales Report - Bill Summary';
+
+    // Handle Excel format
+    if ($request->get('format') === 'excel') {
+        return Excel::download(new \App\Exports\BillSummaryExport($salesByBill), 'sales-report-bill-summary.xlsx');
+    }
+
+    // Handle PDF format
+    if ($request->get('format') === 'pdf') {
+        $filename = str_replace(' ', '-', $reportTitle) . '_' . Carbon::now()->format('Y-m-d') . '.pdf';
+
+        try {
+            $defaultConfig = (new ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
+            $defaultFontConfig = (new FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
+
+            $mpdf = new Mpdf([
+                'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
+                'fontdata' => $fontData + [
+                    'notosanssinhala' => [
+                        'R' => 'NotoSansSinhala-Regular.ttf',
+                        'B' => 'NotoSansSinhala-Bold.ttf',
+                    ]
+                ],
+                'default_font' => 'notosanssinhala',
+                'mode' => 'utf-8',
+                'format' => 'A4-P',
+                'margin_top' => 15,
+                'margin_bottom' => 15,
+                'margin_left' => 10,
+                'margin_right' => 10,
+            ]);
+
+            $html = view('dashboard.reports.sales_report_pdf', compact('salesByBill'))->render();
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($filename, 'D');
+
+        } catch (\Exception $e) {
+            Log::error("PDF generation failed: " . $e->getMessage());
+            return back()->with('error', 'PDF generation failed: ' . $e->getMessage());
+        }
+    }
+    return back()->with('error', 'Invalid export format.');
+}
 }
 
 

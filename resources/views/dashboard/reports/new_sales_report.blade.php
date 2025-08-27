@@ -215,6 +215,10 @@
                 @endif
             </div>
         </div>
+        <div class="mt-3">
+    <a href="{{ route('sales.report.download', ['format' => 'excel', 'supplier_code' => request('supplier_code'), 'item_code' => request('item_code'), 'customer_short_name' => request('customer_short_name'), 'customer_code' => request('customer_code'), 'bill_no' => request('bill_no')]) }}" class="btn btn-success me-2">Download Excel</a>
+    <a href="{{ route('sales.report.download', ['format' => 'pdf', 'supplier_code' => request('supplier_code'), 'item_code' => request('item_code'), 'customer_short_name' => request('customer_short_name'), 'customer_code' => request('customer_code'), 'bill_no' => request('bill_no')]) }}" class="btn btn-danger">Download PDF</a>
+</div>
          
     </div>
 @endsection
