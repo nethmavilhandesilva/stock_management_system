@@ -873,9 +873,9 @@ public function grnReport(Request $request)
 public function emailChangesReport()
 {
     // Fetch the data. You need to get the same data as your web report.
-    $entries = Sale::orderBy('created_at', 'desc')->get();
+    $entries = Salesadjustment::orderBy('created_at', 'desc')->get();
 
-    Mail::to('nethmavilhan@gmail.com')->send(new ChangeReportMail($entries->groupBy('code')));
+    Mail::to('nethmavilhan2005@gmail.com')->send(new ChangeReportMail($entries->groupBy('code')));
 
     return redirect()->back()->with('success', 'Changes report email sent successfully!');
 }
@@ -964,34 +964,47 @@ public function emailTotalSalesReport()
             // Redirect back with a success message
             return redirect()->back()->with('success', 'Credit report email sent successfully!');
         }
-         public function emailItemWiseReport(Request $request)
-    {
-        // This method is designed to be triggered by a POST request from a form.
-        // The "MethodNotAllowed" error indicates that the frontend is trying to use a GET request.
-        // Make sure the "Email" button is inside a <form> with method="POST" and its action
-        // attribute set to the correct route for this method.
-
-        // Start with the base query, replicating the logic from your itemWiseReport method
-        $query = Sale::query();
-
-        // Apply any filters from the request to the query
-        if ($request->filled('item_code')) {
-            $query->where('item_code', $request->item_code);
-        }
-        
-        $sales = $query->get();
+      public function emailItemWiseReport(Request $request)
+{
+    try {
+        // Get all sales data (no filters)
+        $sales = Sale::all();
 
         // Calculate totals
         $total_packs = $sales->sum('packs');
         $total_weight = $sales->sum('weight');
         $total_amount = $sales->sum('total');
 
-        // Send the email with the filtered data and calculated totals
-        Mail::to('nethmavilhan@gmail.com')->send(new ItemWiseReportMail($sales, $total_packs, $total_weight, $total_amount));
+        // Log the data being sent
+        Log::info('Preparing to send Item-wise report email', [
+            'to' => 'nethmavilhan2005@gmail.com',
+            'total_packs' => $total_packs,
+            'total_weight' => $total_weight,
+            'total_amount' => $total_amount,
+            'sales_count' => $sales->count(),
+        ]);
 
-        // Redirect back with a success message
-        return redirect()->back()->with('success', 'Item-wise report email sent successfully!');
+        // Send the email
+        Mail::to('nethmavilhan2005@gmail.com')
+            ->send(new ItemWiseReportMail($sales, $total_packs, $total_weight, $total_amount));
+
+        Log::info('Item-wise report email sent successfully.');
+
+        return redirect()->route('dashboard')
+            ->with('success', 'Item-wise report email sent successfully!');
+
+    } catch (\Exception $e) {
+        // Log the error details
+        Log::error('Failed to send Item-wise report email', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return redirect()->route('dashboard')
+            ->with('error', 'Failed to send Item-wise report email. Please check logs.');
     }
+}
+
    public function emailGrnSalesReport(Request $request)
 {
     // Fetch all sales as there are no filters
@@ -1155,7 +1168,7 @@ public function emailOverviewReport(Request $request)
 
     // Send the email directly to your address
     try {
-        Mail::to('nethmavilhan@gmail.com')
+        Mail::to('nethmavilhan2005@gmail.com')
             ->send(new SalesReportMail($salesByBill, $grandTotal));
 
         return back()->with('success', 'Sales report email sent successfully!');

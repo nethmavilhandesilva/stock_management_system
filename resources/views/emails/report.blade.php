@@ -1,7 +1,7 @@
 <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ccc;">
     <h2 style="font-weight: bold;">TGK ට්‍රේඩර්ස්</h2>
     <h4>මුළු අයිතම විකිණුම් – ප්‍රමාණ අනුව</h4>
-    <span style="font-size: 14px;">2025-08-23</span>
+    <span style="font-size: 14px;">{{ $settingDate }}</span>
 
     <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
         <thead style="background-color: #4CAF50; color: white;">
@@ -15,13 +15,11 @@
         </thead>
         <tbody>
             @php
-                $sales = [
-                    (object)['item_code' => 'LUNUI', 'item_name' => 'ලුණු ඉන්දියානු', 'packs' => 12, 'weight' => 12.00, 'total' => 144.00]
-                ];
                 $total_packs = 0;
                 $total_weight = 0;
                 $total_amount = 0;
             @endphp
+
             @foreach($sales as $sale)
                 <tr>
                     <td style="padding: 8px; border: 1px solid #ddd;">{{ $sale->item_code }}</td>

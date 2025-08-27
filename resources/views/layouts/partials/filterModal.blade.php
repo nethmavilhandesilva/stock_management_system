@@ -70,12 +70,10 @@
         </div>
 
         <div class="modal-footer">
-       <form action="{{ route('sales.report') }}" method="GET" class="d-flex align-items-center">
-    @foreach (request()->query() as $key => $value)
-        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-    @endforeach
-    <button type="submit" class="print-btn">✉️ Send Email</button>
-</form>
+    
+  <a href="{{ route('salesemail.report') }}" class="btn btn-info">
+            📧 Daily Email Report
+        </a>
           <button type="submit" class="btn btn-success">Filter</button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>

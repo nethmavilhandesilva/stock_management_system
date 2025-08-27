@@ -87,7 +87,7 @@
         <tbody>
             @forelse($sales as $sale)
                 <tr>
-                    <td>{{ $sale->created_at->format('Y-m-d') }}</td>
+                    <td>{{ $sale->Date}}</td>
                     <td>{{ $sale->bill_no }}</td>
                     <td>{{ $sale->customer_code }}</td>
                     <td class="text-end">{{ $sale->packs }}</td>

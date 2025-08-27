@@ -30,7 +30,7 @@ class Sale extends Model
         'CustomerBillEnteredOn',
         'FirstTimeBillPrintedOn',
         'BillChangedOn',
-        'BillReprintedOn',
+        'BillReprintAfterchanges',
         'UniqueCode',
         'PerKGPrice',
         'PerKGTotal',

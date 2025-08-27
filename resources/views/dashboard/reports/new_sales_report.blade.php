@@ -153,7 +153,7 @@
                     @foreach ($salesByBill as $billNo => $sales)
                         @php
                             $firstPrinted = $sales->first()->FirstTimeBillPrintedOn ?? null;
-                            $reprinted = $sales->first()->BillReprintedOn ?? null;
+                            $reprinted = $sales->first()->BillReprintAfterchanges ?? null;
                             $billTotal = 0;
                         @endphp
 
@@ -161,10 +161,10 @@
                             <h5 class="fw-bold text-white mb-2">Bill No: {{ $billNo }}</h5>
                             <div class="right-info">
                                 @if($firstPrinted)
-                                    <span>First Printed: {{ \Carbon\Carbon::parse($firstPrinted)->format('Y-m-d H:i') }}</span>
+                                    <span>First Printed: {{ \Carbon\Carbon::parse($firstPrinted)->format('Y-m-d') }}</span>
                                 @endif
                                 @if($reprinted)
-                                    <span>Reprinted: {{ \Carbon\Carbon::parse($reprinted)->format('Y-m-d H:i') }}</span>
+                                    <span>Reprinted: {{ \Carbon\Carbon::parse($reprinted)->format('Y-m-d') }}</span>
                                 @endif
                             </div>
                         </div>

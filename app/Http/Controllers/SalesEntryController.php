@@ -283,94 +283,121 @@ class SalesEntryController extends Controller
         });
     }
 
+   public function update(Request $request, Sale $sale)
+{
+    $validatedData = $request->validate([
+        'customer_code' => 'required|string|max:255',
+        'customer_name' => 'nullable|string|max:255',
+        'code' => 'required|string|max:255',
+        'supplier_code' => 'required|string|max:255',
+        'item_code' => 'required|string|max:255',
+        'item_name' => 'required|string|max:255',
+        'weight' => 'required|numeric|min:0',
+        'price_per_kg' => 'required|numeric|min:0',
+        'total' => 'required|numeric|min:0',
+        'packs' => 'required|integer|min:0',
+    ]);
 
-    public function update(Request $request, Sale $sale)
-    {
-        $validatedData = $request->validate([
-            'customer_code' => 'required|string|max:255',
-            'customer_name' => 'nullable|string|max:255',
-            'code' => 'required|string|max:255',
-            'supplier_code' => 'required|string|max:255',
-            'item_code' => 'required|string|max:255',
-            'item_name' => 'required|string|max:255',
-            'weight' => 'required|numeric|min:0',
-            'price_per_kg' => 'required|numeric|min:0',
-            'total' => 'required|numeric|min:0',
-            'packs' => 'required|integer|min:0',
+    try {
+        // keep old values before update
+        $oldPacks = $sale->packs;
+        $oldWeight = $sale->weight;
+
+        // --- Adjustment tracking for bill_printed ---
+        if ($sale->bill_printed === 'Y') {
+            $originalData = $sale->toArray();
+            Salesadjustment::create([
+                'customer_code' => $originalData['customer_code'],
+                'supplier_code' => $originalData['supplier_code'],
+                'code' => $originalData['code'],
+                'item_code' => $originalData['item_code'],
+                'item_name' => $originalData['item_name'],
+                'weight' => $originalData['weight'],
+                'price_per_kg' => $originalData['price_per_kg'],
+                'total' => $originalData['total'],
+                'packs' => $originalData['packs'],
+                'bill_no' => $originalData['bill_no'],
+                'user_id' => 'c11',
+                'type' => 'original',
+                'original_created_at' => $sale->created_at,
+                'original_updated_at' => $sale->updated_at,
+            ]);
+        }
+
+        // Update the sale
+        $sale->update([
+            'customer_code' => $validatedData['customer_code'],
+            'customer_name' => $validatedData['customer_name'] ?? $sale->customer_name,
+            'code' => $validatedData['code'],
+            'supplier_code' => $validatedData['supplier_code'],
+            'item_code' => $validatedData['item_code'],
+            'item_name' => $validatedData['item_name'],
+            'weight' => $validatedData['weight'],
+            'price_per_kg' => $validatedData['price_per_kg'],
+            'total' => $validatedData['total'],
+            'packs' => $validatedData['packs'],
+            'updated' => 'Y',
+            'BillChangedOn' => now(),
         ]);
 
-        try {
-            if ($sale->bill_printed === 'Y') {
-                // Save original data before update
-                $originalData = $sale->toArray(); // keeps timestamps
+        // --- Update GrnEntry packs & weight ---
+        $newPacks = $validatedData['packs'];
+        $newWeight = $validatedData['weight'];
 
-                Salesadjustment::create([
-                    'customer_code' => $originalData['customer_code'],
-                    'supplier_code' => $originalData['supplier_code'],
-                    'code' => $originalData['code'],
-                    'item_code' => $originalData['item_code'],
-                    'item_name' => $originalData['item_name'],
-                    'weight' => $originalData['weight'],
-                    'price_per_kg' => $originalData['price_per_kg'],
-                    'total' => $originalData['total'],
-                    'packs' => $originalData['packs'],
-                    'bill_no' => $originalData['bill_no'],
-                    'user_id' => 'c11',
-                    'type' => 'original',
-                    'original_created_at' => $sale->created_at,
-                    'original_updated_at' => $sale->updated_at,
-                ]);
+        $packsDiff = $newPacks - $oldPacks;
+        $weightDiff = $newWeight - $oldWeight;
+
+        $grnEntry = GrnEntry::where('code', $validatedData['code'])->first();
+
+        if ($grnEntry) {
+            if ($packsDiff !== 0) {
+                // if positive → subtract; if negative → add
+                $grnEntry->packs -= $packsDiff;
             }
 
-            // Update the sale
-            $sale->update([
-                'customer_code' => $validatedData['customer_code'],
-                'customer_name' => $validatedData['customer_name'] ?? $sale->customer_name,
-                'code' => $validatedData['code'],
-                'supplier_code' => $validatedData['supplier_code'],
-                'item_code' => $validatedData['item_code'],
-                'item_name' => $validatedData['item_name'],
-                'weight' => $validatedData['weight'],
-                'price_per_kg' => $validatedData['price_per_kg'],
-                'total' => $validatedData['total'],
-                'packs' => $validatedData['packs'],
-                'updated' => 'Y',
-                'BillChangedOn' => now(),
-            ]);
-
-            // Save updated version as adjustment
-            if ($sale->bill_printed === 'Y') {
-                $newData = $sale->fresh();
-
-                Salesadjustment::create([
-                    'customer_code' => $newData->customer_code,
-                    'supplier_code' => $newData->supplier_code,
-                    'code' => $newData->code,
-                    'item_code' => $newData->item_code,
-                    'item_name' => $newData->item_name,
-                    'weight' => $newData->weight,
-                    'price_per_kg' => $newData->price_per_kg,
-                    'total' => $newData->total,
-                    'packs' => $newData->packs,
-                    'bill_no' => $newData->bill_no,
-                    'user_id' => 'c11',
-                    'type' => 'updated',
-                    'original_created_at' => $newData->created_at,
-                    'original_updated_at' => $newData->updated_at,
-                ]);
+            if ($weightDiff !== 0) {
+                $grnEntry->weight -= $weightDiff;
             }
 
-            return response()->json([
-                'success' => true,
-                'sale' => $sale->fresh(),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update sales record: ' . $e->getMessage(),
-            ], 500);
+            // make sure packs/weight not negative
+            $grnEntry->packs = max(0, $grnEntry->packs);
+            $grnEntry->weight = max(0, $grnEntry->weight);
+
+            $grnEntry->save();
         }
+
+        // Save updated version as adjustment if needed
+        if ($sale->bill_printed === 'Y') {
+            $newData = $sale->fresh();
+            Salesadjustment::create([
+                'customer_code' => $newData->customer_code,
+                'supplier_code' => $newData->supplier_code,
+                'code' => $newData->code,
+                'item_code' => $newData->item_code,
+                'item_name' => $newData->item_name,
+                'weight' => $newData->weight,
+                'price_per_kg' => $newData->price_per_kg,
+                'total' => $newData->total,
+                'packs' => $newData->packs,
+                'bill_no' => $newData->bill_no,
+                'user_id' => 'c11',
+                'type' => 'updated',
+                'original_created_at' => $newData->created_at,
+                'original_updated_at' => $newData->updated_at,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'sale' => $sale->fresh(),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update sales record: ' . $e->getMessage(),
+        ], 500);
     }
+}
 
     public function destroy(Sale $sale)
     {
