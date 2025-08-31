@@ -54,19 +54,35 @@
             font-size: 1rem;
         }
     </style>
+    <style>
+    .move-up {
+        margin-top: -30px; /* decrease this value to move more up */
+    }
+</style>
 
     <div style="min-height: 100vh; padding: 20px;"> {{-- ✅ removed background override --}}
 
         {{-- Per-Code Cards --}}
         @foreach($groupedData as $code => $data)
             <div class="card">
-                <h2>
+              @php
+    $settingDate = \App\Models\Setting::value('value');
+@endphp
+
+<div style="text-align: right; font-weight: bold;">
+    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
+</div>
+
+              <h2 class="move-up">
                     Code: {{ $code }}
                     <span class="small-text d-block">
                         Item: {{ $data['sales']->first()->item_name ?? 'N/A' }} |
                         Purchase Price: {{ number_format($data['purchase_price'], 2) }} |
-                        Remaining Packs: {{ $data['remaining_packs'] }} |
-                        Remaining Weight: {{ $data['remaining_weight'] }}
+                        ow: {{ number_format($data['totalOriginalWeight'], 2) }} |
+                        op: {{ number_format($data['totalOriginalPacks'], 2) }} |
+                        BW: {{ $data['remaining_weight'] }}|
+                        BP: {{ $data['remaining_packs'] }} |
+                     
                     </span>
                 </h2>
 
@@ -76,6 +92,7 @@
                     <thead>
                         <tr>
                             <th>දිනය</th>
+                            <th>බිල් අංකය</th>
                             <th>ගෙණුම්කරු</th>
                             <th>බර</th>
                             <th>කිලෝමිල</th>
@@ -84,9 +101,21 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @php
+                            $totalWeight = 0;
+                            $totalAmount = 0;
+                            $totalPacks = 0;
+                        @endphp
+
                         @foreach($data['sales'] as $sale)
+                            @php
+                                $totalWeight += $sale->weight;
+                                $totalAmount += $sale->total;
+                                $totalPacks  += $sale->packs;
+                            @endphp
                             <tr>
-                                <td>{{ \Carbon\Carbon::parse($sale->created_at)->format('Y-m-d') }}</td>
+                                <td>{{ $sale->Date }}</td>
+                                <td>{{ $sale->bill_no }}</td>
                                 <td>{{ $sale->customer_code }}</td>
                                 <td>{{ $sale->weight }}</td>
                                 <td>{{ $sale->price_per_kg }}</td>
@@ -94,29 +123,62 @@
                                 <td>{{ $sale->packs }}</td>
                             </tr>
                         @endforeach
+
+                        {{-- Totals Row --}}
+                        <tr style="font-weight: bold;">
+                            <td colspan="3" class="text-center">මුළු එකතුව</td>
+                            <td>{{ number_format($totalWeight, 2) }}</td>
+                            <td>-</td>
+                            <td>{{ number_format($totalAmount, 2) }}</td>
+                            <td>{{ number_format($totalPacks, 2) }}</td>
+                        </tr>
                     </tbody>
                 </table>
 
-                {{-- Damage Section --}}
-                <h4>Damage Section</h4>
-                <table class="table table-bordered table-sm text-white mb-2">
-                    <thead>
-                        <tr>
-                            <th>දිනය</th>
-                            <th>Wasted Packs</th>
-                            <th>Wasted Weight</th>
-                            <th>Damage Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{ \Carbon\Carbon::parse($data['updated_at'])->format('Y-m-d') }}</td>
-                            <td>{{ $data['damage']['wasted_packs'] }}</td>
-                            <td>{{ $data['damage']['wasted_weight'] }}</td>
-                            <td>{{ number_format($data['damage']['damage_value'], 2) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+               {{-- Damage Section --}}
+<h4>Damage Section</h4>
+<table class="table table-bordered table-sm text-white mb-2">
+    <thead>
+        <tr>
+            <th>දිනය</th>
+            <th>Wasted Packs</th>
+            <th>Wasted Weight</th>
+            <th>Damage Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        @php
+            $totalDamagePacks = 0;
+            $totalDamageWeight = 0;
+            $totalDamageValue = 0;
+        @endphp
+
+        @if(!empty($data['damage']))
+            {{-- Handle single record --}}
+            <tr>
+                <td>{{ \Carbon\Carbon::parse($data['updated_at'])->format('Y-m-d') }}</td>
+                <td>{{ $data['damage']['wasted_packs'] }}</td>
+                <td>{{ $data['damage']['wasted_weight'] }}</td>
+                <td>{{ number_format($data['damage']['damage_value'], 2) }}</td>
+            </tr>
+
+            @php
+                $totalDamagePacks += $data['damage']['wasted_packs'];
+                $totalDamageWeight += $data['damage']['wasted_weight'];
+                $totalDamageValue += $data['damage']['damage_value'];
+            @endphp
+        @endif
+
+        {{-- Totals Row --}}
+        <tr style="font-weight: bold;">
+            <td class="text-center">මුළු එකතුව</td>
+            <td>{{ number_format($totalDamagePacks, 2) }}</td>
+            <td>{{ number_format($totalDamageWeight, 2) }}</td>
+            <td>{{ number_format($totalDamageValue, 2) }}</td>
+        </tr>
+    </tbody>
+</table>
+
 
                 {{-- Profit --}}
                 <p class="{{ $data['profit'] >= 0 ? 'profit-positive' : 'profit-negative' }}">

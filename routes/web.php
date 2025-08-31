@@ -41,7 +41,7 @@ Route::resource('customers', CustomerController::class);
 Route::resource('suppliers', SupplierController::class);
 
 // GRN
-Route::resource('grn', GrnEntryController::class);
+Route::resource('grn', GrnEntryController::class) ->except(['show']); // exclude show
 Route::post('/grn/store', [GrnEntryController::class, 'store'])->name('grn.store2');
 Route::get('api/grn-entry/{code}', [GrnEntryController::class, 'getGrnEntryByCode']);
 Route::get('/grn-used-data/{code}', [GrnEntryController::class, 'getUsedData']);
@@ -127,5 +127,6 @@ Route::get('/sales-adjustment-report/excel', [ReportController::class, 'exportTo
 Route::get('/sales-adjustment-report/pdf', [ReportController::class, 'exportToPdf'])->name('sales-adjustment.export.pdf');
 Route::get('/grn-sales-overview/download', [ReportController::class, 'downloadGrnSalesOverviewReport'])->name('grn-sales.download');
 Route::get('/grn-overview/download2', [ReportController::class, 'downloadGrnOverviewReport2'])->name('grn-overview.download2');
-Route::get('/sales-report/download', [ReportController::class, 'downloadSalesReport'])->name('sales.report.download');   
+Route::get('/sales-report/download', [ReportController::class, 'downloadSalesReport'])->name('sales.report.download');  
+Route::get('/grn/send-email', [ReportController::class, 'sendGrnEmail'])->name('grn.sendEmail'); 
 require __DIR__.'/auth.php';

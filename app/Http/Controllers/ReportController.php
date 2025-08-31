@@ -34,6 +34,7 @@ use Mpdf\Mpdf;
 use App\Exports\SalesAdjustmentsExport;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
+use App\Mail\GrnbladeReportMail;
 
 class ReportController extends Controller
 {
@@ -805,12 +806,12 @@ public function grnReport(Request $request)
         // --- Sales for Cards ---
         $sales = Sale::where('code', $entry->code)->get([
             'code', 'customer_code', 'item_code', 'supplier_code',
-            'weight', 'price_per_kg', 'total', 'packs', 'item_name'
+            'weight', 'price_per_kg', 'total', 'packs', 'item_name','Date','bill_no',
         ]);
         if ($sales->isEmpty()) {
             $sales = SalesHistory::where('code', $entry->code)->get([
                 'code', 'customer_code', 'item_code', 'supplier_code',
-                'weight', 'price_per_kg', 'total', 'packs', 'item_name'
+                'weight', 'price_per_kg', 'total', 'packs', 'item_name','Date','bill_no'
             ]);
         }
 
@@ -842,6 +843,8 @@ public function grnReport(Request $request)
             'updated_at' => $entry->updated_at,
             'remaining_packs' => $remainingPacks,
             'remaining_weight' => $remainingWeight,
+            'totalOriginalPacks' => $totalOriginalPacks,
+            'totalOriginalWeight' => $totalOriginalWeight,
         ];
 
         // --- Report Data ---
@@ -1565,6 +1568,55 @@ public function downloadSalesReport(Request $request)
         }
     }
     return back()->with('error', 'Invalid export format.');
+}
+public function sendGrnEmail(Request $request)
+{
+    $code = $request->input('code');
+
+    $grnEntries = GrnEntry::when($code, fn($q) => $q->where('code', $code))->get();
+
+    $groupedData = [];
+
+    foreach ($grnEntries as $entry) {
+        $sales = Sale::where('code', $entry->code)->get([
+            'code','customer_code','item_code','supplier_code',
+            'weight','price_per_kg','total','packs','item_name','Date','bill_no'
+        ]);
+
+        if ($sales->isEmpty()) {
+            $sales = SalesHistory::where('code', $entry->code)->get([
+                'code','customer_code','item_code','supplier_code',
+                'weight','price_per_kg','total','packs','item_name','Date','bill_no'
+            ]);
+        }
+
+        $damageValue = $entry->wasted_weight * $entry->PerKGPrice;
+
+        $totalSoldPacks = $sales->sum('packs');
+        $totalSoldWeight = $sales->sum('weight');
+
+        $groupedData[$entry->code] = [
+            'purchase_price' => $entry->total_grn,
+            'item_name' => $entry->item_name,
+            'sales' => $sales,
+            'damage' => [
+                'wasted_packs' => $entry->wasted_packs,
+                'wasted_weight' => $entry->wasted_weight,
+                'damage_value' => $damageValue
+            ],
+            'profit' => $entry->total_grn - $sales->sum('total') - $damageValue,
+            'updated_at' => $entry->updated_at,
+            'remaining_packs' => $entry->original_packs - $totalSoldPacks,
+            'remaining_weight' => $entry->original_weight - $totalSoldWeight,
+            'totalOriginalPacks' => $entry->original_packs,
+            'totalOriginalWeight' => $entry->original_weight,
+        ];
+    }
+
+    Mail::to(['thrcorner@gmail.com','nethmavilhan2005@gmail.com'])
+        ->send(new GrnbladeReportMail($groupedData));
+
+    return back()->with('success', 'GRN Report has been sent successfully!');
 }
 }
 

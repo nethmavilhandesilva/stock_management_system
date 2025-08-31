@@ -17,6 +17,9 @@
                     </select>
                 </div>
                 <div class="modal-footer">
+                     <a href="{{ route('grn.sendEmail') }}" class="btn btn-info">
+            📧 Daily Email Report
+        </a>
                     <button type="submit" class="btn btn-success">Generate Report</button>
                 </div>
             </div>
