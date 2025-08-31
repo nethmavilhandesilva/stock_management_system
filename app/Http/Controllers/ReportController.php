@@ -35,6 +35,7 @@ use App\Exports\SalesAdjustmentsExport;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
 use App\Mail\GrnbladeReportMail;
+use App\Exports\GrnExport;
 
 class ReportController extends Controller
 {
@@ -1617,6 +1618,77 @@ public function sendGrnEmail(Request $request)
         ->send(new GrnbladeReportMail($groupedData));
 
     return back()->with('success', 'GRN Report has been sent successfully!');
+}
+public function exportPdf(Request $request)
+{
+    $code = $request->input('code');
+    $grnEntries = GrnEntry::when($code, fn($q) => $q->where('code', $code))->get();
+
+    $groupedData = [];
+
+    foreach ($grnEntries as $entry) {
+        $sales = Sale::where('code', $entry->code)->get();
+        if ($sales->isEmpty()) {
+            $sales = SalesHistory::where('code', $entry->code)->get();
+        }
+
+        $damageValue = $entry->wasted_weight * $entry->PerKGPrice;
+        $totalSoldPacks = $sales->sum('packs');
+        $totalSoldWeight = $sales->sum('weight');
+
+        $groupedData[$entry->code] = [
+            'purchase_price' => $entry->total_grn,
+            'item_name' => $entry->item_name,
+            'sales' => $sales,
+            'damage' => [
+                'wasted_packs' => $entry->wasted_packs,
+                'wasted_weight' => $entry->wasted_weight,
+                'damage_value' => $damageValue
+            ],
+            'profit' => $entry->total_grn - $sales->sum('total') - $damageValue,
+            'updated_at' => $entry->updated_at,
+            'remaining_packs' => $entry->original_packs - $totalSoldPacks,
+            'remaining_weight' => $entry->original_weight - $totalSoldWeight,
+            'totalOriginalPacks' => $entry->original_packs,
+            'totalOriginalWeight' => $entry->original_weight,
+        ];
+    }
+
+    // --- mPDF Setup for Sinhala ---
+    $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
+    $fontData = (new FontVariables())->getDefaults()['fontdata'];
+
+    $mpdf = new Mpdf([
+        'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
+        'fontdata' => $fontData + [
+            'notosanssinhala' => [
+                'R' => 'NotoSansSinhala-Regular.ttf',
+                'B' => 'NotoSansSinhala-Bold.ttf',
+            ]
+        ],
+        'default_font' => 'notosanssinhala',
+        'mode' => 'utf-8',
+        'format' => 'A4-P',
+        'margin_top' => 15,
+        'margin_bottom' => 15,
+        'margin_left' => 10,
+        'margin_right' => 10,
+    ]);
+
+    // Load Blade HTML
+    $html = view('dashboard.reports.grn_report_pdf', compact('groupedData'))->render();
+
+    $mpdf->WriteHTML($html);
+    $fileName = 'GRN_Report_'.date('Ymd_His').'.pdf';
+
+    return response($mpdf->Output($fileName, 'S'), 200)
+        ->header('Content-Type', 'application/pdf')
+        ->header('Content-Disposition', 'attachment; filename="'.$fileName.'"');
+}
+public function exportExcel(Request $request)
+{
+    $code = $request->input('code');
+    return Excel::download(new GrnExport($code), 'GRN_Report_'.date('Ymd_His').'.xlsx');
 }
 }
 
