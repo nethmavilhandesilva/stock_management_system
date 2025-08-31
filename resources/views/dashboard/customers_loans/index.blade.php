@@ -481,27 +481,55 @@
 
             // Edit button
             $('.edit-loan-btn').on('click', function () {
-                const loan = $(this).closest('tr').data('loan');
-                resetForm();
-                $('#loan_id').val(loan.id);
-                $('#methodField').val('PUT');
-                $('#loanForm').attr('action', `/customers-loans/${loan.id}`);
-                $('input[name="loan_type"][value="' + loan.loan_type + '"]').prop('checked', true);
-                $('input[name="amount"]').val(loan.amount);
-                $('input[name="description"]').val(loan.description);
-                $('input[name="bill_no"]').val(loan.bill_no ?? '');
-                $('input[name="settling_way"][value="' + (loan.settling_way ?? 'cash') + '"]').prop('checked', true);
-                if (loan.customer_id) $('#customer_id').val(loan.customer_id).trigger('change');
-                if (loan.loan_type === 'grn_damage') {
-                    $('#wasted_code').val(loan.wasted_code).trigger('change');
-                    $('input[name="wasted_packs"]').val(loan.wasted_packs);
-                    $('input[name="wasted_weight"]').val(loan.wasted_weight);
-                }
-                toggleLoanTypeDependentFields();
-                updateDescription();
-                $('#submitButton').text('Update Loan').removeClass('btn-light text-dark').addClass('btn-success');
-                $('#cancelEditButton').show();
-            });
+    const loan = $(this).closest('tr').data('loan');
+
+    // Reset form first
+    resetForm();
+
+    // Set hidden fields
+    $('#loan_id').val(loan.id);
+    $('#methodField').val('PUT');
+    $('#loanForm').attr('action', `/customers-loans/${loan.id}`);
+
+    // Set loan type and settling way
+    $('input[name="loan_type"][value="' + loan.loan_type + '"]').prop('checked', true);
+    $('input[name="settling_way"][value="' + (loan.settling_way ?? 'cash') + '"]').prop('checked', true);
+
+    // Set common fields
+    $('input[name="amount"]').val(loan.amount);
+    $('input[name="description"]').val(loan.description);
+    $('input[name="bill_no"]').val(loan.bill_no ?? '');
+    if (loan.customer_id) $('#customer_id').val(loan.customer_id).trigger('change');
+
+    // Cheque fields
+    if (loan.settling_way === 'cheque') {
+        $('#chequeFields').removeClass('d-none').find('input').prop('disabled', false);
+        $('input[name="cheque_no"]').val(loan.cheque_no ?? '');
+        $('input[name="bank"]').val(loan.bank ?? '');
+        $('input[name="cheque_date"]').val(loan.cheque_date ?? '{{ date("Y-m-d") }}');
+    } else {
+        $('#chequeFields').addClass('d-none').find('input').prop('disabled', true);
+    }
+
+    // Wasted/GRN damage fields
+    if (loan.loan_type === 'grn_damage') {
+        $('#loan-details-row').addClass('d-none');
+        $('input[name="amount"], input[name="description"]').prop('disabled', true).removeAttr('required');
+
+        $('#wastedFields').removeClass('d-none').find('input, select').prop('disabled', false);
+        $('#wasted_code').val(loan.wasted_code).trigger('change');
+        $('input[name="wasted_packs"]').val(loan.wasted_packs);
+        $('input[name="wasted_weight"]').val(loan.wasted_weight);
+    }
+
+    // Toggle other fields based on loan type
+    toggleLoanTypeDependentFields();
+    updateDescription();
+
+    // Update submit button
+    $('#submitButton').text('Update Loan').removeClass('btn-light text-dark').addClass('btn-success');
+    $('#cancelEditButton').show();
+});
 
             // Cancel edit
             $('#cancelEditButton').on('click', resetForm);

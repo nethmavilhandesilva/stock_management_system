@@ -50,104 +50,83 @@ class CustomersLoanController extends Controller
 
 
    
-     public function store(Request $request)
-    {
-        // Get the date from the Setting model or use the current date as a fallback
-        $settingDate = Setting::value('value');
-        if (!$settingDate) {
-            $settingDate = now()->toDateString();
+  public function store(Request $request)
+{
+    $settingDate = Setting::value('value') ?? now()->toDateString();
+
+    // Base validation rules
+    $rules = [
+        'loan_type' => 'required|string|in:old,today,ingoing,outgoing,grn_damage',
+        'settling_way' => 'nullable|string|in:cash,cheque',
+        'customer_id' => 'nullable|exists:customers,id',
+        'amount' => 'nullable|numeric',
+        'description' => 'nullable|string|max:255',
+        'bill_no' => 'nullable|string|max:255',
+        'cheque_no' => 'nullable|string|max:255',
+        'bank' => 'nullable|string|max:255',
+        'cheque_date' => 'nullable|date',
+        'wasted_code' => 'nullable|string',
+        'wasted_packs' => 'nullable|numeric',
+        'wasted_weight' => 'nullable|numeric',
+    ];
+
+    $loanType = $request->input('loan_type');
+    $settlingWay = $request->input('settling_way');
+
+    // Conditional validation
+    if ($loanType === 'ingoing' || $loanType === 'outgoing') {
+        $rules['amount'] = 'required|numeric';
+    } elseif ($loanType === 'grn_damage') {
+        $rules['wasted_code'] = 'required|string';
+        $rules['wasted_packs'] = 'required|numeric';
+        $rules['wasted_weight'] = 'required|numeric';
+        $rules['description'] = 'nullable|string|max:255';
+        $rules['amount'] = 'nullable';
+        $rules['customer_id'] = 'nullable';
+        $rules['settling_way'] = 'nullable';
+        $rules['bill_no'] = 'nullable';
+        $rules['cheque_no'] = 'nullable';
+        $rules['bank'] = 'nullable';
+        $rules['cheque_date'] = 'nullable';
+    } else {
+        $rules['amount'] = 'required|numeric';
+        $rules['customer_id'] = 'nullable|exists:customers,id';
+        if ($settlingWay === 'cheque') {
+            $rules['cheque_no'] = 'required|string|max:255';
+            $rules['bank'] = 'required|string|max:255';
+            $rules['cheque_date'] = 'required|date';
+        }
+    }
+
+    $validated = $request->validate($rules);
+
+    // --- GRN damage only updates GrnEntry ---
+    if ($loanType === 'grn_damage') {
+        $grnEntry = GrnEntry::where('code', $validated['wasted_code'])->first();
+        if (!$grnEntry) {
+            return back()->with('error', 'GRN code not found.');
         }
 
-        // Base validation rules
-        $rules = [
-            'loan_type' => 'required|string|in:old,today,ingoing,outgoing,grn_damage',
-            'settling_way' => 'nullable|string|in:cash,cheque',
-            'customer_id' => 'nullable|exists:customers,id',
-            'amount' => 'nullable|numeric|min:0.01',
-            'description' => 'required|string|max:255',
-            'bill_no' => 'nullable|string|max:255',
-            'cheque_no' => 'nullable|string|max:255',
-            'bank' => 'nullable|string|max:255',
-            'cheque_date' => 'nullable|date',
-            'wasted_code' => 'nullable|string',
-            'wasted_packs' => 'nullable|numeric',
-            'wasted_weight' => 'nullable|numeric',
-        ];
+        $grnEntry->packs = max(0, $grnEntry->packs - $validated['wasted_packs']);
+        $grnEntry->weight = max(0, $grnEntry->weight - $validated['wasted_weight']);
+        $grnEntry->save();
 
-        // Conditional required fields based on loan type and settling way
-        if ($request->input('loan_type') === 'ingoing' || $request->input('loan_type') === 'outgoing') {
-            $rules['amount'] = 'required|numeric|min:0.01';
-            $rules['customer_id'] = 'nullable';
-            $rules['settling_way'] = 'nullable';
-            $rules['bill_no'] = 'nullable';
-            $rules['cheque_no'] = 'nullable';
-            $rules['bank'] = 'nullable';
-            $rules['cheque_date'] = 'nullable';
-        } elseif ($request->input('loan_type') === 'grn_damage') {
-            $rules['wasted_code'] = 'required|string';
-            $rules['wasted_packs'] = 'required|numeric';
-            $rules['wasted_weight'] = 'required|numeric';
-            $rules['amount'] = 'nullable';
-            $rules['customer_id'] = 'nullable';
-            $rules['settling_way'] = 'nullable';
-            $rules['bill_no'] = 'nullable';
-            $rules['cheque_no'] = 'nullable';
-            $rules['bank'] = 'nullable';
-            $rules['cheque_date'] = 'nullable';
-            $rules['description'] = 'nullable|string|max:255';
-        } else {
-            $rules['amount'] = 'required|numeric|min:0.01';
-            $rules['customer_id'] = 'required|exists:customers,id';
-            if ($request->input('settling_way') === 'cheque') {
-                $rules['cheque_no'] = 'required|string|max:255';
-                $rules['bank'] = 'required|string|max:255';
-                $rules['cheque_date'] = 'required|date';
-                $rules['bill_no'] = 'nullable';
-            } else {
-                $rules['bill_no'] = 'nullable|string|max:255';
-                $rules['cheque_no'] = 'nullable';
-                $rules['bank'] = 'nullable';
-                $rules['cheque_date'] = 'nullable';
-            }
-        }
-        $validated = $request->validate($rules);
+        return redirect()->route('customers-loans.index')
+            ->with('success', 'GRN stock updated successfully!');
+    }
+
+    // --- If ingoing/outgoing: ONLY store in IncomeExpenses ---
+    if ($loanType === 'ingoing' || $loanType === 'outgoing') {
         $customerShortName = null;
-        if (isset($validated['customer_id']) && $validated['customer_id']) {
+        if (!empty($validated['customer_id'])) {
             $customer = Customer::find($validated['customer_id']);
             if ($customer) {
                 $customerShortName = $customer->short_name;
             }
         }
 
-        // --- Start of the corrected logic to link tables ---
-        $loan = new CustomersLoan();
-        // Only fill loan details for specific loan types
-        if ($validated['loan_type'] !== 'ingoing' && $validated['loan_type'] !== 'outgoing') {
-            $loan->loan_type = $validated['loan_type'];
-            $loan->settling_way = $validated['settling_way'] ?? null;
-            $loan->customer_id = $validated['customer_id'] ?? null;
-            $loan->amount = $validated['amount'] ?? 0;
-            $loan->description = $validated['description'] ?? 'N/A';
-            $loan->customer_short_name = $customerShortName;
-            $loan->bill_no = $validated['bill_no'] ?? null;
-            $loan->cheque_no = $validated['cheque_no'] ?? null;
-            $loan->bank = $validated['bank'] ?? null;
-            $loan->cheque_date = $validated['cheque_date'] ?? null;
-            $loan->date = $settingDate; // Add date to CustomersLoan table
-
-            if ($validated['loan_type'] === 'grn_damage') {
-                $loan->grn_code = $validated['wasted_code'];
-                $loan->wasted_packs = $validated['wasted_packs'];
-                $loan->wasted_weight = $validated['wasted_weight'];
-            }
-            $loan->save();
-        }
-
-        // Now, create the IncomeExpenses record and link it to the newly created loan
         $incomeExpense = new IncomeExpenses();
-        // The key part: associate the new record with the loan ID
-        $incomeExpense->loan_id = $loan->id ?? null;
-        $incomeExpense->loan_type = $validated['loan_type'];
+        $incomeExpense->loan_type = $loanType;
         $incomeExpense->customer_id = $validated['customer_id'] ?? null;
         $incomeExpense->description = $validated['description'];
         $incomeExpense->bill_no = $validated['bill_no'] ?? null;
@@ -156,158 +135,225 @@ class CustomersLoanController extends Controller
         $incomeExpense->cheque_date = $validated['cheque_date'] ?? null;
         $incomeExpense->settling_way = $validated['settling_way'] ?? null;
         $incomeExpense->customer_short_name = $customerShortName;
-        $incomeExpense->date = $settingDate; // Add date to IncomeExpenses table
+        $incomeExpense->date = $settingDate;
 
-        if ($validated['loan_type'] === 'ingoing') {
+        if ($loanType === 'ingoing') {
             $incomeExpense->amount = $validated['amount'];
             $incomeExpense->type = 'income';
-        } elseif ($validated['loan_type'] === 'outgoing') {
-            $incomeExpense->amount = -$validated['amount'];
-            $incomeExpense->type = 'expense';
-        } elseif ($validated['loan_type'] === 'grn_damage') {
-            // GRN damages are an expense
-            $incomeExpense->amount = -($validated['wasted_weight'] * 10); // Example calculation, adjust as needed
-            $incomeExpense->description = "GRN Damage: " . $validated['wasted_code'];
-            $incomeExpense->type = 'expense';
-        } elseif ($validated['loan_type'] === 'old') {
-            $incomeExpense->amount = $validated['amount'];
-            $incomeExpense->type = 'income';
-        } elseif ($validated['loan_type'] === 'today') {
-            $incomeExpense->amount = -$validated['amount'];
-            $incomeExpense->type = 'expense';
-        }
-        $incomeExpense->save();
-
-        return redirect()->route('customers-loans.index')->with('success', 'Loan and income/expense record created successfully!');
-    }
- 
-    public function update(Request $request, $id)
-    {
-        // Base validation rules
-        $rules = [
-            'loan_type' => 'required|string|in:old,today,ingoing,outgoing,grn_damage',
-            'settling_way' => 'nullable|string|in:cash,cheque',
-            'customer_id' => 'nullable|exists:customers,id',
-            'amount' => 'nullable|numeric|min:0.01',
-            'description' => 'required|string|max:255',
-            'bill_no' => 'nullable|string|max:255',
-            'cheque_no' => 'nullable|string|max:255',
-            'bank' => 'nullable|string|max:255',
-            'cheque_date' => 'nullable|date',
-            'wasted_code' => 'nullable|string',
-            'wasted_packs' => 'nullable|numeric',
-            'wasted_weight' => 'nullable|numeric',
-        ];
-
-        if ($request->input('loan_type') === 'ingoing' || $request->input('loan_type') === 'outgoing') {
-            $rules['amount'] = 'required|numeric|min:0.01';
-            $rules['customer_id'] = 'nullable';
-        } elseif ($request->input('loan_type') === 'grn_damage') {
-            $rules['amount'] = 'nullable';
-            $rules['wasted_code'] = 'required|string';
-            $rules['wasted_packs'] = 'required|numeric';
-            $rules['wasted_weight'] = 'required|numeric';
-            $rules['description'] = 'nullable|string|max:255';
-        } else {
-            $rules['amount'] = 'required|numeric|min:0.01';
-            $rules['customer_id'] = 'required|exists:customers,id';
-            if ($request->input('settling_way') === 'cheque') {
-                $rules['cheque_no'] = 'required|string|max:255';
-                $rules['bank'] = 'required|string|max:255';
-                $rules['cheque_date'] = 'required|date';
-            }
-        }
-        $validated = $request->validate($rules);
-
-        // Find existing CustomersLoan record
-        $loan = CustomersLoan::findOrFail($id);
-        $customerShortName = null;
-        if (isset($validated['customer_id']) && $validated['customer_id']) {
-            $customer = Customer::find($validated['customer_id']);
-            if ($customer) {
-                $customerShortName = $customer->short_name;
-            }
-        }
-
-        // Update CustomersLoan record
-        if ($validated['loan_type'] !== 'ingoing' && $validated['loan_type'] !== 'outgoing' && $validated['loan_type'] !== 'grn_damage') {
-             $loan->update([
-                'loan_type' => $validated['loan_type'],
-                'settling_way' => $validated['settling_way'] ?? null,
-                'customer_id' => $validated['customer_id'] ?? null,
-                'amount' => $validated['amount'],
-                'description' => $validated['description'],
-                'customer_short_name' => $customerShortName,
-                'bill_no' => $validated['bill_no'] ?? null,
-                'cheque_no' => $validated['cheque_no'] ?? null,
-                'bank' => $validated['bank'] ?? null,
-                'cheque_date' => $validated['cheque_date'] ?? null,
-             ]);
-        } else if ($validated['loan_type'] === 'grn_damage') {
-             $loan->update([
-                'loan_type' => $validated['loan_type'],
-                'grn_code' => $validated['wasted_code'],
-                'wasted_packs' => $validated['wasted_packs'],
-                'wasted_weight' => $validated['wasted_weight'],
-                'description' => $validated['description'] ?? 'N/A',
-             ]);
-        }
-        
-        // Find the linked IncomeExpenses record
-        $incomeExpense = IncomeExpenses::where('loan_id', $loan->id)->first();
-        if (!$incomeExpense) {
-            // Handle case where no linked record exists
-            $incomeExpense = new IncomeExpenses();
-            $incomeExpense->loan_id = $loan->id;
-        }
-
-        // Update the IncomeExpenses record
-        $incomeExpense->loan_type = $validated['loan_type'];
-        $incomeExpense->customer_id = $validated['customer_id'] ?? null;
-        $incomeExpense->description = $validated['description'] ?? 'N/A';
-        $incomeExpense->bill_no = $validated['bill_no'] ?? null;
-        $incomeExpense->cheque_no = $validated['cheque_no'] ?? null;
-        $incomeExpense->bank = $validated['bank'] ?? null;
-        $incomeExpense->cheque_date = $validated['cheque_date'] ?? null;
-        $incomeExpense->settling_way = $validated['settling_way'] ?? null;
-        $incomeExpense->customer_short_name = $customerShortName;
-
-        if ($validated['loan_type'] === 'ingoing') {
-            $incomeExpense->amount = $validated['amount'];
-            $incomeExpense->type = 'income';
-        } elseif ($validated['loan_type'] === 'outgoing') {
-            $incomeExpense->amount = -$validated['amount'];
-            $incomeExpense->type = 'expense';
-        } elseif ($validated['loan_type'] === 'grn_damage') {
-            $incomeExpense->amount = -($validated['wasted_weight'] * 10);
-            $incomeExpense->description = "GRN Damage: " . $validated['wasted_code'];
-            $incomeExpense->type = 'expense';
-        } elseif ($validated['loan_type'] === 'old') {
-            $incomeExpense->amount = $validated['amount'];
-            $incomeExpense->type = 'income';
-        } elseif ($validated['loan_type'] === 'today') {
+        } else { // outgoing
             $incomeExpense->amount = -$validated['amount'];
             $incomeExpense->type = 'expense';
         }
 
         $incomeExpense->save();
-        return response()->json(['message' => 'Loan record updated successfully!']);
+
+        return redirect()->route('customers-loans.index')
+            ->with('success', 'Income/Expense record created successfully!');
     }
+
+    // --- For other loan types (today, old): create CustomersLoan + IncomeExpenses ---
+    $customerShortName = null;
+    if (!empty($validated['customer_id'])) {
+        $customer = Customer::find($validated['customer_id']);
+        if ($customer) {
+            $customerShortName = $customer->short_name;
+        }
+    }
+
+    $loan = new CustomersLoan();
+    $loan->loan_type = $validated['loan_type'];
+    $loan->settling_way = $validated['settling_way'] ?? null;
+    $loan->customer_id = $validated['customer_id'] ?? null;
+    $loan->amount = $validated['amount'] ?? 0;
+    $loan->description = $validated['description'] ?? 'N/A';
+    $loan->customer_short_name = $customerShortName;
+    $loan->bill_no = $validated['bill_no'] ?? null;
+    $loan->cheque_no = $validated['cheque_no'] ?? null;
+    $loan->bank = $validated['bank'] ?? null;
+    $loan->cheque_date = $validated['cheque_date'] ?? null;
+    $loan->date = $settingDate;
+    $loan->save();
+
+    $incomeExpense = new IncomeExpenses();
+    $incomeExpense->loan_id = $loan->id;
+    $incomeExpense->loan_type = $loanType;
+    $incomeExpense->customer_id = $validated['customer_id'] ?? null;
+    $incomeExpense->description = $validated['description'];
+    $incomeExpense->bill_no = $validated['bill_no'] ?? null;
+    $incomeExpense->cheque_no = $validated['cheque_no'] ?? null;
+    $incomeExpense->bank = $validated['bank'] ?? null;
+    $incomeExpense->cheque_date = $validated['cheque_date'] ?? null;
+    $incomeExpense->settling_way = $validated['settling_way'] ?? null;
+    $incomeExpense->customer_short_name = $customerShortName;
+    $incomeExpense->date = $settingDate;
+
+    if ($loanType === 'old') {
+        $incomeExpense->amount = $validated['amount'];
+        $incomeExpense->type = 'income';
+    } elseif ($loanType === 'today') {
+        $incomeExpense->amount = -$validated['amount'];
+        $incomeExpense->type = 'expense';
+    }
+
+    $incomeExpense->save();
+
+    return redirect()->route('customers-loans.index')
+        ->with('success', 'Loan and income/expense record created successfully!');
+}
+
+public function update(Request $request, $id)
+{
+    // Base validation rules
+    $rules = [
+        'loan_type' => 'required|string|in:old,today,ingoing,outgoing,grn_damage',
+        'settling_way' => 'nullable|string|in:cash,cheque',
+        'customer_id' => 'nullable|exists:customers,id',
+        'amount' => 'nullable|numeric|min:0.01',
+        'description' => 'required|string|max:255',
+        'bill_no' => 'nullable|string|max:255',
+        'cheque_no' => 'nullable|string|max:255',
+        'bank' => 'nullable|string|max:255',
+        'cheque_date' => 'nullable|date',
+        'wasted_code' => 'nullable|string',
+        'wasted_packs' => 'nullable|numeric',
+        'wasted_weight' => 'nullable|numeric',
+    ];
+
+    if (in_array($request->input('loan_type'), ['ingoing', 'outgoing'])) {
+        $rules['amount'] = 'required|numeric';
+        $rules['customer_id'] = 'nullable';
+    } elseif ($request->input('loan_type') === 'grn_damage') {
+        $rules['amount'] = 'nullable';
+        $rules['wasted_code'] = 'required|string';
+        $rules['wasted_packs'] = 'required|numeric';
+        $rules['wasted_weight'] = 'required|numeric';
+        $rules['description'] = 'nullable|string|max:255';
+    } else {
+        $rules['amount'] = 'required|numeric';
+        $rules['customer_id'] = 'required|exists:customers,id';
+        if ($request->input('settling_way') === 'cheque') {
+            $rules['cheque_no'] = 'nullable|string|max:255';
+            $rules['bank'] = 'nullable|string|max:255';
+            $rules['cheque_date'] = 'nullable|date';
+        }
+    }
+
+    $validated = $request->validate($rules);
+
+    // Find the IncomeExpense record (not CustomersLoan directly)
+    $incomeExpense = IncomeExpenses::findOrFail($id);
+
+    // Try to get related loan if exists
+    $loan = $incomeExpense->loan_id ? CustomersLoan::find($incomeExpense->loan_id) : null;
+
+    $customerShortName = null;
+    if (!empty($validated['customer_id'])) {
+        $customer = Customer::find($validated['customer_id']);
+        if ($customer) {
+            $customerShortName = $customer->short_name;
+        }
+    }
+
+    // --- Update CustomersLoan record only if it exists ---
+    if ($loan) {
+        if (in_array($validated['loan_type'], ['old', 'today', 'grn_damage'])) {
+            if ($validated['loan_type'] === 'grn_damage') {
+                $loan->update([
+                    'loan_type' => $validated['loan_type'],
+                    'grn_code' => $validated['wasted_code'],
+                    'wasted_packs' => $validated['wasted_packs'],
+                    'wasted_weight' => $validated['wasted_weight'],
+                    'description' => $validated['description'] ?? 'N/A',
+                ]);
+            } else {
+                $loan->update([
+                    'loan_type' => $validated['loan_type'],
+                    'settling_way' => $validated['settling_way'] ?? null,
+                    'customer_id' => $validated['customer_id'] ?? null,
+                    'amount' => $validated['amount'],
+                    'description' => $validated['description'],
+                    'customer_short_name' => $customerShortName,
+                    'bill_no' => $validated['bill_no'] ?? null,
+                    'cheque_no' => $validated['cheque_no'] ?? null,
+                    'bank' => $validated['bank'] ?? null,
+                    'cheque_date' => $validated['cheque_date'] ?? null,
+                ]);
+            }
+        } elseif (in_array($validated['loan_type'], ['ingoing', 'outgoing'])) {
+            if ($validated['settling_way'] === 'cheque') {
+                $loan->update([
+                    'loan_type' => $validated['loan_type'],
+                    'settling_way' => $validated['settling_way'],
+                    'cheque_no' => $validated['cheque_no'],
+                    'bank' => $validated['bank'],
+                    'cheque_date' => $validated['cheque_date'],
+                    'bill_no' => $validated['bill_no'] ?? null,
+                    'description' => $validated['description'],
+                ]);
+            }
+        }
+    }
+
+    // --- Update the IncomeExpenses record ---
+    $incomeExpense->loan_type = $validated['loan_type'];
+    $incomeExpense->customer_id = $validated['customer_id'] ?? null;
+    $incomeExpense->description = $validated['description'] ?? 'N/A';
+    $incomeExpense->bill_no = $validated['bill_no'] ?? null;
+    $incomeExpense->cheque_no = $validated['cheque_no'] ?? null;
+    $incomeExpense->bank = $validated['bank'] ?? null;
+    $incomeExpense->cheque_date = $validated['cheque_date'] ?? null;
+    $incomeExpense->settling_way = $validated['settling_way'] ?? null;
+    $incomeExpense->customer_short_name = $customerShortName;
+
+    if ($validated['loan_type'] === 'ingoing') {
+        $incomeExpense->amount = $validated['amount'];
+        $incomeExpense->type = 'income';
+    } elseif ($validated['loan_type'] === 'outgoing') {
+        $incomeExpense->amount = -$validated['amount'];
+        $incomeExpense->type = 'expense';
+    } elseif ($validated['loan_type'] === 'grn_damage') {
+        $incomeExpense->amount = -($validated['wasted_weight'] * 10);
+        $incomeExpense->description = "GRN Damage: " . $validated['wasted_code'];
+        $incomeExpense->type = 'expense';
+    } elseif ($validated['loan_type'] === 'old') {
+        $incomeExpense->amount = $validated['amount'];
+        $incomeExpense->type = 'income';
+    } elseif ($validated['loan_type'] === 'today') {
+        $incomeExpense->amount = -$validated['amount'];
+        $incomeExpense->type = 'expense';
+    }
+
+    $incomeExpense->save();
+
+    return response()->json(['message' => 'Record updated successfully!']);
+}
 
     
-  public function destroy(CustomersLoan $loan)
+public function destroy($id)
 {
-    try {
-        // Delete related income/expense(s)
-        $loan->incomeExpenses()->delete();
+    // Find the IncomeExpense record
+    $incomeExpense = IncomeExpenses::findOrFail($id);
 
-        // Delete loan
-        $loan->delete();
+    // Check if linked loan exists
+    if ($incomeExpense->loan_id) {
+        $loan = CustomersLoan::find($incomeExpense->loan_id);
 
-        return redirect()->back()->with('success', 'Loan and associated income/expense record deleted successfully!');
-    } catch (\Exception $e) {
-        return redirect()->back()->withErrors('Failed to delete loan: ' . $e->getMessage());
+        if ($loan) {
+            // Delete only for loan-related types
+            if (in_array($incomeExpense->loan_type, ['old', 'today', 'grn_damage'])) {
+                $loan->delete();
+            } elseif (in_array($incomeExpense->loan_type, ['ingoing', 'outgoing']) 
+                      && $incomeExpense->settling_way === 'cheque') {
+                // Optional: only delete if cheque-based
+                $loan->delete();
+            }
+        }
     }
+
+    // Delete the income/expense record
+    $incomeExpense->delete();
+
+   return redirect()->back()->with('success', 'Record deleted successfully!');
 }
 
   
@@ -328,41 +374,38 @@ class CustomersLoanController extends Controller
     }
 
    
-   public function loanReportResults(Request $request)
-    {
-        // Get the date from the Setting model or use the current date as a fallback
-        $settingDate = Setting::value('value');
-        if (!$settingDate) {
-            $settingDate = now()->toDateString();
-        }
+  public function loanReportResults(Request $request)
+{
+    // Get the date from Setting or default to today
+    $settingDate = Setting::value('value') ?? now()->toDateString();
 
-        $query = CustomersLoan::query();
+    $query = CustomersLoan::query();
 
-        // Apply customer filter if it's filled
-        if ($request->filled('customer_short_name')) {
-            $query->where('customer_short_name', $request->customer_short_name);
-        }
-
-        // Conditionally apply date filtering
-        if ($request->filled('start_date') || $request->filled('end_date')) {
-            // Apply date range filter if start_date and/or end_date are provided
-            if ($request->filled('start_date')) {
-                $query->whereDate('Date', '>=', $request->start_date);
-            }
-            if ($request->filled('end_date')) {
-                $query->whereDate('Date', '<=', $request->end_date);
-            }
-        } else {
-            // If no date range is selected, filter by the specific date from the setting
-            $query->whereDate('Date', $settingDate);
-        }
-
-        // Get the results, ordered by created_at in descending order
-        $loans = $query->orderBy('Date', 'desc')->get();
-
-        return view('dashboard.reports.loan-results', compact('loans'));
+    // Filter by customer if selected
+    if ($request->filled('customer_short_name')) {
+        $query->where('customer_short_name', $request->customer_short_name);
     }
 
+    // Apply date filtering
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        // Both dates given → filter between them
+        $query->whereBetween('Date', [$request->start_date, $request->end_date]);
+    } elseif ($request->filled('start_date')) {
+        // Only start date given → from start_date until now
+        $query->whereDate('Date', '>=', $request->start_date);
+    } elseif ($request->filled('end_date')) {
+        // Only end date given → until end_date
+        $query->whereDate('Date', '<=', $request->end_date);
+    } else {
+        // No range → use setting date
+        $query->whereDate('Date', $settingDate);
+    }
+
+    // Fetch results ordered by Date desc
+    $loans = $query->orderBy('Date', 'desc')->get();
+
+    return view('dashboard.reports.loan-results', compact('loans'));
+}
 
     /**
      * Show loan report.

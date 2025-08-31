@@ -22,11 +22,53 @@
             width: 100%;
         }
 
-        /* Hide print/download buttons */
+        /* Hide buttons when printing */
         .print-btn,
         .btn-success,
-        .btn-danger {
+        .btn-danger,
+        .btn-info {
             display: none !important;
+        }
+
+        /* Remove scrollbars for print */
+        .table-responsive {
+            overflow: visible !important;
+        }
+
+        /* Force A4 page layout */
+        @page {
+            size: A4 portrait;   /* Change to landscape if needed */
+            margin: 10mm;
+        }
+
+        .table {
+            font-size: 11px !important;
+            color: black !important;
+            border-collapse: collapse !important;
+            width: 100%;
+        }
+
+        .table thead th, 
+        .table td, 
+        .table th {
+            padding: 3px 5px !important;
+            border: 1px solid #000 !important;
+            background: #f9f9f9 !important;
+            color: black !important;
+        }
+
+        .total-row {
+            background: #eee !important;
+            color: black !important;
+            font-weight: bold !important;
+        }
+
+        /* White background for print */
+        .card {
+            background: white !important;
+            color: black !important;
+            box-shadow: none !important;
+            border: none !important;
         }
     }
 </style>
@@ -37,13 +79,12 @@
             <div class="report-title-bar">
                 <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
                 <h4 class="fw-bold text-white">📦 ඉතිරි වාර්තාව</h4>
-                             @php
-    $settingDate = \App\Models\Setting::value('value');
-@endphp
-
-<span class="right-info">
-    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
-</span>
+                @php
+                    $settingDate = \App\Models\Setting::value('value');
+                @endphp
+                <span class="right-info">
+                    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
+                </span>
                 <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
             </div>
         </div>

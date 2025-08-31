@@ -472,7 +472,7 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
 
                 /* Adjust card background to white for contrast */
                 .card {
-                    background-color: #87b387ff !important;
+                    background-color: #111439ff !important;
                 }
 
                 /* Select2 specific styling adjustments for smaller size */
@@ -506,15 +506,11 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                     padding: 0 !important;
                 }
 
-                /* Header row styling */
-              /* Header row styling */
-    /* Header row */
-    /* Header row */
-    /* Header row */
-  /* Header row */
+/* Header and Data Rows */
 .grn-header-row {
     display: grid;
-    grid-template-columns: 110px 1.5fr 60px 60px 60px 60px 70px;
+    /* This line is adjusted to give more space to the first column */
+    grid-template-columns: 1fr 1fr 60px 60px 60px 60px 70px;
     gap: 1px;
     background: #333;
     color: #fff;
@@ -522,13 +518,14 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
     font-size: 13px;
     padding: 2px 4px;
     border-bottom: 1px solid #ccc;
-    white-space: nowrap;
+    white-space: nowrap; /* Keeps the header row on a single line for neatness */
 }
 
 /* Data rows */
 .grn-option-row {
     display: grid;
-    grid-template-columns: 110px 1.5fr 60px 60px 60px 60px 70px;
+    /* This line is adjusted to make the first column flexible */
+    grid-template-columns: 1fr 1fr 60px 60px 60px 60px 70px;
     gap: 1px;
     background: #fff7cc;
     color: #000;
@@ -536,46 +533,62 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
     padding: 2px 4px;
     border-bottom: 1px solid #ddd;
     align-items: center;
-    white-space: nowrap;
+    white-space: normal; /* Allows text to wrap within the row */
 }
 
-/* No changes to these sections as the grid template fixes the spacing */
+/* Column Styling */
 .grn-code {
     font-weight: bold;
-    text-align: center;
-}
-.grn-item {
     text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
+
+.grn-item {
+    /* **UPDATED:** Aligning the text to the center */
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Still want ellipsis for the Item name if it's too long */
+    /* **NEW:** Adding a margin to push content to the right */
+    margin-left: 10px; 
+}
+
 .grn-ow,
 .grn-op,
 .grn-bw,
 .grn-bp {
     text-align: right;
 }
+
 .grn-txn-date {
     text-align: center;
     color: #000;
     font-style: normal;
 }
+
+/* Header-specific alignment */
 .grn-header-row .grn-code {
     text-align: center;
 }
+
 .grn-header-row .grn-item {
-    text-align: center; /* Changed from right to center */
-    padding-right: 0; /* Removed this to prevent conflict */
+    /* **UPDATED:** Aligning the header to the center */
+    text-align: center;
+    padding-right: 0;
+    /* **NEW:** Adding a margin to push the header to the right */
+    margin-left: 10px;
 }
+
+/* Option-specific alignment */
 .grn-option-row .grn-item {
-    text-align: center; /* Changed to center to match header */
+    /* This is now handled by the .grn-item class above, so this can be removed or kept for specificity */
 }
+
 .grn-header-row .grn-ow,
 .grn-header-row .grn-op,
 .grn-header-row .grn-bw,
 .grn-header-row .grn-bp {
     text-align: right;
 }
+
 .grn-header-row .grn-txn-date {
     text-align: center;
     color: #fff;
@@ -939,50 +952,51 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                                 @enderror
                             </div>
                         </div>
-                        {{-- Item Details Section --}}
-                        <div class="d-flex flex-wrap gap-2 align-items-start mt-2">
-                            <div style="flex: 1 1 80px;">
-                                <input type="text" id="item_name_display_from_grn" class="form-control" readonly
-                                    placeholder="අයිතමයේ නම (Item Name)"
-                                    style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
-                            </div>
+                      <div class="d-flex flex-wrap gap-2 align-items-start mt-2">
+    <!-- Slightly smaller Item Name field -->
+    <div style="flex: 1.5 1 180px;">
+        <input type="text" id="item_name_display_from_grn" class="form-control" readonly
+            placeholder="අයිතමයේ නම (Item Name)"
+            style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
+    </div>
 
-                            <div style="flex: 1 1 80px;">
-                                <input type="number" name="weight" id="weight" step="0.01"
-                                    class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
-                                    placeholder="බර (kg)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                                <small id="remaining_weight_display" class="form-text text-danger fw-bold"
-                                    style="font-size: 1.3rem;">
-                                    BW: 0.00 kg
-                                </small>
-                            </div>
+    <!-- Weight -->
+    <div style="flex: 1 1 80px;">
+        <input type="number" name="weight" id="weight" step="0.01"
+            class="form-control @error('weight') is-invalid @enderror"
+            value="{{ old('weight') }}" placeholder="බර (kg)" required
+            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+        <small id="remaining_weight_display" class="form-text text-danger fw-bold"
+            style="font-size: 1.3rem;">BW: 0.00 kg</small>
+    </div>
 
-                            <div style="flex: 1 1 80px;">
-                                <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-                                    class="form-control @error('price_per_kg') is-invalid @enderror"
-                                    value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                            </div>
+    <!-- Price per kg -->
+    <div style="flex: 1 1 80px;">
+        <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+            class="form-control @error('price_per_kg') is-invalid @enderror"
+            value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
+            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+    </div>
 
-                            <div style="flex: 1 1 80px;">
-                                <input type="number" name="packs" id="packs"
-                                    class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
-                                    placeholder="ඇසුරුම් (Packs)" required
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-                                <small id="remaining_packs_display" class="form-text text-danger fw-bold"
-                                    style="font-size: 1.3rem;">
-                                    BP: 0
-                                </small>
-                            </div>
+    <!-- Packs -->
+    <div style="flex: 1 1 80px;">
+        <input type="number" name="packs" id="packs"
+            class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
+            placeholder="ඇසුරුම් (Packs)" required
+            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+        <small id="remaining_packs_display" class="form-text text-danger fw-bold"
+            style="font-size: 1.3rem;">BP: 0</small>
+    </div>
 
-                            <div style="flex: 1 1 80px;">
-                                <input type="number" name="total" id="total" readonly
-                                    class="form-control bg-light @error('total') is-invalid @enderror"
-                                    value="{{ old('total') }}" placeholder="සමස්ත (Total)"
-                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
-                            </div>
-                        </div>
+    <!-- Larger Total field -->
+    <div style="flex: 1.5 1 120px;">
+        <input type="number" name="total" id="total" readonly
+            class="form-control bg-light @error('total') is-invalid @enderror"
+            value="{{ old('total') }}" placeholder="සමස්ත (Total)"
+            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
+    </div>
+</div>
+
                         <input type="hidden" name="code" id="code" value="{{ old('code') }}">
                         <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
                         <input type="hidden" name="original_weight" id="original_weight_input">
@@ -1828,91 +1842,7 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
 
 
                 <!-- Second script block: Main logic -->
-             <script>
-        $(document).ready(function () {
-            // Debounce function to delay execution until the user stops typing
-            function debounce(func, delay) {
-                let timeout;
-                return function (...args) {
-                    const context = this;
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => func.apply(context, args), delay);
-                };
-            }
-
-            // Function to fetch and display unprinted sales data
-            function fetchUnprintedSales(customerCode) {
-                let tableBody = $('#mainSalesTableBody');
-                tableBody.empty(); // Clear the table body first
-                $('#customer_name').val('');
-                $('#mainTotalSalesValue').text("0.00"); 
-                $('#mainTotalSalesValueBottom').text("0.00"); // reset bottom total as well
-
-                if (customerCode) {
-                    $.ajax({
-                        url: '/api/sales/unprinted/' + customerCode,
-                        method: 'GET',
-                        success: function (response) {
-                            if (response.length > 0) {
-                                let totalSum = 0; // keep track of total
-
-                                response.forEach(function (sale) {
-                                    let row = $(`
-                                        <tr>
-                                            <td>${sale.code}</td>
-                                            <td>${sale.item_name}</td>
-                                            <td>${sale.weight}</td>
-                                            <td>${sale.price_per_kg}</td>
-                                            <td>${sale.total}</td>
-                                            <td>${sale.packs}</td>
-                                        </tr>
-                                    `);
-
-                                    // Add this sale's total to the sum
-                                    totalSum += parseFloat(sale.total) || 0;
-
-                                    // Click handler to populate form with selected row
-                                    row.on('click', function () {
-                                        populateFormForEdit(sale);
-                                    });
-
-                                    tableBody.append(row);
-                                });
-
-                                // ✅ Show grand total in both fields
-                                $('#mainTotalSalesValue').text(totalSum.toFixed(2));
-                                $('#mainTotalSalesValueBottom').text(totalSum.toFixed(2));
-
-                                // Populate table + auto-fill form with first entry
-                                populateMainSalesTable(response);
-                                populateFormForEdit(response[0]);
-                            } else {
-                                tableBody.html('<tr><td colspan="7" class="text-center">No unprinted sales records found for this customer.</td></tr>');
-                                $('#mainTotalSalesValue').text("0.00");
-                                $('#mainTotalSalesValueBottom').text("0.00");
-                            }
-                        },
-                        error: function (xhr) {
-                            console.error("AJAX Error fetching sales records:", xhr.responseText);
-                            tableBody.html('<tr><td colspan="7" class="text-center text-danger">Error fetching sales data. Please try again.</td></tr>');
-                            $('#mainTotalSalesValue').text("0.00");
-                            $('#mainTotalSalesValueBottom').text("0.00");
-                        }
-                    });
-                } else {
-                    tableBody.html('<tr><td colspan="7" class="text-center">Please enter a customer code to view records.</td></tr>');
-                    $('#mainTotalSalesValue').text("0.00");
-                    $('#mainTotalSalesValueBottom').text("0.00");
-                }
-            }
-
-            const debouncedFetchUnprintedSales = debounce(fetchUnprintedSales, 300);
-            $('#new_customer_code').on('keyup', function () {
-                let customerCode = $(this).val().trim();
-                debouncedFetchUnprintedSales(customerCode);
-            });
-        });
-    </script>
+             
 
 
                 {{-- ALL Custom JavaScript Consolidated Here --}}
@@ -2458,7 +2388,7 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                     <table style="width:100%;font-size:10px;border-collapse:collapse;">
                         <tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr>
                         <tr><td colspan="4">දුර : ${mobile}</td></tr>
-                        <tr><td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td><td colspan="2" style="text-align:right;"><strong>${customerName.toUpperCase()}</strong></td></tr>
+                        <tr><td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td><td colspan="2" style="text-align:right;"><strong style="font-size: 1.8em;">${customerName.toUpperCase()}</strong></td></tr>
                     </table>
                 </div>
                 <hr>
@@ -2467,12 +2397,19 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                     <tbody><tr><td colspan="4"><hr style="height:1px;background-color:#000;"></td></tr>${itemsHtml}</tbody>
                 </table>
                 <hr>
-                <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                    <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td><td style="text-align:right;font-weight:bold;">${totalAmountSum.toFixed(2)}</td></tr>
-                    ${totalAmountRowHtmlF1}
-                </table>
-                <div>${itemSummaryHtml}</div>
+               <table style="width:100%;font-size:10px;border-collapse:collapse;">
+    <tr>
+        <td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td>
+        <td style="text-align:right;font-weight:bold;font-size:1.8em;">
+            ${totalAmountSum.toFixed(2)}
+        </td>
+    </tr>
+    ${totalAmountRowHtmlF1}
+</table>
+
                 <hr>
+                <div>${itemSummaryHtml}</div>
+                
                 <div style="text-align:center;margin-top:10px;">
                     <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
                     <p>නැවත භාර ගනු නොලැබේ</p>
@@ -2796,483 +2733,429 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                         console.log("Initial allSalesData (for default table view):", allSalesData);
 
 
-                        // Function to populate the main sales table
-                        function populateMainSalesTable(salesArray) {
-                            console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
-
-                            currentDisplayedSalesData = salesArray;
-                            console.log("currentDisplayedSalesData updated to:", currentDisplayedSalesData);
-
-                            const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
-
-                            if (!mainSalesTableBodyElement) {
-                                console.error("Error: tbody with ID 'mainSalesTableBody' not found!");
-                                return;
-                            }
-
-                            // Clear existing rows safely
-                            while (mainSalesTableBodyElement.firstChild) {
-                                mainSalesTableBodyElement.removeChild(mainSalesTableBodyElement.firstChild);
-                            }
-                            console.log("After clearing, innerHTML:", mainSalesTableBodyElement.innerHTML);
-
-                            let totalSalesValue = 0;
-
-                            if (salesArray.length === 0) {
-                                console.log("Sales array is empty. Displaying 'No sales records found.'");
-                                const noRecordsRow = document.createElement('tr');
-                                noRecordsRow.innerHTML = '<td colspan="8" class="text-center">No sales records found for this selection.</td>';
-                                mainSalesTableBodyElement.appendChild(noRecordsRow);
-                                totalSalesValue = 0;
-                            } else {
-                                salesArray.forEach(sale => {
-                                    const newRow = document.createElement('tr');
-                                    newRow.dataset.saleId = sale.id;
-                                    newRow.dataset.id = sale.id;
-                                    newRow.dataset.customerCode = sale.customer_code;
-                                    newRow.dataset.customerName = sale.customer_name;
-
-                                    // Ensure all values are handled gracefully, with a fallback to 'N/A' or 0
-                                    const code = sale.code || 'N/A';
-                                    const itemCode = sale.item_code || 'N/A';
-                                    const itemName = sale.item_name || 'N/A';
-                                    const weight = (parseFloat(sale.weight) || 0).toFixed(2);
-                                    const pricePerKg = (parseFloat(sale.price_per_kg) || 0).toFixed(2);
-                                    const total = (parseFloat(sale.total) || 0).toFixed(2);
-                                    const packs = (parseInt(sale.packs) || 0);
-
-                                    newRow.innerHTML = `
-                                                                                                                                                                        <td data-field="code">${code}</td>
-                                                                                                                                                                        <td data-field="item_name">${itemName}</td>
-                                                                                                                                                                        <td data-field="weight">${weight}</td>
-                                                                                                                                                                        <td data-field="price_per_kg">${pricePerKg}</td>
-                                                                                                                                                                        <td data-field="total">${total}</td>
-                                                                                                                                                                        <td data-field="packs">${packs}</td>
-                                                                                                                                                                    `;
-
-                                    mainSalesTableBodyElement.appendChild(newRow);
-                                    totalSalesValue += parseFloat(total);
-                                });
-                            }
-
-                            // Moved the function definition here, so it's defined once.
-                            // This function will now be called after the table is populated.
-                            function displayItemSums() {
-                                const rows = document.querySelectorAll('#mainSalesTableBody tr');
-                                const itemGroups = {};
-
-                                rows.forEach(row => {
-                                    const itemName = row.querySelector('td[data-field="item_name"]')?.textContent.trim() || '';
-                                    const weight = parseFloat(row.querySelector('td[data-field="weight"]')?.textContent) || 0;
-                                    const packs = parseInt(row.querySelector('td[data-field="packs"]')?.textContent) || 0;
-
-                                    if (!itemGroups[itemName]) {
-                                        itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-                                    }
-
-                                    itemGroups[itemName].totalWeight += weight;
-                                    itemGroups[itemName].totalPacks += packs;
-                                });
-
-                                // Build a simple summary string using flexbox for a single row display
-                                let summaryHtml = '<div style="font-size: 0.9rem; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 1rem;">';
-                                for (const [itemName, totals] of Object.entries(itemGroups)) {
-                                    summaryHtml += `
-                                                                                                                                                                      <div style="padding: 0.25rem 0.5rem; border-radius: 0.5rem; background-color: #f3f4f6; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-size: 0.8rem;">
-                                                                                                                                                                            <strong>${itemName}</strong>: බර (kg) = ${totals.totalWeight.toFixed(2)}, මලු = ${totals.totalPacks}
-                                                                                                                                                                        </div>
-                                                                                                                                                                    `;
-                                }
-                                summaryHtml += '</div>';
-
-                                // Place it inside your container below the table
-                                const itemSummaryElement = document.getElementById('itemSummary');
-                                if (itemSummaryElement) {
-                                    itemSummaryElement.innerHTML = summaryHtml;
-                                } else {
-                                    console.error("Error: div with ID 'itemSummary' not found!");
-                                }
-                            }
-
-                            // ADDED: This is the critical line. Call the function after the table is built.
-                            displayItemSums();
-
-                            $('#mainTotalSalesValue').text(totalSalesValue.toFixed(2));
-                            $('#mainTotalSalesValueBottom').text(totalSalesValue.toFixed(2));
-                            console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2));
-
-                        }
-
-
-                        // Call the function initially to populate the table
-                        populateMainSalesTable(allSalesData);
-
-                        // Global variables to store the original GRN values
-                        // Global variables to store the fixed values needed for calculation
-                        let originalGrnPacks = 0;
-                        let originalGrnWeight = 0;
-                        let initialSalePacks = 0;
-                        let initialSaleWeight = 0;
-
-                        // Get references to the input fields and display elements
-                        const remainingPacksDisplay = document.getElementById('remaining_packs_display');
-                        const remainingWeightDisplay = document.getElementById('remaining_weight_display');
-                        const packsField = document.getElementById('packs');
-                        const weightField = document.getElementById('weight');
-
-                        // This function performs the subtraction from the remaining stock
-                        function updateRemainingStock() {
-                            if (updateSalesEntryBtn.style.display === 'inline-block') {
-                                // Get the current values from the input fields as the user types
-                                const currentPacks = parseInt(packsField.value) || 0;
-                                const currentWeight = parseFloat(weightField.value) || 0;
-
-                                // Calculate the difference between the initial sale value and the new input
-                                const packsDifference = currentPacks - initialSalePacks;
-                                const weightDifference = currentWeight - initialSaleWeight;
-
-                                // Calculate the final remaining values by subtracting the difference from the original GRN stock
-                                const finalRemainingPacks = originalGrnPacks - packsDifference;
-                                const finalRemainingWeight = originalGrnWeight - weightDifference;
-
-                                // Update the display with the new remaining values
-                                remainingPacksDisplay.textContent = `Remaining Packs: ${finalRemainingPacks}`;
-                                remainingWeightDisplay.textContent = `Remaining: ${finalRemainingWeight.toFixed(2)} kg`;
-                            }
-                        }
-
-                        // Attach the update function to the input fields' 'input' event
-                        packsField.addEventListener('input', updateRemainingStock);
-                        weightField.addEventListener('input', updateRemainingStock);
-
-                        function populateFormForEdit(sale) {
-                            console.log("Populating form for sale:", sale);
-
-                            // Set the form fields with the *sale* values.
-                            saleIdField.value = sale.id;
-                            newCustomerCodeField.value = sale.customer_code || '';
-                            customerNameField.value = sale.customer_name || '';
-                            newCustomerCodeField.readOnly = true;
-
-                            const grnDisplay = document.getElementById('grn_display');
-                            const grnSelect = document.getElementById('grn_select');
-
-                            grnDisplay.style.display = 'block';
-                            grnDisplay.value = sale.code || '';
-
-                            $(grnSelect).next('.select2-container').hide();
-
-                            const grnOption = $('#grn_select option').filter(function () {
-                                return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code &&
-                                    $(this).data('itemCode') === sale.item_code;
-                            });
-
-                            if (grnOption.length) {
-                                $('#grn_select').val(grnOption.val());
-                            } else {
-                                $('#grn_select').val(null);
-                            }
-
-                            // --- NEW LOGIC: FETCH ORIGINAL GRN VALUES AND STORE INITIAL SALE VALUES ---
-                            if (sale.code) {
-                                fetch(`/api/grn-entry/${sale.code}`) // Fetches original GRN data
-                                    .then(response => response.json())
-                                    .then(grnData => {
-                                        // Store the total original GRN values
-                                        originalGrnPacks = parseInt(grnData.packs || 0);
-                                        originalGrnWeight = parseFloat(grnData.weight || 0);
-
-                                        // Store the initial sale values from the record being edited
-                                        initialSalePacks = parseInt(sale.packs || 0);
-                                        initialSaleWeight = parseFloat(sale.weight || 0);
-
-                                        // Populate the input fields with the existing sale values
-                                        weightField.value = initialSaleWeight.toFixed(2);
-                                        weightField.select(); // Select the weight field content
-                                        // Do NOT focus here. Let the final focus below handle it,
-                                        // or if it's the first in the tab order.
-
-                                        packsField.value = initialSalePacks;
-                                        // packsField.select(); // This will be selected when focus moves here
-
-                                        // Ensure pricePerKgField is set BEFORE calculating total
-                                        pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
-                                        // pricePerKgField.select(); // This will be selected when focus moves here
-
-                                        // Now, call calculateTotal() AFTER all necessary values are set
-                                        calculateTotal(); // ✨ Call calculateTotal here! ✨
-
-                                        // Perform the initial calculation to show the correct remaining stock.
-                                        updateRemainingStock();
-
-                                        console.log("Original GRN Packs:", originalGrnPacks, "Initial Sale Packs:", initialSalePacks);
-                                    })
-                                    .catch(error => {
-                                        console.error('Error fetching data:', error);
-                                        remainingPacksDisplay.textContent = 'Remaining Packs: N/A';
-                                        remainingWeightDisplay.textContent = 'Remaining: N/A kg';
-                                    });
-                            }
-                            // --- END OF NEW LOGIC ---
-
-                            supplierSelect.value = sale.supplier_code || '';
-                            supplierDisplaySelect.value = sale.supplier_code || '';
-                            itemSelect.value = sale.item_code || '';
-                            itemSelect.dispatchEvent(new Event('change'));
-
-                            itemNameDisplayFromGrn.value = sale.item_name || '';
-                            itemNameField.value = sale.item_name || '';
-
-                            // pricePerKgField.value is set inside the fetch, but also here for initial load in case fetch fails or sale.code is null
-                            if (!sale.code) { // Only set if not already handled by fetch success
-                                pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
-                                calculateTotal();
-                            }
-
-
-                            salesEntryForm.action = `sales/update/${sale.id}`;
-
-                            addSalesEntryBtn.style.display = 'none';
-                            updateSalesEntryBtn.style.display = 'inline-block';
-                            deleteSalesEntryBtn.style.display = 'inline-block';
-                            cancelEntryBtn.style.display = 'inline-block';
-
-                            // Set initial focus to weightField and select its content
-                            weightField.focus();
-                            weightField.select();
-                        }
-
-                        // Global Event Listeners for Tab Navigation with Enter Key
-
-                        // When Enter is pressed in #weight input, move focus to #packs
-                        document.getElementById('weight').addEventListener('keydown', function (e) {
-                            if (e.key === 'Enter') {
-                                e.preventDefault(); // prevent form submission or other defaults
-                                document.getElementById('price_per_kg').focus();
-                                document.getElementById('price_per_kg').select(); // Select content of packs field
-                            }
-                        });
-
-                        // When Enter is pressed in #packs input, move focus to #price_per_kg
-                        document.getElementById('price_per_kg').addEventListener('keydown', function (e) {
-                            if (e.key === 'Enter') {
-                                e.preventDefault(); // prevent form submission or other defaults
-                                document.getElementById('packs').focus();
-                                document.getElementById('packs').select(); // Select content of price_per_kg field
-                            }
-                        });
-
-
-                        // When Enter is pressed in #price_per_kg input, move focus to the next logical field (e.g., a submit button, or another input)
-                        // For now, let's assume it moves to the update button or a relevant action.
-                        document.getElementById('price_per_kg').addEventListener('keydown', function (e) {
-                            if (e.key === 'Enter') {
-                                e.preventDefault(); // prevent form submission or other defaults
-                                // You might want to focus on your update button here, or another field
-                                // Example: document.getElementById('updateSalesEntryBtn').focus();
-                                // For demonstration, let's just log it or do nothing specific if no clear next field
-                                console.log("Enter pressed in Price per KG. Next action not explicitly defined.");
-                            }
-                        });
-
-
-                        function resetForm() {
-                            console.log("Resetting form...");
-                            salesEntryForm.reset();
-                            saleIdField.value = '';
-                            newCustomerCodeField.readOnly = false;
-                            $('#customer_code_select').val(null).trigger('change.select2');
-                            $('#grn_select').val(null).trigger('change.select2');
-                            grnDisplay.value = 'Select GRN Entry...';
-                            supplierSelect.value = '';
-                            supplierDisplaySelect.value = '';
-                            itemSelect.value = '';
-                            itemSelect.dispatchEvent(new Event('change'));
-                            itemNameDisplayFromGrn.value = '';
-                            itemNameField.value = '';
-                            calculateTotal();
-
-                            salesEntryForm.action = "{{ route('grn.store') }}";
-
-                            addSalesEntryBtn.style.display = 'inline-block';
-                            updateSalesEntryBtn.style.display = 'none';
-                            deleteSalesEntryBtn.style.display = 'none';
-                            cancelEntryBtn.style.display = 'none';
-
-                            newCustomerCodeField.focus();
-                            console.log("Form reset complete.");
-                        }
-
-                        document.getElementById('mainSalesTableBody').addEventListener('click', function (event) {
-                            const clickedRow = event.target.closest('tr[data-sale-id]');
-                            if (clickedRow) {
-                                const saleId = clickedRow.dataset.saleId;
-                                console.log("Row clicked, sale ID:", saleId);
-                                const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
-                                if (saleToEdit) {
-                                    console.log("Sale found in currentDisplayedSalesData for ID:", saleId, saleToEdit);
-                                    populateFormForEdit(saleToEdit);
-                                } else {
-                                    console.warn("Sale NOT found in currentDisplayedSalesData for ID:", saleId);
-                                    alert(
-                                        "Could not find this record for editing. It might not be in the currently displayed sales list. Please try reloading the page if this persists."
-                                    );
-                                }
-                            }
-                        });
-
-                        // Get references
-                        const salesEntryForm = document.getElementById('salesEntryForm');
-                        const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
-                        const saleIdField = document.getElementById('sale_id');
-
-                        let originalFormData = {}; // To store the original values for comparison
-
-                        // Helper function to get current form data as an object
-                        function getCurrentFormData(form) {
-                            const formData = new FormData(form);
-                            const data = {};
-                            formData.forEach((value, key) => {
-                                data[key] = value;
-                            });
-                            return data;
-                        }
-
-                        // Store original form data when a record is selected (you must call this manually when loading data)
-                        function storeOriginalFormData() {
-                            if (salesEntryForm) {
-                                originalFormData = getCurrentFormData(salesEntryForm);
-                            }
-                        }
-
-                        // Compare current data with original to see if any changes were made
-                        function isFormDataChanged(currentData) {
-                            for (let key in currentData) {
-                                if (currentData[key] !== originalFormData[key]) {
-                                    return true; // At least one field has changed
-                                }
-                            }
-                            return false;
-                        }
-
-                        if (salesEntryForm && updateSalesEntryBtn && saleIdField) {
-
-                            // Enter keypress triggers update only if update button is visible
-                            salesEntryForm.addEventListener('keypress', function (event) {
-                                if (event.key === 'Enter') {
-                                    const style = window.getComputedStyle(updateSalesEntryBtn);
-                                    const visible = style.display !== 'none' && style.visibility !== 'hidden';
-                                    const rendered = updateSalesEntryBtn.offsetWidth > 0 || updateSalesEntryBtn.offsetHeight > 0;
-
-                                    if (visible && rendered) {
-                                        event.preventDefault();
-                                        updateSalesEntryBtn.click();
-                                    }
-                                }
-                            });
-
-                            // Click event for update button
-                            updateSalesEntryBtn.addEventListener('click', function () {
-                                const saleId = saleIdField.value;
-                                if (!saleId) {
-                                    alert('No record selected for update.');
-                                    return;
-                                }
-
-                                const currentFormData = getCurrentFormData(salesEntryForm);
-                                if (!isFormDataChanged(currentFormData)) {
-                                    alert('No changes detected. Update not required.');
-                                    return;
-                                }
-
-                                // Add method and token
-                                currentFormData['_method'] = 'PUT';
-                                currentFormData['_token'] = '{{ csrf_token() }}';
-
-                                fetch(`sales/update/${saleId}`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify(currentFormData)
-                                })
-                                    .then(response => {
-                                        if (!response.ok) {
-                                            return response.json().then(errorData => Promise.reject(errorData));
-                                        }
-                                        return response.json();
-                                    })
-                                    .then(result => {
-                                        console.log("Server response:", result);
-
-                                        // Check the structure of the returned `sale` object here
-                                        console.log("Updated sale record received from server:", result.sale);
-
-                                        if (result.success && result.sale) {
-
-
-                                            const updatedIndex = currentDisplayedSalesData.findIndex(sale => String(sale.id) === String(saleId));
-                                            console.log("Found index to update:", updatedIndex);
-                                            if (updatedIndex !== -1) {
-                                                currentDisplayedSalesData[updatedIndex] = result.sale;
-                                                populateMainSalesTable(currentDisplayedSalesData);
-                                            } else {
-                                                alert("Record updated on server but not found in local data. Reloading.");
-                                                window.location.reload();
-                                            }
-
-                                            // This is the line that's causing the problem.
-                                            // It's calling a function that resets the form, and likely the table too.
-                                            // To fix this, you should remove or comment out the resetForm() call here.
-                                            // Instead, you should manually clear the form fields for the *current* entry.
-
-                                            // You should not call resetForm() here.
-                                            // Instead, manually clear the form fields like this:
-                                            saleIdField.value = '';
-                                            salesEntryForm.reset(); // If you still want to reset form fields without clearing the table.
-
-                                            console.log("Form reset complete.");
-                                        } else {
-                                            alert('Update failed: ' + result.message);
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.error('Error updating sales entry:', error);
-                                        let errorMessage = 'An error occurred during update.';
-                                        if (error?.message) errorMessage += '\n' + error.message;
-                                        if (error?.errors) {
-                                            for (const key in error.errors) {
-                                                errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
-                                            }
-                                        }
-                                        alert(errorMessage);
-                                    });
-                            });
-                        } else {
-                            console.error("Form, update button, or sale ID field not found. Please check their IDs.");
-                        }
-                        deleteSalesEntryBtn.addEventListener('click', function () {
+                 function populateMainSalesTable(salesArray) {
+    console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
+
+    // Create a fresh DEEP copy of the array to ensure reactivity
+    currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
+    console.log("currentDisplayedSalesData updated to:", currentDisplayedSalesData);
+
+    const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
+
+    if (!mainSalesTableBodyElement) {
+        console.error("Error: tbody with ID 'mainSalesTableBody' not found!");
+        return;
+    }
+
+    // Clear existing rows completely
+    mainSalesTableBodyElement.innerHTML = '';
+
+    let totalSalesValue = 0;
+
+    if (salesArray.length === 0) {
+        const noRecordsRow = document.createElement('tr');
+        noRecordsRow.innerHTML = '<td colspan="8" class="text-center">No sales records found for this selection.</td>';
+        mainSalesTableBodyElement.appendChild(noRecordsRow);
+        totalSalesValue = 0;
+    } else {
+        salesArray.forEach(sale => {
+            const newRow = document.createElement('tr');
+            newRow.dataset.saleId = sale.id;
+            newRow.dataset.id = sale.id;
+            newRow.dataset.customerCode = sale.customer_code;
+            newRow.dataset.customerName = sale.customer_name;
+
+            const code = sale.code || 'N/A';
+            const itemCode = sale.item_code || 'N/A';
+            const itemName = sale.item_name || 'N/A';
+
+            // Always take values directly from server response
+            const weight = sale.weight !== null && sale.weight !== undefined
+                ? parseFloat(sale.weight).toFixed(2)
+                : '0.00';
+
+            const pricePerKg = sale.price_per_kg !== null && sale.price_per_kg !== undefined
+                ? parseFloat(sale.price_per_kg).toFixed(2)
+                : '0.00';
+
+            const packs = sale.packs !== null && sale.packs !== undefined
+                ? parseInt(sale.packs)
+                : 0;
+
+            // Prefer server total, fallback only if missing
+            const total = sale.total !== null && sale.total !== undefined
+                ? parseFloat(sale.total).toFixed(2)
+                : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
+
+            // Debug log
+            console.log(
+                `Sale ID ${sale.id}: weight=${weight}, packs=${packs}, price_per_kg=${pricePerKg}, total=${total}`
+            );
+
+            newRow.innerHTML = `
+                <td data-field="code">${code}</td>
+                <td data-field="item_name">${itemName}</td>
+                <td data-field="weight">${weight}</td>
+                <td data-field="price_per_kg">${pricePerKg}</td>
+                <td data-field="total">${total}</td>
+                <td data-field="packs">${packs}</td>
+            `;
+
+            mainSalesTableBodyElement.appendChild(newRow);
+            totalSalesValue += parseFloat(total);
+        });
+    }
+
+    // Build item summary
+    function displayItemSums() {
+        const rows = document.querySelectorAll('#mainSalesTableBody tr');
+        const itemGroups = {};
+
+        rows.forEach(row => {
+            const itemName = row.querySelector('td[data-field="item_name"]')?.textContent.trim() || '';
+            const weight = parseFloat(row.querySelector('td[data-field="weight"]')?.textContent) || 0;
+            const packs = parseInt(row.querySelector('td[data-field="packs"]')?.textContent) || 0;
+
+            if (!itemGroups[itemName]) {
+                itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+            }
+
+            itemGroups[itemName].totalWeight += weight;
+            itemGroups[itemName].totalPacks += packs;
+        });
+
+        let summaryHtml = '<div style="font-size: 0.9rem; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 1rem;">';
+        for (const [itemName, totals] of Object.entries(itemGroups)) {
+            summaryHtml += `
+                <div style="padding: 0.25rem 0.5rem; border-radius: 0.5rem; background-color: #f3f4f6; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-size: 0.8rem;">
+                    <strong>${itemName}</strong>: බර (kg) = ${totals.totalWeight.toFixed(2)}, මලු = ${totals.totalPacks}
+                </div>
+            `;
+        }
+        summaryHtml += '</div>';
+
+        const itemSummaryElement = document.getElementById('itemSummary');
+        if (itemSummaryElement) {
+            itemSummaryElement.innerHTML = summaryHtml;
+        }
+    }
+
+    displayItemSums();
+
+    $('#mainTotalSalesValue').text(totalSalesValue.toFixed(2));
+    $('#mainTotalSalesValueBottom').text(totalSalesValue.toFixed(2));
+    console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2));
+}
+
+// Call initially with all data
+populateMainSalesTable(allSalesData);
+
+// ================= REMAINING STOCK CALCULATIONS =================
+let originalGrnPacks = 0;
+let originalGrnWeight = 0;
+let initialSalePacks = 0;
+let initialSaleWeight = 0;
+
+const remainingPacksDisplay = document.getElementById('remaining_packs_display');
+const remainingWeightDisplay = document.getElementById('remaining_weight_display');
+const packsField = document.getElementById('packs');
+const weightField = document.getElementById('weight');
+
+function updateRemainingStock() {
+    if (updateSalesEntryBtn.style.display === 'inline-block') {
+        const currentPacks = parseInt(packsField.value) || 0;
+        const currentWeight = parseFloat(weightField.value) || 0;
+
+        const packsDifference = currentPacks - initialSalePacks;
+        const weightDifference = currentWeight - initialSaleWeight;
+
+        const finalRemainingPacks = originalGrnPacks - packsDifference;
+        const finalRemainingWeight = originalGrnWeight - weightDifference;
+
+        remainingPacksDisplay.textContent = `Remaining Packs: ${finalRemainingPacks}`;
+        remainingWeightDisplay.textContent = `Remaining: ${finalRemainingWeight.toFixed(2)} kg`;
+    }
+}
+
+packsField.addEventListener('input', updateRemainingStock);
+weightField.addEventListener('input', updateRemainingStock);
+
+// ================= POPULATE FORM FOR EDIT =================
+function populateFormForEdit(sale) {
+    console.log("Populating form for sale:", sale);
+
+    saleIdField.value = sale.id;
+    newCustomerCodeField.value = sale.customer_code || '';
+    customerNameField.value = sale.customer_name || '';
+    newCustomerCodeField.readOnly = true;
+
+    const grnDisplay = document.getElementById('grn_display');
+    const grnSelect = document.getElementById('grn_select');
+
+    grnDisplay.style.display = 'block';
+    grnDisplay.value = sale.code || '';
+
+    // HIDE the GRN select dropdown and make it read-only
+    $(grnSelect).next('.select2-container').hide();
+    grnSelect.disabled = true; // Prevent changes to GRN code
+
+    // Store original values for remaining stock calculation
+    initialSalePacks = parseInt(sale.packs || 0);
+    initialSaleWeight = parseFloat(sale.weight || 0);
+
+    weightField.value = initialSaleWeight.toFixed(2);
+    packsField.value = initialSalePacks;
+    pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+    
+    calculateTotal();
+
+    // Fetch GRN data for remaining stock calculation
+    if (sale.code) {
+        fetch(`/api/grn-entry/${sale.code}`)
+            .then(response => response.json())
+            .then(grnData => {
+                originalGrnPacks = parseInt(grnData.packs || 0);
+                originalGrnWeight = parseFloat(grnData.weight || 0);
+                updateRemainingStock();
+            })
+            .catch(error => {
+                console.error('Error fetching GRN data:', error);
+                remainingPacksDisplay.textContent = 'Remaining Packs: N/A';
+                remainingWeightDisplay.textContent = 'Remaining: N/A kg';
+            });
+    } else {
+        updateRemainingStock();
+    }
+
+    supplierSelect.value = sale.supplier_code || '';
+    supplierDisplaySelect.value = sale.supplier_code || '';
+    itemSelect.value = sale.item_code || '';
+    
+    // Trigger change event after a short delay to ensure Select2 is updated
+    setTimeout(() => {
+        itemSelect.dispatchEvent(new Event('change'));
+    }, 100);
+
+    itemNameDisplayFromGrn.value = sale.item_name || '';
+    itemNameField.value = sale.item_name || '';
+
+    salesEntryForm.action = `sales/update/${sale.id}`;
+
+    addSalesEntryBtn.style.display = 'none';
+    updateSalesEntryBtn.style.display = 'inline-block';
+    deleteSalesEntryBtn.style.display = 'inline-block';
+    cancelEntryBtn.style.display = 'inline-block';
+
+    weightField.focus();
+    weightField.select();
+    
+    // Store original form data for change detection
+    storeOriginalFormData();
+    
+    console.log("Form populated with updated sale data");
+}
+
+// ================= RESET FORM =================
+function resetForm() {
+    console.log("Resetting form...");
+    salesEntryForm.reset();
+    saleIdField.value = '';
+    newCustomerCodeField.readOnly = false;
+    $('#customer_code_select').val(null).trigger('change.select2');
+    
+    // Re-enable GRN select when resetting form
+    const grnSelect = document.getElementById('grn_select');
+    grnSelect.disabled = false;
+    $(grnSelect).next('.select2-container').show();
+    $('#grn_select').val(null).trigger('change.select2');
+    
+    grnDisplay.value = 'Select GRN Entry...';
+    supplierSelect.value = '';
+    supplierDisplaySelect.value = '';
+    itemSelect.value = '';
+    itemSelect.dispatchEvent(new Event('change'));
+    itemNameDisplayFromGrn.value = '';
+    itemNameField.value = '';
+    calculateTotal();
+
+    salesEntryForm.action = "{{ route('grn.store') }}";
+
+    addSalesEntryBtn.style.display = 'inline-block';
+    updateSalesEntryBtn.style.display = 'none';
+    deleteSalesEntryBtn.style.display = 'none';
+    cancelEntryBtn.style.display = 'none';
+
+    newCustomerCodeField.focus();
+}
+
+// ================= TABLE CLICK HANDLER =================
+document.getElementById('mainSalesTableBody').addEventListener('click', function (event) {
+    const clickedRow = event.target.closest('tr[data-sale-id]');
+    if (clickedRow) {
+        const saleId = clickedRow.dataset.saleId;
+        const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
+        if (saleToEdit) {
+            populateFormForEdit(saleToEdit);
+        }
+    }
+});
+
+// ================= ENTER KEY NAVIGATION =================
+document.getElementById('weight').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('price_per_kg').focus();
+        document.getElementById('price_per_kg').select();
+    }
+});
+
+document.getElementById('price_per_kg').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('packs').focus();
+        document.getElementById('packs').select();
+    }
+});
+
+// ================= FETCH UNPRINTED SALES =================
+$(document).ready(function () {
+    function debounce(func, delay) {
+        let timeout;
+        return function (...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
+
+    function fetchUnprintedSales(customerCode) {
+        let tableBody = $('#mainSalesTableBody');
+        tableBody.empty();
+        $('#customer_name').val('');
+        $('#mainTotalSalesValue').text("0.00");
+        $('#mainTotalSalesValueBottom').text("0.00");
+
+        if (customerCode) {
+            $.ajax({
+                url: '/api/sales/unprinted/' + customerCode,
+                method: 'GET',
+                success: function (response) {
+                    if (response.length > 0) {
+                        populateMainSalesTable(response);
+                        populateFormForEdit(response[0]);
+                    } else {
+                        tableBody.html('<tr><td colspan="7" class="text-center">No unprinted sales records found for this customer.</td></tr>');
+                    }
+                },
+                error: function (xhr) {
+                    console.error("AJAX Error fetching sales records:", xhr.responseText);
+                    tableBody.html('<tr><td colspan="7', ' class="text-center text-danger">Error fetching sales data. Please try again.</td></tr>');
+                }
+            });
+        } else {
+            tableBody.html('<tr><td colspan="7" class="text-center">Please enter a customer code to view records.</td></tr>');
+        }
+    }
+
+    const debouncedFetchUnprintedSales = debounce(fetchUnprintedSales, 300);
+    $('#new_customer_code').on('keyup', function () {
+        let customerCode = $(this).val().trim();
+        debouncedFetchUnprintedSales(customerCode);
+    });
+});
+
+// Get references
+const salesEntryForm = document.getElementById('salesEntryForm');
+const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
+const saleIdField = document.getElementById('sale_id');
+const grnSelect = document.getElementById('grn_select');
+const grnDisplay = document.getElementById('grn_display');
+
+let originalFormData = {}; // To store the original values for comparison
+
+// Helper function to get current form data as an object
+function getCurrentFormData(form) {
+    const formData = new FormData(form);
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+    return data;
+}
+
+// Store original form data when a record is selected
+function storeOriginalFormData() {
+    if (salesEntryForm) {
+        originalFormData = getCurrentFormData(salesEntryForm);
+    }
+}
+
+// Compare current data with original to see if any changes were made
+function isFormDataChanged(currentData) {
+    for (let key in currentData) {
+        if (currentData[key] !== originalFormData[key]) {
+            return true; // At least one field has changed
+        }
+    }
+    return false;
+}
+
+// ================= UPDATE BUTTON CLICK HANDLER =================
+if (salesEntryForm && updateSalesEntryBtn && saleIdField) {
+    // Enter keypress triggers update only if update button is visible
+    salesEntryForm.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+            const style = window.getComputedStyle(updateSalesEntryBtn);
+            const visible = style.display !== 'none' && style.visibility !== 'hidden';
+            const rendered = updateSalesEntryBtn.offsetWidth > 0 || updateSalesEntryBtn.offsetHeight > 0;
+
+            if (visible && rendered) {
+                event.preventDefault();
+                updateSalesEntryBtn.click();
+            }
+        }
+    });
+
+    // Click event for update button
+    updateSalesEntryBtn.addEventListener('click', function () {
         const saleId = saleIdField.value;
         if (!saleId) {
-            alert('No record selected for deletion.');
+            alert('No record selected for update.');
             return;
         }
 
-        if (!confirm('Are you sure you want to delete this sales record?')) {
+        let currentFormData = getCurrentFormData(salesEntryForm);
+        
+        // For updates, remove the GRN code field to prevent changes
+        if (updateSalesEntryBtn.style.display === 'inline-block') {
+            delete currentFormData['grn_select'];
+            
+            // Get the original sale data to include required fields that shouldn't change
+            const originalSale = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
+            if (originalSale) {
+                currentFormData['code'] = originalSale.code || '';
+                currentFormData['item_name'] = originalSale.item_name || '';
+                currentFormData['item_code'] = originalSale.item_code || '';
+                currentFormData['supplier_code'] = originalSale.supplier_code || '';
+            }
+        }
+
+        if (!isFormDataChanged(currentFormData)) {
+            alert('No changes detected. Update not required.');
             return;
         }
 
-        fetch(`sales/delete/${saleId}`, {   // ✅ use your hosted link
+        // Add method and token
+        currentFormData['_method'] = 'PUT';
+        currentFormData['_token'] = '{{ csrf_token() }}';
+
+        fetch(`sales/update/${saleId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
-            body: JSON.stringify({
-                _method: 'DELETE',
-                _token: '{{ csrf_token() }}'
-            })
+            body: JSON.stringify(currentFormData)
         })
         .then(response => {
             if (!response.ok) {
@@ -3281,44 +3164,136 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
             return response.json();
         })
         .then(result => {
-            if (result.success) {
-                alert(result.message);
+            console.log("Server response:", result);
+            console.log("Updated sale record received from server:", result.sale);
+            console.log("Weight:", result.sale.weight, "Packs:", result.sale.packs, "Price:", result.sale.price_per_kg, "Total:", result.sale.total);
+            
+            if (result.success && result.sale) {
+                // Create a DEEP copy of the array to ensure complete reactivity
+                const updatedSalesData = JSON.parse(JSON.stringify(currentDisplayedSalesData));
+                const updatedIndex = updatedSalesData.findIndex(
+                    sale => String(sale.id) === String(saleId)
+                );
+                console.log("Found index to update:", updatedIndex);
 
-                // ✅ Remove row from the table
-                const rowToDelete = document.querySelector(`#mainSalesTableBody tr[data-id="${saleId}"]`);
-                if (rowToDelete) {
-                    rowToDelete.remove();
+                if (updatedIndex !== -1) {
+                    // COMPLETELY replace the object with all new data
+                    updatedSalesData[updatedIndex] = JSON.parse(JSON.stringify(result.sale));
+                    
+                    // Update the global reference
+                    currentDisplayedSalesData = updatedSalesData;
+                    
+                    // Force a complete re-render of the table
+                    populateMainSalesTable(currentDisplayedSalesData);
+                    
+                    // Update the form with the new data to keep everything in sync
+                    populateFormForEdit(result.sale);
+                    
+                    console.log("Sale record successfully updated in local data");
+                } else {
+                    console.warn("Record updated on server but not found in local data");
+                    // Refresh the entire table data
+                    fetchSalesData().then(() => {
+                        const refreshedSale = currentDisplayedSalesData.find(
+                            sale => String(sale.id) === String(saleId)
+                        );
+                        if (refreshedSale) {
+                            populateFormForEdit(refreshedSale);
+                        }
+                    });
                 }
 
-                // ✅ Recalculate totals
-                let totalSum = 0;
-                document.querySelectorAll('#mainSalesTableBody tr').forEach(row => {
-                    const totalCell = row.querySelector('td:nth-child(5)'); // adjust column index if needed
-                    if (totalCell) {
-                        totalSum += parseFloat(totalCell.textContent) || 0;
-                    }
-                });
-
-                // Update total fields
-                document.getElementById('mainTotalSalesValue').textContent = totalSum.toFixed(2);
-                document.getElementById('mainTotalSalesValueBottom').textContent = totalSum.toFixed(2);
-
-                // ✅ Call your resetForm() instead of manually resetting fields
-                resetForm();
-
+                console.log("Update completed successfully.");
             } else {
-                alert('Delete failed: ' + result.message);
+                alert('Update failed: ' + result.message);
             }
         })
         .catch(error => {
-            console.error('Error deleting sales entry:', error);
-            let errorMessage = 'An error occurred during deletion.';
-            if (error && error.message) {
-                errorMessage += '\n' + error.message;
+            console.error('Error updating sales entry:', error);
+            let errorMessage = 'An error occurred during update.';
+            if (error?.message) errorMessage += '\n' + error.message;
+            if (error?.errors) {
+                for (const key in error.errors) {
+                    errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
+                }
             }
             alert(errorMessage);
         });
     });
+}
+
+// Add this function to fetch sales data if needed
+function fetchSalesData() {
+    return fetch('/api/sales')
+        .then(response => response.json())
+        .then(data => {
+            currentDisplayedSalesData = data;
+            populateMainSalesTable(currentDisplayedSalesData);
+            return data;
+        })
+        .catch(error => {
+            console.error('Error fetching sales data:', error);
+            return [];
+        });
+}
+
+// ================= DELETE BUTTON CLICK HANDLER =================
+deleteSalesEntryBtn.addEventListener('click', function () {
+    const saleId = saleIdField.value;
+    if (!saleId) {
+        alert('No record selected for deletion.');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to delete this sales record?')) {
+        return;
+    }
+
+    fetch(`sales/delete/${saleId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            _method: 'DELETE',
+            _token: '{{ csrf_token() }}'
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorData => Promise.reject(errorData));
+        }
+        return response.json();
+    })
+    .then(result => {
+        if (result.success) {
+            alert(result.message);
+
+            // Remove from displayed data
+            currentDisplayedSalesData = currentDisplayedSalesData.filter(sale => String(sale.id) !== String(saleId));
+            
+            // Repopulate table
+            populateMainSalesTable(currentDisplayedSalesData);
+            
+            // Reset form
+            resetForm();
+            
+            console.log("Record deleted successfully.");
+        } else {
+            alert('Delete failed: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting sales entry:', error);
+        let errorMessage = 'An error occurred during deletion.';
+        if (error && error.message) {
+            errorMessage += '\n' + error.message;
+        }
+        alert(errorMessage);
+    });
+});
+                      
 
                         cancelEntryBtn.addEventListener('click', resetForm);
 

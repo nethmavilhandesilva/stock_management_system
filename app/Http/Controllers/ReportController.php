@@ -804,20 +804,34 @@ public function grnReport(Request $request)
     foreach ($grnEntries as $entry) {
         // --- Sales for Cards ---
         $sales = Sale::where('code', $entry->code)->get([
-            'code', 'customer_code', 'item_code', 'supplier_code', 'weight', 'price_per_kg', 'total', 'packs', 'item_name'
+            'code', 'customer_code', 'item_code', 'supplier_code',
+            'weight', 'price_per_kg', 'total', 'packs', 'item_name'
         ]);
         if ($sales->isEmpty()) {
             $sales = SalesHistory::where('code', $entry->code)->get([
-                'code', 'customer_code', 'item_code', 'supplier_code', 'weight', 'price_per_kg', 'total', 'packs', 'item_name'
+                'code', 'customer_code', 'item_code', 'supplier_code',
+                'weight', 'price_per_kg', 'total', 'packs', 'item_name'
             ]);
         }
 
-        $totalSales = $sales->sum('total'); // Sum of sales total
-        $damageValue = $entry->wasted_weight * $entry->PerKGPrice; // Damage value
+        $totalSales = $sales->sum('total'); 
+        $damageValue = $entry->wasted_weight * $entry->PerKGPrice; 
 
+        // --- Summary Data ---
+        $totalSoldPacks = $sales->sum('packs');
+        $totalSoldWeight = $sales->sum('weight');
+        $totalSalesValueForGrn = $sales->sum('total');
+
+        $totalOriginalPacks = $entry->original_packs;
+        $totalOriginalWeight = $entry->original_weight;
+
+        $remainingPacks = $totalOriginalPacks - $totalSoldPacks;
+        $remainingWeight = $totalOriginalWeight - $totalSoldWeight;
+
+        // --- Grouped Data for Card ---
         $groupedData[$entry->code] = [
             'purchase_price' => $entry->total_grn,
-            'item_name' => $entry->item_name, // <-- Add item_name here
+            'item_name' => $entry->item_name,
             'sales' => $sales,
             'damage' => [
                 'wasted_packs' => $entry->wasted_packs,
@@ -826,20 +840,11 @@ public function grnReport(Request $request)
             ],
             'profit' => $entry->total_grn - $totalSales - $damageValue,
             'updated_at' => $entry->updated_at,
+            'remaining_packs' => $remainingPacks,
+            'remaining_weight' => $remainingWeight,
         ];
 
-        // --- Summary Table Data ---
-        $relatedSales = $sales; // For reportData, same as above
-        $totalSoldPacks = $relatedSales->sum('packs');
-        $totalSoldWeight = $relatedSales->sum('weight');
-        $totalSalesValueForGrn = $relatedSales->sum('total');
-
-        $totalOriginalPacks = $entry->original_packs;
-        $totalOriginalWeight = $entry->original_weight;
-
-        $remainingPacks = $totalOriginalPacks - $totalSoldPacks;
-        $remainingWeight = $totalOriginalWeight - $totalSoldWeight;
-
+        // --- Report Data ---
         $reportData[] = [
             'grn_code' => $entry->code,
             'item_name' => $entry->item_name,
@@ -858,22 +863,28 @@ public function grnReport(Request $request)
         'reportData' => collect($reportData)
     ]);
 }
-    public function sendDailyReport()
-{
-    // Fetch your data here
-    $sales = Sale::select('item_code', 'item_name', 'packs', 'weight', 'total')->get();
 
-    // The data you want to pass to the email view
+   public function sendDailyReport()
+{
+    // Group by item_name and aggregate
+    $sales = Sale::select('item_name')
+        ->selectRaw('MIN(item_code) as item_code') // keep one code (or you can use MAX)
+        ->selectRaw('SUM(packs) as packs')
+        ->selectRaw('SUM(weight) as weight')
+        ->selectRaw('SUM(total) as total')
+        ->groupBy('item_name')
+        ->get();
+
     $reportData = [
         'sales' => $sales,
         'settingDate' => now()->format('Y-m-d')
     ];
 
-    // Send the email
     Mail::to('nethmavilhan@gmail.com')->send(new DailyReportMail($reportData));
 
     return "Daily report email sent successfully!";
 }
+
 public function emailChangesReport()
 {
     // Fetch the data. You need to get the same data as your web report.
