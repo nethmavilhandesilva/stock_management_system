@@ -21,7 +21,8 @@ class Salesadjustment extends Model
         'packs',
         'bill_no',
         'type',
-        'original_created_at'
+        'original_created_at',
+        'Date'
     ];
       // Cast the original_created_at and original_updated_at to Carbon
     protected $casts = [

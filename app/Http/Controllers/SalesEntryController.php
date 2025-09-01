@@ -45,7 +45,7 @@ class SalesEntryController extends Controller
         $unprocessedSales = Sale::whereIn('Processed', ['Y', 'N']) // Include both processed and unprocessed
             ->get();
         $billDate = Setting::value('value');
-    
+
         $salesPrinted = Sale::where('bill_printed', 'Y')
             ->orderBy('created_at', 'desc')
             ->orderBy('bill_no') // Or ->orderBy('created_at') for chronological order
@@ -67,101 +67,101 @@ class SalesEntryController extends Controller
             ->distinct()
             ->orderBy('code')
             ->get();
-        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay', 'codes','billDate'));
+        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay', 'codes', 'billDate'));
     }
 
     public function store(Request $request)
-{
-    // Add grn_entry_code to validation
-    $validated = $request->validate([
-        'supplier_code' => 'required',
-        'customer_code' => 'required|string|max:255',
-        'customer_name' => 'nullable',
-        'code' => 'required',
-        'item_code' => 'required',
-        'item_name' => 'required',
-        'weight' => 'required|numeric',
-        'price_per_kg' => 'required|numeric',
-        'total' => 'required|numeric',
-        'packs' => 'required|integer|min:1',
-        'grn_entry_code' => 'required|string|exists:grn_entries,code',
-        'original_weight' => 'nullable',
-        'original_packs' => 'nullable',
-    ]);
-
-    try {
-        DB::beginTransaction(); // Start a database transaction
-
-        // 1. Find the original GRN record using the grn_entry_code
-        $grnEntry = GrnEntry::where('code', $validated['grn_entry_code'])->first();
-
-        if (!$grnEntry) {
-            throw new \Exception('Selected GRN entry not found for update.');
-        }
-
-        // 2. Get the PerKGPrice from the GRN entry and calculate PerKGTotal (the cost)
-        $perKgPrice = $grnEntry->PerKGPrice;
-        $perKgTotal = $perKgPrice * $validated['weight'];
-
-       
-
-        // 5. Generate the bill number
-        $lastBillNoSale = (int) Sale::max('bill_no');
-        $lastBillNoHistory = (int) SalesHistory::max('bill_no');
-
-        $lastBillNo = max($lastBillNoSale, $lastBillNoHistory);
-        $newBillNo = $lastBillNo ? $lastBillNo + 1 : 1000;
-
-        // 6. Get the date value from settings
-        $settingDate = Setting::value('value'); // gets "value" column from first row
-
-        if (!$settingDate) {
-            $settingDate = now()->toDateString(); // fallback if null
-        }
-
-        // 7. Create the Sale record
-        $loggedInUserId = auth()->user()->user_id;
-        $uniqueCode = $validated['customer_code'] . '-' . $loggedInUserId;
-        $sellingKGTotal = $validated['total'] - $perKgTotal;
-        $saleCode = $grnEntry->code;
-
-        Sale::create([
-            'supplier_code' => $validated['supplier_code'],
-            'customer_code' => strtoupper($validated['customer_code']),
-            'customer_name' => $validated['customer_name'],
-            'code' => $saleCode,
-            'item_code' => $validated['item_code'],
-            'item_name' => $validated['item_name'],
-            'weight' => $validated['weight'],
-            'price_per_kg' => $validated['price_per_kg'],
-            'total' => $validated['total'],
-            'packs' => $validated['packs'],
-            'original_weight' => $validated['original_weight'],
-            'original_packs' => $validated['original_packs'],
-            'Processed' => 'N',
-            'FirstTimeBillPrintedOn' => null,
-            'BillChangedOn' => null,
-            'CustomerBillEnteredOn' => now(),
-            'UniqueCode' => $uniqueCode,
-            'PerKGPrice' => $perKgPrice,
-            'PerKGTotal' => $perKgTotal,
-            'SellingKGTotal' => $sellingKGTotal,
-            'Date' => $settingDate, // <-- pulled from settings
+    {
+        // Add grn_entry_code to validation
+        $validated = $request->validate([
+            'supplier_code' => 'required',
+            'customer_code' => 'required|string|max:255',
+            'customer_name' => 'nullable',
+            'code' => 'required',
+            'item_code' => 'required',
+            'item_name' => 'required',
+            'weight' => 'required|numeric',
+            'price_per_kg' => 'required|numeric',
+            'total' => 'required|numeric',
+            'packs' => 'required|integer|min:1',
+            'grn_entry_code' => 'required|string|exists:grn_entries,code',
+            'original_weight' => 'nullable',
+            'original_packs' => 'nullable',
         ]);
-        $this->updateGrnRemainingStock($validated['grn_entry_code']);
 
-        DB::commit(); // Commit the transaction
+        try {
+            DB::beginTransaction(); // Start a database transaction
 
-        return redirect()->back()->withInput($request->only(['customer_code', 'customer_name']));
+            // 1. Find the original GRN record using the grn_entry_code
+            $grnEntry = GrnEntry::where('code', $validated['grn_entry_code'])->first();
 
-    } catch (\Exception | \Illuminate\Database\QueryException $e) {
-        DB::rollBack(); // Rollback on any exception
-        Log::error('Failed to add sales entry and update GRN: ' . $e->getMessage());
-        return redirect()->back()
-            ->withErrors(['error' => 'Failed to add sales entry: ' . $e->getMessage()])
-            ->withInput($request->all());
+            if (!$grnEntry) {
+                throw new \Exception('Selected GRN entry not found for update.');
+            }
+
+            // 2. Get the PerKGPrice from the GRN entry and calculate PerKGTotal (the cost)
+            $perKgPrice = $grnEntry->PerKGPrice;
+            $perKgTotal = $perKgPrice * $validated['weight'];
+
+
+
+            // 5. Generate the bill number
+            $lastBillNoSale = (int) Sale::max('bill_no');
+            $lastBillNoHistory = (int) SalesHistory::max('bill_no');
+
+            $lastBillNo = max($lastBillNoSale, $lastBillNoHistory);
+            $newBillNo = $lastBillNo ? $lastBillNo + 1 : 1000;
+
+            // 6. Get the date value from settings
+            $settingDate = Setting::value('value'); // gets "value" column from first row
+
+            if (!$settingDate) {
+                $settingDate = now()->toDateString(); // fallback if null
+            }
+
+            // 7. Create the Sale record
+            $loggedInUserId = auth()->user()->user_id;
+            $uniqueCode = $validated['customer_code'] . '-' . $loggedInUserId;
+            $sellingKGTotal = $validated['total'] - $perKgTotal;
+            $saleCode = $grnEntry->code;
+
+            Sale::create([
+                'supplier_code' => $validated['supplier_code'],
+                'customer_code' => strtoupper($validated['customer_code']),
+                'customer_name' => $validated['customer_name'],
+                'code' => $saleCode,
+                'item_code' => $validated['item_code'],
+                'item_name' => $validated['item_name'],
+                'weight' => $validated['weight'],
+                'price_per_kg' => $validated['price_per_kg'],
+                'total' => $validated['total'],
+                'packs' => $validated['packs'],
+                'original_weight' => $validated['original_weight'],
+                'original_packs' => $validated['original_packs'],
+                'Processed' => 'N',
+                'FirstTimeBillPrintedOn' => null,
+                'BillChangedOn' => null,
+                'CustomerBillEnteredOn' => now(),
+                'UniqueCode' => $uniqueCode,
+                'PerKGPrice' => $perKgPrice,
+                'PerKGTotal' => $perKgTotal,
+                'SellingKGTotal' => $sellingKGTotal,
+                'Date' => $settingDate, // <-- pulled from settings
+            ]);
+            $this->updateGrnRemainingStock($validated['grn_entry_code']);
+
+            DB::commit(); // Commit the transaction
+
+            return redirect()->back()->withInput($request->only(['customer_code', 'customer_name']));
+
+        } catch (\Exception | \Illuminate\Database\QueryException $e) {
+            DB::rollBack(); // Rollback on any exception
+            Log::error('Failed to add sales entry and update GRN: ' . $e->getMessage());
+            return redirect()->back()
+                ->withErrors(['error' => 'Failed to add sales entry: ' . $e->getMessage()])
+                ->withInput($request->all());
+        }
     }
-}
     public function markAllAsProcessed(Request $request)
     {
         try {
@@ -273,111 +273,131 @@ class SalesEntryController extends Controller
         });
     }
 
-   public function update(Request $request, Sale $sale)
-{
-    $validatedData = $request->validate([
-        'customer_code' => 'required|string|max:255',
-        'customer_name' => 'nullable|string|max:255',
-        'code' => 'required|string|max:255',
-        'supplier_code' => 'required|string|max:255',
-        'item_code' => 'required|string|max:255',
-        'item_name' => 'required|string|max:255',
-        'weight' => 'required|numeric|min:0',
-        'price_per_kg' => 'required|numeric|min:0',
-        'total' => 'required|numeric|min:0',
-        'packs' => 'required|integer|min:0',
-    ]);
-
-    try {
-        // keep old values before update
-        $oldPacks = $sale->packs;
-        $oldWeight = $sale->weight;
-
-        // --- Adjustment tracking for bill_printed ---
-        if ($sale->bill_printed === 'Y') {
-            $originalData = $sale->toArray();
-            Salesadjustment::create([
-                'customer_code' => $originalData['customer_code'],
-                'supplier_code' => $originalData['supplier_code'],
-                'code' => $originalData['code'],
-                'item_code' => $originalData['item_code'],
-                'item_name' => $originalData['item_name'],
-                'weight' => $originalData['weight'],
-                'price_per_kg' => $originalData['price_per_kg'],
-                'total' => $originalData['total'],
-                'packs' => $originalData['packs'],
-                'bill_no' => $originalData['bill_no'],
-                'user_id' => 'c11',
-                'type' => 'original',
-                'original_created_at' => $sale->created_at,
-                'original_updated_at' => $sale->updated_at,
-            ]);
-        }
-
-        // Update the sale
-       // Update the sale
-$sale->update([
-    'customer_code'   => $validatedData['customer_code'],
-    'customer_name'   => $validatedData['customer_name'] ?? $sale->customer_name,
-    'code'            => $validatedData['code'],
-    'supplier_code'   => $validatedData['supplier_code'],
-    'item_code'       => $validatedData['item_code'],
-    'item_name'       => $validatedData['item_name'],
-    'weight'          => $validatedData['weight'],   // ✅ added
-    'packs'           => $validatedData['packs'],    // ✅ added
-    'price_per_kg'    => $validatedData['price_per_kg'],
-    'total'           => $validatedData['total'],
-    'updated'         => 'Y',
-    'BillChangedOn'   => now(),
-]);
-
-        $this->updateGrnRemainingStock($validatedData['code']);
-
-       
-        // Save updated version as adjustment if needed
-        if ($sale->bill_printed === 'Y') {
-            $newData = $sale->fresh();
-            Salesadjustment::create([
-                'customer_code' => $newData->customer_code,
-                'supplier_code' => $newData->supplier_code,
-                'code' => $newData->code,
-                'item_code' => $newData->item_code,
-                'item_name' => $newData->item_name,
-                'weight' => $newData->weight,
-                'price_per_kg' => $newData->price_per_kg,
-                'total' => $newData->total,
-                'packs' => $newData->packs,
-                'bill_no' => $newData->bill_no,
-                'user_id' => 'c11',
-                'type' => 'updated',
-                'original_created_at' => $newData->created_at,
-                'original_updated_at' => $newData->updated_at,
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'sale' => $sale->fresh(),
+    public function update(Request $request, Sale $sale)
+    {
+        $validatedData = $request->validate([
+            'customer_code' => 'required|string|max:255',
+            'customer_name' => 'nullable|string|max:255',
+            'code' => 'required|string|max:255',
+            'supplier_code' => 'required|string|max:255',
+            'item_code' => 'required|string|max:255',
+            'item_name' => 'required|string|max:255',
+            'weight' => 'required|numeric|min:0',
+            'price_per_kg' => 'required|numeric|min:0',
+            'total' => 'required|numeric|min:0',
+            'packs' => 'required|integer|min:0',
         ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to update sales record: ' . $e->getMessage(),
-        ], 500);
+
+        try {
+            // Get the setting date value
+            $settingDate = \App\Models\Setting::value('value');
+            $formattedDate = \Carbon\Carbon::parse($settingDate)->format('Y-m-d');
+
+            $oldPacks = $sale->packs;
+            $oldWeight = $sale->weight;
+
+            // --- Adjustment tracking for bill_printed ---
+            if ($sale->bill_printed === 'Y') {
+                $originalData = $sale->toArray();
+                Salesadjustment::create([
+                    'customer_code' => $originalData['customer_code'],
+                    'supplier_code' => $originalData['supplier_code'],
+                    'code' => $originalData['code'],
+                    'item_code' => $originalData['item_code'],
+                    'item_name' => $originalData['item_name'],
+                    'weight' => $originalData['weight'],
+                    'price_per_kg' => $originalData['price_per_kg'],
+                    'total' => $originalData['total'],
+                    'packs' => $originalData['packs'],
+                    'bill_no' => $originalData['bill_no'],
+                    'user_id' => 'c11',
+                    'type' => 'original',
+                    'original_created_at' => $sale->created_at,
+                    'original_updated_at' => $sale->updated_at,
+                    'Date' => $formattedDate, // ✅ Add Date
+                ]);
+            }
+
+            // Update the sale
+            $sale->update([
+                'customer_code' => $validatedData['customer_code'],
+                'customer_name' => $validatedData['customer_name'] ?? $sale->customer_name,
+                'code' => $validatedData['code'],
+                'supplier_code' => $validatedData['supplier_code'],
+                'item_code' => $validatedData['item_code'],
+                'item_name' => $validatedData['item_name'],
+                'weight' => $validatedData['weight'],
+                'packs' => $validatedData['packs'],
+                'price_per_kg' => $validatedData['price_per_kg'],
+                'total' => $validatedData['total'],
+                'updated' => 'Y',
+                'BillChangedOn' => now(),
+            ]);
+
+            $this->updateGrnRemainingStock($validatedData['code']);
+
+            // Save updated version as adjustment if needed
+            if ($sale->bill_printed === 'Y') {
+                $newData = $sale->fresh();
+                Salesadjustment::create([
+                    'customer_code' => $newData->customer_code,
+                    'supplier_code' => $newData->supplier_code,
+                    'code' => $newData->code,
+                    'item_code' => $newData->item_code,
+                    'item_name' => $newData->item_name,
+                    'weight' => $newData->weight,
+                    'price_per_kg' => $newData->price_per_kg,
+                    'total' => $newData->total,
+                    'packs' => $newData->packs,
+                    'bill_no' => $newData->bill_no,
+                    'user_id' => 'c11',
+                    'type' => 'updated',
+                    'original_created_at' => $newData->created_at,
+                    'original_updated_at' => $newData->updated_at,
+                    'Date' => $formattedDate, // ✅ Add Date
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'sale' => $sale->fresh(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update sales record: ' . $e->getMessage(),
+            ], 500);
+        }
     }
-}
 
- public function destroy(Sale $sale)
-{
-    try {
-        if ($sale->bill_printed === 'Y') {
-            // Check if an 'original' record already exists for this code and bill_no
-            $alreadyExists = Salesadjustment::where('customer_code', $sale->customer_code)
-                ->where('bill_no', $sale->bill_no)
-                ->where('type', 'original')
-                ->exists();
 
-            if (!$alreadyExists) {
+    public function destroy(Sale $sale)
+    {
+        try {
+            if ($sale->bill_printed === 'Y') {
+                // Check if an 'original' record already exists for this code and bill_no
+                $alreadyExists = Salesadjustment::where('customer_code', $sale->customer_code)
+                    ->where('bill_no', $sale->bill_no)
+                    ->where('type', 'original')
+                    ->exists();
+
+                if (!$alreadyExists) {
+                    Salesadjustment::create([
+                        'customer_code' => $sale->customer_code,
+                        'supplier_code' => $sale->supplier_code,
+                        'code' => $sale->code,
+                        'item_code' => $sale->item_code,
+                        'item_name' => $sale->item_name,
+                        'weight' => $sale->weight,
+                        'price_per_kg' => $sale->price_per_kg,
+                        'total' => $sale->total,
+                        'packs' => $sale->packs,
+                        'bill_no' => $sale->bill_no,
+                        'type' => 'original',
+                        'original_created_at' => $sale->created_at,
+                    ]);
+                }
+
                 Salesadjustment::create([
                     'customer_code' => $sale->customer_code,
                     'supplier_code' => $sale->supplier_code,
@@ -389,91 +409,75 @@ $sale->update([
                     'total' => $sale->total,
                     'packs' => $sale->packs,
                     'bill_no' => $sale->bill_no,
-                    'type' => 'original',
+                    'type' => 'deleted',
                     'original_created_at' => $sale->created_at,
                 ]);
             }
 
-            Salesadjustment::create([
-                'customer_code' => $sale->customer_code,
-                'supplier_code' => $sale->supplier_code,
-                'code' => $sale->code,
-                'item_code' => $sale->item_code,
-                'item_name' => $sale->item_name,
-                'weight' => $sale->weight,
-                'price_per_kg' => $sale->price_per_kg,
-                'total' => $sale->total,
-                'packs' => $sale->packs,
-                'bill_no' => $sale->bill_no,
-                'type' => 'deleted',
-                'original_created_at' => $sale->created_at,
+            // Delete and update GRN stock
+            $saleCode = $sale->code;
+            $sale->delete();
+            $this->updateGrnRemainingStock($saleCode);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sales record deleted successfully.'
             ]);
-        }
 
-        // Delete and update GRN stock
-        $saleCode = $sale->code;
-        $sale->delete();
-        $this->updateGrnRemainingStock($saleCode);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Sales record deleted successfully.'
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('Error deleting sale: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'An error occurred while deleting the sale.'
-        ], 500);
-    }
-}
-
-public function updateGrnRemainingStock(): void
-{
-    // Fetch all GRN entries and group them by their unique 'code'
-    $grnEntriesByCode = GrnEntry::all()->groupBy('code');
-
-    // Fetch all sales and sales history entries
-    $currentSales    = Sale::all()->groupBy('code');
-    $historicalSales = SalesHistory::all()->groupBy('code');
-
-    foreach ($grnEntriesByCode as $grnCode => $entries) {
-        // Calculate the total original packs and weight for the current GRN code
-        $totalOriginalPacks  = $entries->sum('original_packs');
-        $totalOriginalWeight = $entries->sum('original_weight');
-        $totalWastedPacks    = $entries->sum('wasted_packs');
-        $totalWastedWeight   = $entries->sum('wasted_weight');
-
-        // Sum up packs and weight from sales for this specific GRN code
-        $totalSoldPacks = 0;
-        if (isset($currentSales[$grnCode])) {
-            $totalSoldPacks += $currentSales[$grnCode]->sum('packs');
-        }
-        if (isset($historicalSales[$grnCode])) {
-            $totalSoldPacks += $historicalSales[$grnCode]->sum('packs');
-        }
-
-        $totalSoldWeight = 0;
-        if (isset($currentSales[$grnCode])) {
-            $totalSoldWeight += $currentSales[$grnCode]->sum('weight');
-        }
-        if (isset($historicalSales[$grnCode])) {
-            $totalSoldWeight += $historicalSales[$grnCode]->sum('weight');
-        }
-
-        // Calculate remaining stock based on all original, sold, and wasted amounts
-        $remainingPacks  = $totalOriginalPacks - $totalSoldPacks - $totalWastedPacks;
-        $remainingWeight = $totalOriginalWeight - $totalSoldWeight - $totalWastedWeight;
-
-        // Update each individual GRN entry with the new remaining values
-        foreach ($entries as $grnEntry) {
-            $grnEntry->packs  = max($remainingPacks, 0);
-            $grnEntry->weight = max($remainingWeight, 0);
-            $grnEntry->save();
+        } catch (\Exception $e) {
+            Log::error('Error deleting sale: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while deleting the sale.'
+            ], 500);
         }
     }
-}
+
+    public function updateGrnRemainingStock(): void
+    {
+        // Fetch all GRN entries and group them by their unique 'code'
+        $grnEntriesByCode = GrnEntry::all()->groupBy('code');
+
+        // Fetch all sales and sales history entries
+        $currentSales = Sale::all()->groupBy('code');
+        $historicalSales = SalesHistory::all()->groupBy('code');
+
+        foreach ($grnEntriesByCode as $grnCode => $entries) {
+            // Calculate the total original packs and weight for the current GRN code
+            $totalOriginalPacks = $entries->sum('original_packs');
+            $totalOriginalWeight = $entries->sum('original_weight');
+            $totalWastedPacks = $entries->sum('wasted_packs');
+            $totalWastedWeight = $entries->sum('wasted_weight');
+
+            // Sum up packs and weight from sales for this specific GRN code
+            $totalSoldPacks = 0;
+            if (isset($currentSales[$grnCode])) {
+                $totalSoldPacks += $currentSales[$grnCode]->sum('packs');
+            }
+            if (isset($historicalSales[$grnCode])) {
+                $totalSoldPacks += $historicalSales[$grnCode]->sum('packs');
+            }
+
+            $totalSoldWeight = 0;
+            if (isset($currentSales[$grnCode])) {
+                $totalSoldWeight += $currentSales[$grnCode]->sum('weight');
+            }
+            if (isset($historicalSales[$grnCode])) {
+                $totalSoldWeight += $historicalSales[$grnCode]->sum('weight');
+            }
+
+            // Calculate remaining stock based on all original, sold, and wasted amounts
+            $remainingPacks = $totalOriginalPacks - $totalSoldPacks - $totalWastedPacks;
+            $remainingWeight = $totalOriginalWeight - $totalSoldWeight - $totalWastedWeight;
+
+            // Update each individual GRN entry with the new remaining values
+            foreach ($entries as $grnEntry) {
+                $grnEntry->packs = max($remainingPacks, 0);
+                $grnEntry->weight = max($remainingWeight, 0);
+                $grnEntry->save();
+            }
+        }
+    }
 
     public function saveAsUnprinted(Request $request)
     {
@@ -592,8 +596,8 @@ public function updateGrnRemainingStock(): void
             foreach ($grnEntries->groupBy('code') as $code => $entries) {
                 $totalOriginalPacks = $entries->sum('original_packs');
                 $totalOriginalWeight = $entries->sum('original_weight');
-                $totalWastedPacks    = $entries->sum('wasted_packs');
-                $totalWastedWeight   = $entries->sum('wasted_weight');
+                $totalWastedPacks =  $grnEntries->sum('wasted_packs');
+                $totalWastedWeight =  $grnEntries->sum('wasted_weight');
 
 
                 $currentSales = Sale::where('code', $code)->get();
@@ -604,8 +608,8 @@ public function updateGrnRemainingStock(): void
                 $totalSoldWeight = $relatedSales->sum('weight');
                 $totalSalesValue = $relatedSales->sum('total');
 
-                $remainingPacks  = $totalOriginalPacks - $totalSoldPacks - $totalWastedPacks;
-                $remainingWeight = $totalOriginalWeight - $totalSoldWeight - $totalWastedWeight;
+                $remainingPacks = $entries->sum('packs');
+                $remainingWeight = $entries->sum('weight');
 
 
                 $dayStartReportData[] = [
@@ -627,32 +631,59 @@ public function updateGrnRemainingStock(): void
             }
 
             // --- Generate GRN Report Data (if you need a separate GRN table) ---
-            $grnReportData = [];
-            foreach ($grnEntries as $grnEntry) {
-                $currentSales = Sale::where('code', $grnEntry->code)->get();
-                $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
-                $relatedSales = $currentSales->merge($historicalSales);
+            $grnEntries = GrnEntry::all();
 
-                $totalSoldPacks = $relatedSales->sum('packs');
-                $totalSoldWeight = $relatedSales->sum('weight');
-                $totalSalesValueForGrn = $relatedSales->sum('total');
+    $reportData = [];
 
-                $remainingPacks = $grnEntry->original_packs - $totalSoldPacks;
-                $remainingWeight = $grnEntry->original_weight - $totalSoldWeight;
+    // Group by item_name
+    $grouped = $grnEntries->groupBy('item_name');
 
-                $grnReportData[] = [
-                    'date' => Carbon::parse($grnEntry->created_at)->timezone('Asia/Colombo')->format('Y-m-d H:i:s'),
-                    'grn_code' => $grnEntry->code,
-                    'item_name' => $grnEntry->item_name,
-                    'original_packs' => $grnEntry->original_packs,
-                    'original_weight' => $grnEntry->original_weight,
-                    'sold_packs' => $totalSoldPacks,
-                    'sold_weight' => $totalSoldWeight,
-                    'total_sales_value' => $totalSalesValueForGrn,
-                    'remaining_packs' => $remainingPacks,
-                    'remaining_weight' => number_format($remainingWeight, 2, '.', ''),
-                ];
-            }
+    foreach ($grouped as $itemName => $entries) {
+        $originalPacks = 0;
+        $originalWeight = 0;
+        $soldPacks = 0;
+        $soldWeight = 0;
+        $totalSalesValue = 0;
+        $remainingPacks = 0;
+        $remainingWeight = 0;
+
+        foreach ($entries as $grnEntry) {
+            // Fetch current and historical sales for this GRN code
+            $currentSales = Sale::where('code', $grnEntry->code)->get();
+            $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
+            $relatedSales = $currentSales->merge($historicalSales);
+
+            // Total weight sold and total sales value for this GRN
+            $totalSoldWeight = $relatedSales->sum('weight');
+            $totalSalesValueForGrn = $relatedSales->sum('total');
+
+            // Sum original packs and weight
+            $originalPacks += $grnEntry->original_packs;
+            $originalWeight += $grnEntry->original_weight;
+
+            // Sum sold packs and weight
+            $soldPacks += $grnEntry->original_packs - $grnEntry->packs;
+            $soldWeight += $grnEntry->original_weight - $grnEntry->weight;
+
+            // Sum remaining packs and weight (direct from GRN entry)
+            $remainingPacks += $grnEntry->packs;
+            $remainingWeight += $grnEntry->weight;
+
+            // Sum total sales value
+            $totalSalesValue += $totalSalesValueForGrn;
+        }
+
+        $grnReportData[] = [
+            'item_name' => $itemName,
+            'original_packs' => $originalPacks,
+            'original_weight' => $originalWeight,
+            'sold_packs' => $soldPacks,
+            'sold_weight' => $soldWeight,
+            'total_sales_value' => $totalSalesValue,
+            'remaining_packs' => $remainingPacks,
+            'remaining_weight' => $remainingWeight,
+        ];
+    }
 
             // --- Weight-Based Report Data ---
             $weightBasedReportData = Sale::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total')
@@ -666,12 +697,22 @@ public function updateGrnRemainingStock(): void
                 ->get()
                 ->groupBy('bill_no');
 
-            $salesadjustments = Salesadjustment::orderBy('created_at', 'desc')->get();
+            // Get the setting date value
+            $settingDate = Setting::value('value');
+
+            // Fetch sales adjustments where Date matches setting date
+            $salesadjustments = Salesadjustment::whereDate('Date', $settingDate)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
 
             // --- Financial Report Data ---
+            $settingDate = Setting::value('value');
+
             $financialRecords = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
-                ->whereDate('created_at', Carbon::today())
+                ->whereDate('Date', $settingDate)   // compare Date column with settingDate
                 ->get();
+
 
             $financialReportData = [];
             $totalDr = 0;
@@ -714,7 +755,11 @@ public function updateGrnRemainingStock(): void
             $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
                 ->value(DB::raw('SUM(wasted_weight * PerKGPrice)')) ?? 0;
 
-            $loanQuery = CustomersLoan::query();
+            $settingDate = Setting::value('value');
+
+            $loanQuery = CustomersLoan::query()
+                ->whereDate('Date', $settingDate);
+
             $loanQuery->whereDate('created_at', '<=', $dayStartDate);
             $loans = $loanQuery->orderBy('created_at', 'desc')->get();
 
@@ -742,8 +787,8 @@ public function updateGrnRemainingStock(): void
                 $sales = Sale::all();
                 $salesHistoryData = $sales->map(function ($sale) use ($dayStartDate) {
                     return [
-                        'Date' =>$sale->Date,
-                        'bill_no' =>$sale->bill_no, 
+                        'Date' => $sale->Date,
+                        'bill_no' => $sale->bill_no,
                         'code' => $sale->code,
                         'item_code' => $sale->item_code,
                         'item_name' => $sale->item_name,
@@ -761,7 +806,7 @@ public function updateGrnRemainingStock(): void
                         'SellingKGTotal' => $sale->SellingKGTotal,
                         'created_at' => $sale->created_at->format('Y-m-d H:i:s'),
                         'updated_at' => $sale->updated_at->format('Y-m-d H:i:s'),
-                        
+
                     ];
                 })->toArray();
 

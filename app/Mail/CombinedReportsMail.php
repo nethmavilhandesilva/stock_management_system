@@ -93,7 +93,7 @@ class CombinedReportsMail extends Mailable
     public function build()
     {
         return $this->subject('ඒකාබද්ධ දින වාර්තාව - ' . $this->dayStartDate->format('Y-m-d'))
-                    ->to('cdesilva2005@gmail.com')
+                    ->to('nethmavilhan2005@gmail.com')
                     ->view('emails.day_start_report')
                     ->with([
                         'dayStartReportData' => $this->dayStartReportData,
