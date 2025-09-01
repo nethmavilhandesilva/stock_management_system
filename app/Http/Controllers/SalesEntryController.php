@@ -273,7 +273,7 @@ class SalesEntryController extends Controller
         });
     }
 
-    public function update(Request $request, Sale $sale)
+     public function update(Request $request, Sale $sale)
     {
         $validatedData = $request->validate([
             'customer_code' => 'required|string|max:255',
@@ -312,7 +312,7 @@ class SalesEntryController extends Controller
                     'bill_no' => $originalData['bill_no'],
                     'user_id' => 'c11',
                     'type' => 'original',
-                    'original_created_at' => $sale->created_at,
+                    'original_created_at' => $sale->Date,
                     'original_updated_at' => $sale->updated_at,
                     'Date' => $formattedDate, // ✅ Add Date
                 ]);
@@ -371,67 +371,67 @@ class SalesEntryController extends Controller
     }
 
 
-    public function destroy(Sale $sale)
-    {
-        try {
-            if ($sale->bill_printed === 'Y') {
-                // Check if an 'original' record already exists for this code and bill_no
-                $alreadyExists = Salesadjustment::where('customer_code', $sale->customer_code)
-                    ->where('bill_no', $sale->bill_no)
-                    ->where('type', 'original')
-                    ->exists();
+  public function destroy(Sale $sale)
+{
+    try {
+        // Get the setting date value
+        $settingDate = \App\Models\Setting::value('value');
+        $formattedDate = \Carbon\Carbon::parse($settingDate)->format('Y-m-d');
 
-                if (!$alreadyExists) {
-                    Salesadjustment::create([
-                        'customer_code' => $sale->customer_code,
-                        'supplier_code' => $sale->supplier_code,
-                        'code' => $sale->code,
-                        'item_code' => $sale->item_code,
-                        'item_name' => $sale->item_name,
-                        'weight' => $sale->weight,
-                        'price_per_kg' => $sale->price_per_kg,
-                        'total' => $sale->total,
-                        'packs' => $sale->packs,
-                        'bill_no' => $sale->bill_no,
-                        'type' => 'original',
-                        'original_created_at' => $sale->created_at,
-                    ]);
-                }
-
-                Salesadjustment::create([
-                    'customer_code' => $sale->customer_code,
-                    'supplier_code' => $sale->supplier_code,
-                    'code' => $sale->code,
-                    'item_code' => $sale->item_code,
-                    'item_name' => $sale->item_name,
-                    'weight' => $sale->weight,
-                    'price_per_kg' => $sale->price_per_kg,
-                    'total' => $sale->total,
-                    'packs' => $sale->packs,
-                    'bill_no' => $sale->bill_no,
-                    'type' => 'deleted',
-                    'original_created_at' => $sale->created_at,
-                ]);
-            }
-
-            // Delete and update GRN stock
-            $saleCode = $sale->code;
-            $sale->delete();
-            $this->updateGrnRemainingStock($saleCode);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Sales record deleted successfully.'
+        if ($sale->bill_printed === 'Y') {
+            // Always create an "original" record
+            Salesadjustment::create([
+                'customer_code' => $sale->customer_code,
+                'supplier_code' => $sale->supplier_code,
+                'code' => $sale->code,
+                'item_code' => $sale->item_code,
+                'item_name' => $sale->item_name,
+                'weight' => $sale->weight,
+                'price_per_kg' => $sale->price_per_kg,
+                'total' => $sale->total,
+                'packs' => $sale->packs,
+                'bill_no' => $sale->bill_no,
+                'type' => 'original',
+                'original_created_at' => $sale->Date,
+                'Date' => $formattedDate, // ✅ store setting date
             ]);
 
-        } catch (\Exception $e) {
-            Log::error('Error deleting sale: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while deleting the sale.'
-            ], 500);
+            // Always create a "deleted" record
+            Salesadjustment::create([
+                'customer_code' => $sale->customer_code,
+                'supplier_code' => $sale->supplier_code,
+                'code' => $sale->code,
+                'item_code' => $sale->item_code,
+                'item_name' => $sale->item_name,
+                'weight' => $sale->weight,
+                'price_per_kg' => $sale->price_per_kg,
+                'total' => $sale->total,
+                'packs' => $sale->packs,
+                'bill_no' => $sale->bill_no,
+                'type' => 'deleted',
+                'original_created_at' => $sale->created_at,
+                'Date' => $formattedDate, // ✅ store setting date
+            ]);
         }
+
+        // Delete and update GRN stock
+        $saleCode = $sale->code;
+        $sale->delete();
+        $this->updateGrnRemainingStock($saleCode);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sales record deleted successfully.'
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error deleting sale: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'An error occurred while deleting the sale.'
+        ], 500);
     }
+}
 
     public function updateGrnRemainingStock(): void
     {

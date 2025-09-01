@@ -608,7 +608,7 @@
                                     <td>{{ $original->bill_no }}</td>
                                     <td>{{ $original->customer_code }}</td>
                                     <td>{{ $original->type }}</td>
-                                    <td>{{ $original->created_at->timezone('Asia/Colombo')->format('Y-m-d H:i') }}</td>
+                                    <td>{{ $original->original_created_at->timezone('Asia/Colombo')->format('Y-m-d') }}</td>
                                 </tr>
                             @endif
 
@@ -624,7 +624,10 @@
                                     <td>{{ $updated->bill_no }}</td>
                                     <td class="{{ $original && $updated->customer_code != $original->customer_code ? 'changed' : '' }}">{{ $updated->customer_code }}</td>
                                     <td>{{ $updated->type }}</td>
-                                    <td>{{ $updated->created_at->timezone('Asia/Colombo')->format('Y-m-d H:i') }}</td>
+                                    <td>
+    {{ $updated->Date }} 
+    {{ \Carbon\Carbon::parse($updated->created_at)->setTimezone('Asia/Colombo')->format('H:i:s') }}
+</td>
                                 </tr>
                             @endif
 
@@ -640,7 +643,10 @@
                                     <td>{{ $deleted->bill_no }}</td>
                                     <td class="{{ $original && $deleted->customer_code != $original->customer_code ? 'changed' : '' }}">{{ $deleted->customer_code }}</td>
                                     <td>{{ $deleted->type }}</td>
-                                    <td>{{ $deleted->created_at->timezone('Asia/Colombo')->format('Y-m-d H:i') }}</td>
+                                      <td>
+    {{ $deleted->Date }} 
+    {{ \Carbon\Carbon::parse($deleted->created_at)->setTimezone('Asia/Colombo')->format('H:i:s') }}
+</td>
                                 </tr>
                             @endif
                         @empty
