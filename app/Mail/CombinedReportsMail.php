@@ -17,38 +17,21 @@ class CombinedReportsMail extends Mailable
     public $weightBasedReportData;
     public $salesByBill;
     public $salesadjustments;
-    public $loans; // ✅ add this
-    
-    // ✅ Financial report properties
+    public $loans; // raw loans
+    public $highlightedLoans;
+      public $finalLoans; // ✅ enriched loans with highlight
+
+    // Financial report properties
     public $financialReportData;
     public $financialTotalDr;
     public $financialTotalCr;
     public $financialProfit;
     public $financialDamages;
-    public   $profitTotal ;
-    public  $totalDamages;
-
+    public $profitTotal;
+    public $totalDamages;
 
     /**
      * Create a new message instance.
-     *
-     * @param mixed $dayStartReportData
-     * @param mixed $grnReportData
-     * @param mixed $salesReportData
-     * @param \Carbon\Carbon $dayStartDate
-     * @param mixed $weightBasedReportData
-     * @param mixed $salesByBill
-     * @param mixed $salesadjustments
-     * @param mixed $financialReportData
-     * @param float $financialTotalDr
-     * @param float $financialTotalCr
-     * @param float $financialProfit
-     * @param float $financialDamages
-     * @param float $profitTotal
-     * @param float $totalDamages
-     * @param mixed  $loans 
-     *
-     * @return void
      */
     public function __construct(
         $dayStartReportData,
@@ -63,9 +46,11 @@ class CombinedReportsMail extends Mailable
         $financialTotalCr = 0,
         $financialProfit = 0,
         $financialDamages = 0,
-        $profitTotal=0,
-        $totalDamages=0,
-         $loans ,
+        $profitTotal = 0,
+        $totalDamages = 0,
+        $loans = null,
+        $highlightedLoans = null,
+        $finalLoans =null,  // ✅ Add parameter // ✅ new parameter
     ) {
         $this->dayStartReportData = $dayStartReportData;
         $this->grnReportData = $grnReportData;
@@ -82,13 +67,14 @@ class CombinedReportsMail extends Mailable
         $this->financialDamages = $financialDamages;
         $this->profitTotal = $profitTotal;
         $this->totalDamages = $totalDamages;
+
         $this->loans = $loans;
+        $this->highlightedLoans = $highlightedLoans; 
+         $this->finalLoans = $finalLoans; // assign enriched loans
     }
 
     /**
      * Build the message.
-     *
-     * @return $this
      */
     public function build()
     {
@@ -111,6 +97,8 @@ class CombinedReportsMail extends Mailable
                         'profitTotal' => $this->profitTotal,
                         'totalDamages' => $this->totalDamages,
                         'loans' => $this->loans,
+                        'highlightedLoans' => $this->highlightedLoans,
+                        'finalLoans' => $this->finalLoans,  // pass enriched loans to view
                     ]);
     }
 }

@@ -231,6 +231,7 @@
             .changed { background-color: #ffc107 !important; color: #333 !important; }
         }
     </style>
+  
 </head>
 <body>
 
@@ -245,7 +246,7 @@
                 </div>
                 <div class="date-info">
                     <span>{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
-                    <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
+                   
                 </div>
             </div>
             <div class="table-container">
@@ -334,7 +335,7 @@
         </div>
         <div class="date-info">
             <span>{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
-            <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
+           
         </div>
     </div>
     <div class="table-container">
@@ -424,7 +425,7 @@
                 </div>
                 <div class="date-info">
                     <span>{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
-                    <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
+                  
                 </div>
             </div>
             <div class="table-container">
@@ -487,7 +488,7 @@
                 </div>
                 <div class="date-info">
                     <span>{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
-                    <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
+                  
                 </div>
             </div>
             <div class="bill-details">
@@ -566,7 +567,7 @@
                 </div>
                 <div class="date-info">
                     <span>{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
-                    <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
+                  
                 </div>
             </div>
             <div class="table-container">
@@ -668,7 +669,7 @@
                 </div>
                 <div class="date-info">
                     <span>{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
-                    <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
+                   
                 </div>
             </div>
             <div class="table-container">
@@ -721,96 +722,141 @@
                 </table>
             </div>
         </div>
-
-        {{-- Section 8 - Loan/Customer Report --}}
-        <div class="report-section">
-            <div class="report-header">
-                <div class="title">
-                    <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
-                    <h4>නයා වාර්තාව</h4>
-                </div>
-                <div class="date-info">
-                    <span>{{ \Carbon\Carbon::now()->format('Y-m-d H:i') }}</span>
-                    <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
-                </div>
-            </div>
-            <div class="table-container">
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-                @if ($loans->isEmpty())
-                    <div class="alert alert-info">No loan records found for the selected filters.</div>
-                @else
-                    <table class="report-table loan-table">
-                        <thead>
-                            <tr>
-                                <th>පාරිභෝගික නම</th>
-                                <th>බිල් අංකය</th>
-                                <th>දිනය</th>
-                                <th>විස්තරය</th>
-                                <th>චෙක්පත්</th>
-                                <th>බැංකුව</th>
-                                <th>ලබීම්</th>
-                                <th>දීම්</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php
-                                $receivedTotal = 0;
-                                $paidTotal = 0;
-                            @endphp
-                            @foreach ($loans as $loan)
-                                @php
-                                    if ($loan->description === 'වෙළෙන්දාගේ ලාද පරණ නය') {
-                                        $receivedTotal += $loan->amount;
-                                        $receivedAmount = number_format($loan->amount, 2);
-                                        $paidAmount = '';
-                                    } elseif ($loan->description === 'වෙළෙන්දාගේ අද දින නය ගැනීම') {
-                                        $paidTotal += $loan->amount;
-                                        $receivedAmount = '';
-                                        $paidAmount = number_format($loan->amount, 2);
-                                    } else {
-                                        $receivedAmount = '';
-                                        $paidAmount = '';
-                                    }
-                                @endphp
-                                <tr>
-                                    <td>{{ $loan->customer_short_name }}</td>
-                                    <td>{{ $loan->bill_no }}</td>
-                                    <td>{{ $loan->created_at->format('Y-m-d') }}</td>
-                                    <td>{{ $loan->description }}</td>
-                                    <td>{{ $loan->cheque_no }}</td>
-                                    <td>{{ $loan->bank }}</td>
-                                    <td class="text-end">{{ $receivedAmount }}</td>
-                                    <td class="text-end">{{ $paidAmount }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot>
-                            <tr class="loan-totals-row">
-                                <td colspan="6" class="text-end">එකතුව:</td>
-                                <td class="text-end">{{ number_format($receivedTotal, 2) }}</td>
-                                <td class="text-end">{{ number_format($paidTotal, 2) }}</td>
-                            </tr>
-                            <tr class="loan-net-balance-row">
-                                @php
-                                    $netBalance = $paidTotal - $receivedTotal;
-                                @endphp
-                                <td colspan="7" class="text-end">ශුද්ධ ශේෂය:</td>
-                                <td class="text-end">{{ number_format($netBalance, 2) }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                @endif
-            </div>
-        </div>
+        {{-- ================= SECTION 7 - Loan Report ================= --}}
+<div class="custom-card">
+    <div class="report-title-bar">
+        <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
+        <h4 class="fw-bold text-white">ණය වාර්තාව</h4>
+        @php
+            $settingDate = \App\Models\Setting::value('value');
+        @endphp
+        <span class="right-info">
+            {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
+        </span>
+        
     </div>
+
+    <div class="card-body p-3">
+        @if ($finalLoans->isEmpty())
+            <div class="alert alert-info text-center">No loan records found.</div>
+        @else
+            <table class="table table-bordered table-striped table-hover table-sm mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>පාරිභෝගික නම</th>
+                        <th class="text-end">මුදල (Rs)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($finalLoans as $loan)
+                        <tr style="background-color: {{ $loop->even ? '#f8f9fa' : '#ffffff' }};">
+                            <td class="{{ $loan->highlight_color ?? '' }}" style="font-weight: 500;">
+                                {{ $loan->customer_short_name }}
+                            </td>
+                            <td class="text-end fw-bold">
+                                {{ number_format($loan->total_amount, 2) }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr class="table-secondary">
+                        <th class="text-end">Grand Total:</th>
+                        <th class="text-end">
+                            {{ number_format($finalLoans->sum('total_amount'), 2) }}
+                        </th>
+                    </tr>
+                </tfoot>
+            </table>
+        @endif
+    </div>
+</div>
+
+<style>
+    .custom-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        background-color: #ffffff;
+        overflow: hidden;
+        margin: 20px auto;
+        max-width: 800px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .report-title-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background: linear-gradient(90deg, #4b79a1, #283e51);
+        color: #fff;
+        border-bottom: 2px solid #ccc;
+    }
+
+    .company-name {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .fw-bold {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .right-info {
+        font-size: 0.95rem;
+        background-color: rgba(255,255,255,0.2);
+        padding: 3px 8px;
+        border-radius: 5px;
+    }
+
+    .print-btn {
+        background-color: #ff9800;
+        color: #fff;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.3s;
+    }
+
+    .print-btn:hover {
+        background-color: #e68900;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    thead th {
+        font-size: 1rem;
+        text-align: left;
+        padding: 10px;
+    }
+
+    tbody td {
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+
+    tfoot th, tfoot td {
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 10px;
+    }
+
+   
+    
+</style>
+
+
+
+
+      
 </body>
 </html>
 

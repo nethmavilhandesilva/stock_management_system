@@ -248,7 +248,8 @@
                         @forelse($loans as $loan)
                             <tr class="loan-row" data-loan='@json($loan)'>
                                 <td>{{ $loan->description }}</td>
-                                <td>{{ number_format($loan->amount, 2) }}</td>
+                                <td>{{ number_format(abs($loan->amount), 2) }}</td>
+
                                 <td>{{ $loan->customer_short_name }}</td>
                                 <td>{{ ucfirst($loan->loan_type) }}</td>
                                 <td>{{ $loan->bill_no ?? '-' }}</td>

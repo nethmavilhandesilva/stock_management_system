@@ -2365,7 +2365,12 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                 if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
                 itemGroups[itemName].totalWeight += weight;
                 itemGroups[itemName].totalPacks += packs;
-                return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
+                return `<tr style="font-size: 1.2em;">
+  <td style="text-align:left;">${itemName} <br>${packs}</td>
+  <td style="text-align:right;">${weight.toFixed(2)}</td>
+  <td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
+  <td style="text-align:right;">${sale.total.toFixed(2)}</td>
+</tr>`;
             }).join('');
 
             let itemSummaryHtml = '';
@@ -2379,42 +2384,64 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
             }
 
             const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
-                <div style="text-align:center;margin-bottom:5px;">
-                    <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
-                    <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
-                    <p style="margin:0;font-size:0.8em;">වි.ආ.ම. වේයන්ගොඩ</p>
-                </div>
-                <div style="text-align:left;margin-bottom:5px;">
-                    <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                        <tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr>
-                        <tr><td colspan="4">දුර : ${mobile}</td></tr>
-                        <tr><td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td><td colspan="2" style="text-align:right;"><strong style="font-size: 1.8em;">${customerName.toUpperCase()}</strong></td></tr>
-                    </table>
-                </div>
-                <hr>
-                <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                    <thead><tr><th>වර්ගය<br>මලු</th><th>කිලෝ</th><th>මිල</th><th>අගය</th></tr></thead>
-                    <tbody><tr><td colspan="4"><hr style="height:1px;background-color:#000;"></td></tr>${itemsHtml}</tbody>
-                </table>
-                <hr>
-               <table style="width:100%;font-size:10px;border-collapse:collapse;">
-    <tr>
-        <td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td>
-        <td style="text-align:right;font-weight:bold;font-size:1.8em;">
-            ${totalAmountSum.toFixed(2)}
-        </td>
-    </tr>
-    ${totalAmountRowHtmlF1}
-</table>
-
-                <hr>
-                <div>${itemSummaryHtml}</div>
-                
-                <div style="text-align:center;margin-top:10px;">
-                    <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                    <p>නැවත භාර ගනු නොලැබේ</p>
-                </div>
-            </div>`;
+    <div style="text-align:center;margin-bottom:5px;">
+        <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
+        <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
+        <p style="margin:0;font-size:0.8em;">වි.ආ.ම. වේයන්ගොඩ</p>
+    </div>
+    <div style="text-align:left;margin-bottom:5px;">
+        <table style="width:100%;font-size:10px;border-collapse:collapse;">
+            <tr>
+                <td colspan="2">දිනය : ${date}</td>
+                <td colspan="2" style="text-align:right;">${time}</td>
+            </tr>
+            <tr>
+                <td colspan="4">දුර : ${mobile}</td>
+            </tr>
+            <tr>
+                <td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td>
+                <td colspan="2" style="text-align:right;">
+                    <strong style="font-size: 1.8em;">${customerName.toUpperCase()}</strong>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <hr>
+    <table style="width:100%;font-size:10px;border-collapse:collapse;">
+        <thead style="font-size: 1.3em;">
+            <tr>
+                <th>වර්ගය<br>මලු</th>
+                <th>කිලෝ</th>
+                <th>මිල</th>
+                <th>අගය</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="4">
+                    <hr style="height:1px;background-color:#000;">
+                </td>
+            </tr>
+            ${itemsHtml}
+        </tbody>
+    </table>
+    <hr>
+    <table style="width:100%;font-size:10px;border-collapse:collapse;">
+        <tr>
+            <td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td>
+            <td style="text-align:right;font-weight:bold;font-size:1.8em;">
+                ${totalAmountSum.toFixed(2)}
+            </td>
+        </tr>
+        ${totalAmountRowHtmlF1}
+    </table>
+    <hr>
+    <div>${itemSummaryHtml}</div>
+    <div style="text-align:center;margin-top:10px;">
+        <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+        <p>නැවත භාර ගනු නොලැබේ</p>
+    </div>
+</div>`;
 
             await Promise.all([
                 sendReceiptEmail(receiptHtml, customerName, customerEmail),
@@ -2475,12 +2502,18 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
             if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
             itemGroups[itemName].totalWeight += weight;
             itemGroups[itemName].totalPacks += packs;
-            return `<tr><td style="text-align:left;">${itemName} <br>${packs}</td><td style="text-align:right;">${weight.toFixed(2)}</td><td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td><td style="text-align:right;">${sale.total.toFixed(2)}</td></tr>`;
+            return`<tr style="font-size:14px;">
+    <td style="text-align:left;">${itemName} <br>${packs}</td>
+    <td style="text-align:right;">${weight.toFixed(2)}</td>
+    <td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
+    <td style="text-align:right;">${sale.total.toFixed(2)}</td>
+</tr>`;
+
         }).join('');
 
         let itemSummaryHtml = '';
         Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
-            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
+            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:1.5rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
         });
 
         // Fetch loan amount
@@ -2652,7 +2685,7 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                                                                                                                                                                                                                                                                                                         width: 20%;
                                                                                                                                                                                                                                                                                                     }
                                                                                                                                                                                                                                                                                                     .grand-total {
-                                                                                                                                                                                                                                                                                                        font-size: 1.1em;
+                                                                                                                                                                                                                                                                                                        font-size: 9.1em;
                                                                                                                                                                                                                                                                                                         font-weight: bold;
                                                                                                                                                                                                                                                                                                     }
                                                                                                                                                                                                                                                                                                     .footer-section {

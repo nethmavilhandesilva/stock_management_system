@@ -396,9 +396,7 @@ public function destroy($id)
     } elseif ($request->filled('end_date')) {
         // Only end date given → until end_date
         $query->whereDate('Date', '<=', $request->end_date);
-    } else {
-        // No range → use setting date
-        $query->whereDate('Date', $settingDate);
+    
     }
 
     // Fetch results ordered by Date desc

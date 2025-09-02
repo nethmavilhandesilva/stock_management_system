@@ -103,22 +103,26 @@
                 @foreach($reportData as $row)
                     <tr>
                         <td>{{ $row['description'] }}</td>
-                        <td>{{ $row['dr'] ? number_format($row['dr'], 2) : '' }}</td>
-                        <td>{{ $row['cr'] ? number_format($row['cr'], 2) : '' }}</td>
+                      <td>{{ $row['dr'] ? number_format(abs($row['dr']), 2) : '' }}</td>
+
+                      <td>{{ $row['cr'] ? number_format(abs($row['cr']), 2) : '' }}</td>
+
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr class="fw-bold">
                     <td>Total</td>
-                    <td>{{ number_format($totalDr, 2) }}</td>
-                    <td>{{ number_format($totalCr, 2) }}</td>
+                    <td>{{ number_format(abs($totalDr), 2) }}</td>
+
+                  <td>{{ number_format(abs($totalCr), 2) }}</td>
+
                 </tr>
                 <tr class="fw-bold table-warning">
                     <td>ඇතැති මුදල්</td>
                     <td colspan="2">
                         @php
-                            $diff = $totalDr - $totalCr;
+                            $diff = $totalDr + $totalCr;
                         @endphp
                         @if($diff < 0)
                             <span class="text-danger">{{ number_format($diff, 2) }}</span>
