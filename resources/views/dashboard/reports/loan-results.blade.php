@@ -162,11 +162,11 @@
                             @foreach ($loans as $loan)
                                 @php
                                     // Determine if the amount is a receipt or a payment based on the description
-                                    if ($loan->description === 'වෙළෙන්දාගේ ලාද පරණ නය') {
+                                    if ($loan->loan_type === 'old') {
                                         $receivedTotal += $loan->amount;
                                         $receivedAmount = number_format($loan->amount, 2);
                                         $paidAmount = '';
-                                    } elseif ($loan->description === 'වෙළෙන්දාගේ අද දින නය ගැනීම') {
+                                    } elseif ($loan->loan_type === 'today') {
                                         $paidTotal += $loan->amount;
                                         $receivedAmount = '';
                                         $paidAmount = number_format($loan->amount, 2);

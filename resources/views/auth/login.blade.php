@@ -1,20 +1,22 @@
 <x-guest-layout>
+    <!-- Set page title -->
+    <x-slot name="title">
+        POS-Sales
+    </x-slot>
+
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-
-
         <!-- User ID -->
         <div class="mt-4">
             <x-input-label for="user_id" :value="__('User ID')" />
-            <x-text-input id="user_id" class="block mt-1 w-full" type="text" name="user_id" :value="old('user_id')"
-                required autofocus autocomplete="username" />
+            <x-text-input id="user_id" class="block mt-1 w-full" type="text" name="user_id"
+                :value="old('user_id')" required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
         </div>
-
 
         <!-- Password -->
         <div class="mt-4">
@@ -34,6 +36,7 @@
             </label>
         </div>
 
+        <!-- Login Button & Forgot Password -->
         <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
                 <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"

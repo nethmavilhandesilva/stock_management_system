@@ -19,6 +19,7 @@ use App\Mail\DayStartReport;
 use App\Mail\CombinedReportsMail;
 use App\Models\IncomeExpenses; // Optional if you use FPDI later for templates
 use Fpdf\Fpdf;
+use App\Mail\CombinedReportsMail2;
 
 
 
@@ -836,6 +837,24 @@ Mail::send(new CombinedReportsMail(
     totalDamages: $totalDamages,
     loans: $loans,
     finalLoans: $finalLoans, // ✅ Use enriched dataset instead of raw $loans
+));
+Mail::send(new CombinedReportsMail2(
+    $dayStartReportData,
+    $grnReportData,
+    $grnEntries,
+    $dayStartDate,
+    $weightBasedReportData,
+    salesByBill: $salesByBill,
+    salesadjustments: $salesadjustments,
+    financialReportData: $financialReportData,
+    financialTotalDr: $totalDr,
+    financialTotalCr: $totalCr,
+    financialProfit: $profitTotal,
+    financialDamages: $totalDamages,
+    profitTotal: $profitTotal,
+    totalDamages: $totalDamages,
+    loans: $loans,
+    finalLoans: $finalLoans, // ✅ use the same data
 ));
 
             // --- Archive Sales and Clear Table ---
