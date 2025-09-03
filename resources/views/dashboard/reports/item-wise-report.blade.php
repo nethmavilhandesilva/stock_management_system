@@ -88,14 +88,20 @@
             <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
         </div>
 
+        {{-- Item description --}}
+        @if($sales->isNotEmpty())
+           <div class="mb-3 text-white">
+    <strong>අයිතමය:</strong> {{ $sales->first()->item_name }} 
+    (<strong></strong> {{ $sales->first()->item_code }})
+</div>
+
+        @endif
+
         <table class="table table-bordered table-striped table-sm text-center align-middle">
             <thead class="table-dark">
                 <tr>
                     <th>බිල් අංකය</th>
-                    <th>වර්ගය</th>
-                    <th>භාණ්ඩ කේතය</th>
                     <th>මලු</th>
-                    <th>පැකට්</th>
                     <th>බර (kg)</th>
                     <th>මිල (Rs/kg)</th>
                     <th>එකතුව (Rs)</th>
@@ -113,9 +119,6 @@
                 @foreach($sales as $sale)
                     <tr>
                         <td>{{ $sale->bill_no }}</td>
-                        <td>{{ $sale->item_name }}</td>
-                        <td>{{ $sale->item_code }}</td>
-                        <td class="text-end">{{ $sale->packs }}</td>
                         <td class="text-end">{{ $sale->packs }}</td>
                         <td class="text-end">{{ number_format($sale->weight, 2) }}</td>
                         <td class="text-end">{{ number_format($sale->price_per_kg, 2) }}</td>
@@ -133,7 +136,7 @@
 
             <tfoot>
                 <tr class="table-secondary fw-bold">
-                    <td colspan="4" class="text-end">මුළු එකතුව:</td>
+                    <td class="text-end">මුළු එකතුව:</td>
                     <td class="text-end">{{ $total_packs }}</td>
                     <td class="text-end">{{ number_format($total_weight, 2) }}</td>
                     <td></td>
@@ -161,8 +164,6 @@
                 @endforeach
                 <button type="submit" class="btn btn-danger">⬇️ Download PDF</button>
             </form>
-
-            
         </div>
     </div>
 </div>
