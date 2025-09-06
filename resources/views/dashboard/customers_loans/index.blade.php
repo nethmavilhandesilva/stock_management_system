@@ -126,6 +126,11 @@
                             <input type="radio" name="loan_type" value="grn_damage">
                             GRN Damages
                         </label>
+                        <label class="me-3">
+                            <input type="radio" name="loan_type" value="returns">
+                            Returns
+                        </label>
+
                     </div>
 
                     <div class="col-md-4" id="settlingWaySection">
@@ -146,7 +151,8 @@
                             <option value="">-- Select Customer --</option>
                             @foreach($customers as $customer)
                                 <option value="{{ $customer->id }}" data-credit-limit="{{ $customer->credit_limit }}">
-                                    {{ $customer->short_name }} - {{ $customer->name }}</option>
+                                    {{ $customer->short_name }} - {{ $customer->name }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -222,6 +228,54 @@
                             </div>
                         </div>
                     </div>
+                 {{-- NEW: Returns Section --}}
+<div id="returnsFields" class="col-md-12 d-none">
+    <div class="border rounded p-2 bg-light" style="border-color: #006600 !important;">
+        <h6 class="text-success fw-bold mb-2" style="border-bottom: 1px solid #006600;">Returns Details</h6>
+        <div class="row g-2">
+            <div class="col-2">
+                <label for="return_grn_code" class="form-label mb-1">GRN Code</label>
+                <select class="form-select form-select-sm" name="return_grn_code" id="return_grn_code">
+                    <option value="">-- Select GRN Code --</option>
+                    @foreach($grnCodes as $code)
+                        <option value="{{ $code }}">{{ $code }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-2">
+                <label for="return_item_code" class="form-label mb-1">Item Code</label>
+                <input type="text" class="form-control form-control-sm" name="return_item_code" id="return_item_code" readonly>
+            </div>
+            <div class="col-2">
+                <label for="return_bill_no" class="form-label mb-1">Bill No</label>
+                <select class="form-select form-select-sm" name="return_bill_no" id="return_bill_no">
+                    <option value="">-- Select Bill --</option>
+                    @foreach(\App\Models\Sale::pluck('bill_no') as $bill)
+                        <option value="{{ $bill }}">{{ $bill }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-2">
+                <label for="return_weight" class="form-label mb-1">Weight</label>
+                <input type="number" step="0.01" class="form-control form-control-sm" name="return_weight" id="return_weight">
+            </div>
+            <div class="col-2">
+                <label for="return_packs" class="form-label mb-1">Packs</label>
+                <input type="number" step="1" class="form-control form-control-sm" name="return_packs" id="return_packs">
+            </div>
+            <div class="col-2">
+                <label for="return_reason" class="form-label mb-1">Reason</label>
+                <input type="text" class="form-control form-control-sm" name="return_reason" id="return_reason">
+            </div>
+        </div>
+
+        <!-- Submit button for Returns Section -->
+        <div class="mt-3 text-end">
+            <button type="submit" class="btn btn-success btn-sm" id="returnSubmitButton">Add Return</button>
+        </div>
+    </div>
+</div>
+
 
                     <div class="col-12 mt-3" id="mainSubmitSection">
                         <button type="submit" class="btn btn-light text-dark" id="submitButton">Add Loan</button>
@@ -280,11 +334,15 @@
                     <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark">
                         ණය වාර්තාව
                     </a>
+                    <a href="{{ route('returns.report') }}" class="btn btn-dark btn-sm"> View Returns Report</a>
+
+
                 </div>
 
             </div>
         </div>
     </div>
+
 
     {{-- Include Select2 CSS --}}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -292,6 +350,32 @@
     {{-- Include jQuery and Select2 JS --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const returnBtn = document.getElementById("returnSubmitButton");
+    const loanForm = document.getElementById("loanForm");
+
+    if (returnBtn) {
+        returnBtn.addEventListener("click", function (e) {
+            e.preventDefault(); // stop normal form submission
+
+            // force loan_type = returns
+            let returnRadio = document.querySelector('input[name="loan_type"][value="returns"]');
+            if (returnRadio) {
+                returnRadio.checked = true;
+            }
+
+            // hide amount/description validation for returns
+            document.querySelector('[name="amount"]').removeAttribute("required");
+            document.querySelector('[name="description"]').removeAttribute("required");
+
+            // submit form
+            loanForm.submit();
+        });
+    }
+});
+</script>
+
 
     <script>
         $(document).ready(function () {
@@ -482,55 +566,55 @@
 
             // Edit button
             $('.edit-loan-btn').on('click', function () {
-    const loan = $(this).closest('tr').data('loan');
+                const loan = $(this).closest('tr').data('loan');
 
-    // Reset form first
-    resetForm();
+                // Reset form first
+                resetForm();
 
-    // Set hidden fields
-    $('#loan_id').val(loan.id);
-    $('#methodField').val('PUT');
-    $('#loanForm').attr('action', `/customers-loans/${loan.id}`);
+                // Set hidden fields
+                $('#loan_id').val(loan.id);
+                $('#methodField').val('PUT');
+                $('#loanForm').attr('action', `/customers-loans/${loan.id}`);
 
-    // Set loan type and settling way
-    $('input[name="loan_type"][value="' + loan.loan_type + '"]').prop('checked', true);
-    $('input[name="settling_way"][value="' + (loan.settling_way ?? 'cash') + '"]').prop('checked', true);
+                // Set loan type and settling way
+                $('input[name="loan_type"][value="' + loan.loan_type + '"]').prop('checked', true);
+                $('input[name="settling_way"][value="' + (loan.settling_way ?? 'cash') + '"]').prop('checked', true);
 
-    // Set common fields
-    $('input[name="amount"]').val(loan.amount);
-    $('input[name="description"]').val(loan.description);
-    $('input[name="bill_no"]').val(loan.bill_no ?? '');
-    if (loan.customer_id) $('#customer_id').val(loan.customer_id).trigger('change');
+                // Set common fields
+                $('input[name="amount"]').val(loan.amount);
+                $('input[name="description"]').val(loan.description);
+                $('input[name="bill_no"]').val(loan.bill_no ?? '');
+                if (loan.customer_id) $('#customer_id').val(loan.customer_id).trigger('change');
 
-    // Cheque fields
-    if (loan.settling_way === 'cheque') {
-        $('#chequeFields').removeClass('d-none').find('input').prop('disabled', false);
-        $('input[name="cheque_no"]').val(loan.cheque_no ?? '');
-        $('input[name="bank"]').val(loan.bank ?? '');
-        $('input[name="cheque_date"]').val(loan.cheque_date ?? '{{ date("Y-m-d") }}');
-    } else {
-        $('#chequeFields').addClass('d-none').find('input').prop('disabled', true);
-    }
+                // Cheque fields
+                if (loan.settling_way === 'cheque') {
+                    $('#chequeFields').removeClass('d-none').find('input').prop('disabled', false);
+                    $('input[name="cheque_no"]').val(loan.cheque_no ?? '');
+                    $('input[name="bank"]').val(loan.bank ?? '');
+                    $('input[name="cheque_date"]').val(loan.cheque_date ?? '{{ date("Y-m-d") }}');
+                } else {
+                    $('#chequeFields').addClass('d-none').find('input').prop('disabled', true);
+                }
 
-    // Wasted/GRN damage fields
-    if (loan.loan_type === 'grn_damage') {
-        $('#loan-details-row').addClass('d-none');
-        $('input[name="amount"], input[name="description"]').prop('disabled', true).removeAttr('required');
+                // Wasted/GRN damage fields
+                if (loan.loan_type === 'grn_damage') {
+                    $('#loan-details-row').addClass('d-none');
+                    $('input[name="amount"], input[name="description"]').prop('disabled', true).removeAttr('required');
 
-        $('#wastedFields').removeClass('d-none').find('input, select').prop('disabled', false);
-        $('#wasted_code').val(loan.wasted_code).trigger('change');
-        $('input[name="wasted_packs"]').val(loan.wasted_packs);
-        $('input[name="wasted_weight"]').val(loan.wasted_weight);
-    }
+                    $('#wastedFields').removeClass('d-none').find('input, select').prop('disabled', false);
+                    $('#wasted_code').val(loan.wasted_code).trigger('change');
+                    $('input[name="wasted_packs"]').val(loan.wasted_packs);
+                    $('input[name="wasted_weight"]').val(loan.wasted_weight);
+                }
 
-    // Toggle other fields based on loan type
-    toggleLoanTypeDependentFields();
-    updateDescription();
+                // Toggle other fields based on loan type
+                toggleLoanTypeDependentFields();
+                updateDescription();
 
-    // Update submit button
-    $('#submitButton').text('Update Loan').removeClass('btn-light text-dark').addClass('btn-success');
-    $('#cancelEditButton').show();
-});
+                // Update submit button
+                $('#submitButton').text('Update Loan').removeClass('btn-light text-dark').addClass('btn-success');
+                $('#cancelEditButton').show();
+            });
 
             // Cancel edit
             $('#cancelEditButton').on('click', resetForm);
@@ -545,4 +629,74 @@
             resetForm();
         });
     </script>
+   <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const returnsFields = document.getElementById('returnsFields');
+    const wastedFields = document.getElementById('wastedFields');
+    const chequeFields = document.getElementById('chequeFields');
+    const loanDetails = document.getElementById('loan-details-row');
+    const radios = document.querySelectorAll('input[name="loan_type"]');
+    const loanSection = document.getElementById('submitButton');
+    const amountSection = document.getElementById('amount_section');
+    const descriptionSection = document.getElementById('description_section');
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            // Hide all optional sections first
+            returnsFields.classList.add('d-none');
+            wastedFields.classList.add('d-none');
+            chequeFields.classList.add('d-none');
+            loanDetails.classList.remove('d-none');
+            amountSection.classList.remove('d-none');
+            descriptionSection.classList.remove('d-none');
+
+            if (this.value === 'returns') {
+                // Show returns, hide amount + description
+                returnsFields.classList.remove('d-none');
+                loanDetails.classList.add('d-none');
+                amountSection.classList.add('d-none');
+                descriptionSection.classList.add('d-none');
+                loanSection.classList.add('d-none');
+            } else if (this.value === 'grn_damage') {
+                // Show wasted, hide amount + description
+                wastedFields.classList.remove('d-none');
+                loanDetails.classList.add('d-none');
+                amountSection.classList.add('d-none');
+                descriptionSection.classList.add('d-none');
+            }
+        });
+    });
+
+    // Autofill Item Code from GRN when Returns selected
+    const returnGrn = document.getElementById('return_grn_code');
+    if (returnGrn) {
+        returnGrn.addEventListener('change', function () {
+            let code = this.value;
+            if (!code) return;
+            fetch(`/api/grn-entry/${code}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('return_item_code').value = data?.item_code || '';
+                });
+        });
+    }
+
+    // Autofill Weight & Packs from Sale Bill
+    const returnBill = document.getElementById('return_bill_no');
+    if (returnBill) {
+        returnBill.addEventListener('change', function () {
+            let billNo = this.value;
+            if (!billNo) return;
+            fetch(`/api/sale/${billNo}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('return_weight').value = data?.weight || '';
+                    document.getElementById('return_packs').value = data?.packs || '';
+                });
+        });
+    }
+});
+</script>
+
+
 @endsection

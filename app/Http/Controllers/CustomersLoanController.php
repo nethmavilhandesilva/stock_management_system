@@ -50,13 +50,13 @@ class CustomersLoanController extends Controller
 
 
    
-  public function store(Request $request)
+public function store(Request $request)
 {
     $settingDate = Setting::value('value') ?? now()->toDateString();
 
     // Base validation rules
     $rules = [
-        'loan_type' => 'required|string|in:old,today,ingoing,outgoing,grn_damage',
+        'loan_type' => 'required|string|in:old,today,ingoing,outgoing,grn_damage,returns',
         'settling_way' => 'nullable|string|in:cash,cheque',
         'customer_id' => 'nullable|exists:customers,id',
         'amount' => 'nullable|numeric',
@@ -80,17 +80,16 @@ class CustomersLoanController extends Controller
         $rules['wasted_code'] = 'required|string';
         $rules['wasted_packs'] = 'required|numeric';
         $rules['wasted_weight'] = 'required|numeric';
-        $rules['description'] = 'nullable|string|max:255';
-        $rules['amount'] = 'nullable';
-        $rules['customer_id'] = 'nullable';
-        $rules['settling_way'] = 'nullable';
-        $rules['bill_no'] = 'nullable';
-        $rules['cheque_no'] = 'nullable';
-        $rules['bank'] = 'nullable';
-        $rules['cheque_date'] = 'nullable';
+    } elseif ($loanType === 'returns') {
+        // Returns validation
+        $rules['return_grn_code'] = 'required|string';
+        $rules['return_item_code'] = 'required|string';
+        $rules['return_bill_no'] = 'required|string';
+        $rules['return_weight'] = 'required|numeric';
+        $rules['return_packs'] = 'required|numeric';
+        $rules['return_reason'] = 'nullable|string|max:255';
     } else {
         $rules['amount'] = 'required|numeric';
-        $rules['customer_id'] = 'nullable|exists:customers,id';
         if ($settlingWay === 'cheque') {
             $rules['cheque_no'] = 'required|string|max:255';
             $rules['bank'] = 'required|string|max:255';
@@ -100,13 +99,12 @@ class CustomersLoanController extends Controller
 
     $validated = $request->validate($rules);
 
-    // --- GRN damage only updates GrnEntry ---
+    // --- Handle GRN Damage ---
     if ($loanType === 'grn_damage') {
         $grnEntry = GrnEntry::where('code', $validated['wasted_code'])->first();
         if (!$grnEntry) {
             return back()->with('error', 'GRN code not found.');
         }
-
         $grnEntry->packs = max(0, $grnEntry->packs - $validated['wasted_packs']);
         $grnEntry->weight = max(0, $grnEntry->weight - $validated['wasted_weight']);
         $grnEntry->save();
@@ -115,7 +113,26 @@ class CustomersLoanController extends Controller
             ->with('success', 'GRN stock updated successfully!');
     }
 
-    // --- If ingoing/outgoing: ONLY store in IncomeExpenses ---
+    // --- Handle Returns ---
+    if ($loanType === 'returns') {
+        $incomeExpense = new IncomeExpenses();
+        $incomeExpense->loan_type = 'returns';
+        $incomeExpense->GRN_Code = $validated['return_grn_code'];
+        $incomeExpense->Item_Code = $validated['return_item_code'];
+        $incomeExpense->Bill_no = $validated['return_bill_no'];
+        $incomeExpense->weight = $validated['return_weight'];
+        $incomeExpense->packs = $validated['return_packs'];
+        $incomeExpense->Reason = $validated['return_reason'] ?? null;
+        $incomeExpense->amount = 0; // no money movement
+        $incomeExpense->type = 'expense'; // you can change to 'income' if adding stock
+        $incomeExpense->date = $settingDate;
+        $incomeExpense->save();
+
+        return redirect()->route('customers-loans.index')
+            ->with('success', 'Return record added successfully!');
+    }
+
+    // --- Handle Ingoing / Outgoing ---
     if ($loanType === 'ingoing' || $loanType === 'outgoing') {
         $customerShortName = null;
         if (!empty($validated['customer_id'])) {
@@ -137,21 +154,15 @@ class CustomersLoanController extends Controller
         $incomeExpense->customer_short_name = $customerShortName;
         $incomeExpense->date = $settingDate;
 
-        if ($loanType === 'ingoing') {
-            $incomeExpense->amount = $validated['amount'];
-            $incomeExpense->type = 'income';
-        } else { // outgoing
-            $incomeExpense->amount = -$validated['amount'];
-            $incomeExpense->type = 'expense';
-        }
-
+        $incomeExpense->amount = ($loanType === 'ingoing') ? $validated['amount'] : -$validated['amount'];
+        $incomeExpense->type = ($loanType === 'ingoing') ? 'income' : 'expense';
         $incomeExpense->save();
 
         return redirect()->route('customers-loans.index')
             ->with('success', 'Income/Expense record created successfully!');
     }
 
-    // --- For other loan types (today, old): create CustomersLoan + IncomeExpenses ---
+    // --- Handle Old / Today loans ---
     $customerShortName = null;
     if (!empty($validated['customer_id'])) {
         $customer = Customer::find($validated['customer_id']);
@@ -236,7 +247,9 @@ public function update(Request $request, $id)
             $rules['bank'] = 'nullable|string|max:255';
             $rules['cheque_date'] = 'nullable|date';
         }
+        
     }
+    
 
     $validated = $request->validate($rules);
 

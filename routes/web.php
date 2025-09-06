@@ -86,7 +86,8 @@ Route::post('/report/download/{reportType}/{format}', [ReportController::class, 
 Route::get('/financial-report', [ReportController::class, 'financialReport'])->name('financial.report');
 Route::get('/sales-report', [ReportController::class, 'salesReport'])->name('sales.report');
 Route::get('/grn-report', [ReportController::class, 'grnReport'])->name('grn.report');
-
+Route::get('/returns-report', [ReportController::class, 'returnsReport']) ->name('returns.report');
+   
 // Customer loans
 Route::get('/customers/{id}/loans-total', [CustomersLoanController::class, 'getTotalLoanAmount']);
 Route::post('/get-loan-amount', [SalesEntryController::class, 'getLoanAmount'])->name('get.loan.amount');
@@ -131,4 +132,15 @@ Route::get('/grn-overview/download2', [ReportController::class, 'downloadGrnOver
 Route::get('/sales-report/download', [ReportController::class, 'downloadSalesReport'])->name('sales.report.download');  
 Route::get('/grn/export/pdf', [ReportController::class, 'exportPdf'])->name('grn.exportPdf');
 Route::get('/grn/export/excel', [ReportController::class, 'exportExcel'])->name('grn.exportExcel');
+//returns
+Route::get('/api/grn-entry/{code}', function ($code) {
+    $entry = \App\Models\GrnEntry::where('code', $code)->first();
+    return response()->json($entry);
+});
+
+Route::get('/api/sale/{bill_no}', function ($bill_no) {
+    $sale = Sale::where('bill_no', $bill_no)->first();
+    return response()->json($sale);
+});
+
 require __DIR__.'/auth.php';

@@ -23,6 +23,12 @@ class IncomeExpenses extends Model
         'unique_code',
         'user_id',
         'Date',
+        'GRN_Code',
+        'Item_Code',
+        'Bill_no',
+        'weight ',
+        'packs',
+        'Reason',
     ];
 
     public function customer()

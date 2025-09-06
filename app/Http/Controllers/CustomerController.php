@@ -23,6 +23,7 @@ class CustomerController extends Controller
     {
         $request->validate([
             'short_name'=>'required',
+            'ID_NO' => 'nullable',
             'name' => 'required',
             'telephone_no' => 'nullable',
             'credit_limit' => 'required|numeric',
@@ -43,6 +44,7 @@ class CustomerController extends Controller
             'short_name'=>'required',
             'name' => 'required',
             'telephone_no' => 'nullable',
+             'ID_NO' => 'nullable',
             'credit_limit' => 'required|numeric',
         ]);
 

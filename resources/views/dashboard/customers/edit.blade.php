@@ -84,6 +84,10 @@
             <label for="name_field" class="form-label">සම්පූර්ණ නම</label>
             <input type="text" name="name" id="name_field" value="{{ $customer->name }}" class="form-control" required>
         </div>
+         <div class="mb-3">
+            <label for="ID_NO" class="form-label">ID_NO</label>
+            <input type="text" name="ID_NO" id="ID_NO" value="{{ $customer->ID_NO }}" class="form-control" required>
+        </div>
 
         <div class="mb-3">
             <label for="address_field" class="form-label">ලිපිනය</label>

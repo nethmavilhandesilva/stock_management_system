@@ -1738,6 +1738,20 @@ class ReportController extends Controller
         $code = $request->input('code');
         return Excel::download(new GrnExport($code), 'GRN_Report_' . date('Ymd_His') . '.xlsx');
     }
+    public function returnsReport()
+{
+    $data = IncomeExpenses::select(
+        'GRN_Code',
+        'Item_Code',
+        'bill_no',
+        'weight',
+        'packs',
+        'Reason'
+    )->get();
+
+    return view('dashboard.reports.returns_report', compact('data'));
+}
+
 }
 
 
