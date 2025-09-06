@@ -291,8 +291,8 @@ class SalesEntryController extends Controller
 
         try {
             // Get the setting date value
-            $settingDate = \App\Models\Setting::value('value');
-            $formattedDate = \Carbon\Carbon::parse($settingDate)->format('Y-m-d');
+            $settingDate = Setting::value('value');
+            $formattedDate = Carbon::parse($settingDate)->format('Y-m-d');
 
             $oldPacks = $sale->packs;
             $oldWeight = $sale->weight;
@@ -577,333 +577,318 @@ class SalesEntryController extends Controller
         }
     }
 
-    public function dayStart(Request $request)
-    {
-        try {
-            DB::beginTransaction();
+  public function dayStart(Request $request)
+{
+    try {
+        DB::beginTransaction();
 
-            // Validate the date input from modal
-            $request->validate([
-                'new_day_date' => 'required|date',
-            ]);
+        // Validate the date input from modal
+        $request->validate([
+            'new_day_date' => 'required|date',
+        ]);
 
-            // Use the selected date from the modal
-            $dayStartDate = Carbon::parse($request->new_day_date)->startOfDay();
+        // Use the selected date from the modal
+        $dayStartDate = Carbon::parse($request->new_day_date)->startOfDay();
 
-            // --- Generate Day Start Report Data using GRN grouping logic ---
-            $grnEntries = GrnEntry::all();
-            $dayStartReportData = [];
+        // --- Generate Day Start Report Data using GRN grouping logic ---
+        $grnEntries = GrnEntry::all();
+        $dayStartReportData = [];
 
-            foreach ($grnEntries->groupBy('code') as $code => $entries) {
-                $totalOriginalPacks = $entries->sum('original_packs');
-                $totalOriginalWeight = $entries->sum('original_weight');
+        foreach ($grnEntries->groupBy('code') as $code => $entries) {
+            $totalOriginalPacks = $entries->sum('original_packs');
+            $totalOriginalWeight = $entries->sum('original_weight');
 
-                $remainingPacks = $entries->sum('packs');
-                $remainingWeight = $entries->sum('weight');
+            $remainingPacks = $entries->sum('packs');
+            $remainingWeight = $entries->sum('weight');
 
-                $totalSoldPacks = $totalOriginalPacks - $remainingPacks;
-                $totalSoldWeight = $totalOriginalWeight - $remainingWeight;
+            $totalSoldPacks = $totalOriginalPacks - $remainingPacks;
+            $totalSoldWeight = $totalOriginalWeight - $remainingWeight;
 
-                // --- Total sales value (merge current + historical sales) ---
-                $currentSales = Sale::where('code', $code)->get();
-                $historicalSales = SalesHistory::where('code', $code)->get();
-                $relatedSales = $currentSales->merge($historicalSales);
-                $totalSalesValue = $relatedSales->sum('total'); // exactly like getGrnSalesOverviewReport
+            // --- Total sales value (merge current + historical sales) ---
+            $currentSales = Sale::where('code', $code)->get();
+            $historicalSales = SalesHistory::where('code', $code)->get();
+            $relatedSales = $currentSales->merge($historicalSales);
+            $totalSalesValue = $relatedSales->sum('total');
 
-                $totalWastedPacks = $entries->sum('wasted_packs');
-                $totalWastedWeight = $entries->sum('wasted_weight');
+            $totalWastedPacks = $entries->sum('wasted_packs');
+            $totalWastedWeight = $entries->sum('wasted_weight');
 
-                $dayStartReportData[] = [
-                    'date' => Carbon::parse($entries->first()->created_at)
-                        ->timezone('Asia/Colombo')
-                        ->format('Y-m-d H:i:s'),
-                    'grn_code' => $code,
-                    'item_name' => $entries->first()->item_name,
-                    'original_packs' => $totalOriginalPacks,
-                    'original_weight' => $totalOriginalWeight,
-                    'sold_packs' => $totalSoldPacks,
-                    'sold_weight' => $totalSoldWeight,
-                    'total_sales_value' => $totalSalesValue,
-                    'remaining_packs' => $remainingPacks,
-                    'remaining_weight' => $remainingWeight,
-                    'totalWastedPacks' => $totalWastedPacks,
-                    'totalWastedWeight' => $totalWastedWeight,
-                ];
-            }
-            // --- Generate GRN Report Data (if you need a separate GRN table) ---
-            $grnEntries = GrnEntry::all();
-
-            $reportData = [];
-
-            // Group by item_name
-            $grouped = $grnEntries->groupBy('item_name');
-
-            foreach ($grouped as $itemName => $entries) {
-                $originalPacks = 0;
-                $originalWeight = 0;
-                $soldPacks = 0;
-                $soldWeight = 0;
-                $totalSalesValue = 0;
-                $remainingPacks = 0;
-                $remainingWeight = 0;
-
-                foreach ($entries as $grnEntry) {
-                    // Fetch current and historical sales for this GRN code
-                    $currentSales = Sale::where('code', $grnEntry->code)->get();
-                    $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
-                    $relatedSales = $currentSales->merge($historicalSales);
-
-                    // Total weight sold and total sales value for this GRN
-                    $totalSoldWeight = $relatedSales->sum('weight');
-                    $totalSalesValueForGrn = $relatedSales->sum('total');
-
-                    // Sum original packs and weight
-                    $originalPacks += $grnEntry->original_packs;
-                    $originalWeight += $grnEntry->original_weight;
-
-                    // Sum sold packs and weight
-                    $soldPacks += $grnEntry->original_packs - $grnEntry->packs;
-                    $soldWeight += $grnEntry->original_weight - $grnEntry->weight;
-
-                    // Sum remaining packs and weight (direct from GRN entry)
-                    $remainingPacks += $grnEntry->packs;
-                    $remainingWeight += $grnEntry->weight;
-
-                    // Sum total sales value
-                    $totalSalesValue += $totalSalesValueForGrn;
-                }
-
-                $grnReportData[] = [
-                    'item_name' => $itemName,
-                    'original_packs' => $originalPacks,
-                    'original_weight' => $originalWeight,
-                    'sold_packs' => $soldPacks,
-                    'sold_weight' => $soldWeight,
-                    'total_sales_value' => $totalSalesValue,
-                    'remaining_packs' => $remainingPacks,
-                    'remaining_weight' => $remainingWeight,
-                ];
-            }
-
-            // --- Weight-Based Report Data ---
-            $weightBasedReportData = Sale::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total')
-                ->groupBy('item_name', 'item_code')
-                ->orderBy('item_name', 'asc')
-                ->get();
-
-            $salesByBill = Sale::query()
-                ->whereNotNull('bill_no')
-                ->where('bill_no', '<>', '')
-                ->get()
-                ->groupBy('bill_no');
-
-            // Get the setting date value
-            $settingDate = Setting::value('value');
-
-            // Fetch sales adjustments where Date matches setting date
-            $salesadjustments = Salesadjustment::whereDate('Date', $settingDate)
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-
-            // --- Financial Report Data ---
-            $settingDate = Setting::value('value');
-
-            $financialRecords = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
-                ->whereDate('Date', $settingDate)   // compare Date column with settingDate
-                ->get();
-
-
-            $financialReportData = [];
-            $totalDr = 0;
-            $totalCr = 0;
-
-            foreach ($financialRecords as $record) {
-                $dr = null;
-                $cr = null;
-
-                $desc = $record->customer_short_name;
-                if (!empty($record->bill_no)) {
-                    $desc .= " ({$record->bill_no})";
-                }
-                $desc .= " - {$record->description}";
-
-                if (in_array($record->loan_type, ['old', 'ingoing'])) {
-                    $dr = $record->amount;
-                    $totalDr += $record->amount;
-                } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
-                    $cr = $record->amount;
-                    $totalCr += $record->amount;
-                }
-
-                $financialReportData[] = [
-                    'description' => $desc,
-                    'dr' => $dr,
-                    'cr' => $cr
-                ];
-            }
-
-            $salesTotal = Sale::sum('total');
-            $totalDr += $salesTotal;
-            $financialReportData[] = [
-                'description' => 'Sales Total',
-                'dr' => $salesTotal,
-                'cr' => null
+            $dayStartReportData[] = [
+                'date' => Carbon::parse($entries->first()->created_at)
+                    ->timezone('Asia/Colombo')
+                    ->format('Y-m-d H:i:s'),
+                'grn_code' => $code,
+                'item_name' => $entries->first()->item_name,
+                'original_packs' => $totalOriginalPacks,
+                'original_weight' => $totalOriginalWeight,
+                'sold_packs' => $totalSoldPacks,
+                'sold_weight' => $totalSoldWeight,
+                'total_sales_value' => $totalSalesValue,
+                'remaining_packs' => $remainingPacks,
+                'remaining_weight' => $remainingWeight,
+                'totalWastedPacks' => $totalWastedPacks,
+                'totalWastedWeight' => $totalWastedWeight,
             ];
-
-            $profitTotal = Sale::sum('SellingKGTotal');
-            $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
-                ->value(DB::raw('SUM(wasted_weight * PerKGPrice)')) ?? 0;
-
-$allLoans = CustomersLoan::all();
-$groupedLoans = $allLoans->groupBy('customer_short_name');
-$finalLoans = [];
-
-foreach ($groupedLoans as $customerShortName => $loans) {
-    // Last 'old' loan
-    $lastOldLoan = $loans->where('loan_type', 'old')
-        ->sortByDesc(fn($l) => Carbon::parse($l->created_at))
-        ->first();
-
-    // First 'today' loan after the last old loan
-    $firstTodayAfterOld = $loans->filter(function ($l) use ($lastOldLoan) {
-        return $l->loan_type === 'today' &&
-               Carbon::parse($l->created_at) > (
-                   $lastOldLoan ? Carbon::parse($lastOldLoan->created_at)
-                                : Carbon::parse('1970-01-01')
-               );
-    })->sortBy(fn($l) => Carbon::parse($l->created_at))
-      ->first();
-
-    $highlightColor = null;
-
-    if ($lastOldLoan && $firstTodayAfterOld) {
-        $daysBetweenLoans = Carbon::parse($lastOldLoan->created_at)
-            ->diffInDays(Carbon::parse($firstTodayAfterOld->created_at));
-
-        if ($daysBetweenLoans > 30) {
-            $highlightColor = 'red-highlight';
-        } elseif ($daysBetweenLoans >= 14) {
-            $highlightColor = 'blue-highlight';
         }
 
-        // Check if extra today loans exist after the first today
-        $extraTodayLoanExists = $loans->filter(function ($l) use ($firstTodayAfterOld) {
-            return $l->loan_type === 'today' &&
-                   Carbon::parse($l->created_at) > Carbon::parse($firstTodayAfterOld->created_at);
-        })->count() > 0;
+        // --- Generate GRN Report Data ---
+        $reportData = [];
+        $grouped = $grnEntries->groupBy('item_name');
+        $grnReportData = [];
 
-        if ($extraTodayLoanExists) {
-            $highlightColor = null;
-        }
-    } elseif ($lastOldLoan && !$firstTodayAfterOld) {
-        $daysSinceLastOldLoan = Carbon::parse($lastOldLoan->created_at)->diffInDays(Carbon::now());
+        foreach ($grouped as $itemName => $entries) {
+            $originalPacks = 0;
+            $originalWeight = 0;
+            $soldPacks = 0;
+            $soldWeight = 0;
+            $totalSalesValue = 0;
+            $remainingPacks = 0;
+            $remainingWeight = 0;
 
-        if ($daysSinceLastOldLoan > 30) {
-            $highlightColor = 'red-highlight';
-        } elseif ($daysSinceLastOldLoan >= 14) {
-            $highlightColor = 'blue-highlight';
-        }
-    }
+            foreach ($entries as $grnEntry) {
+                $currentSales = Sale::where('code', $grnEntry->code)->get();
+                $historicalSales = SalesHistory::where('code', $grnEntry->code)->get();
+                $relatedSales = $currentSales->merge($historicalSales);
 
-    // Totals
-    $totalToday = $loans->where('loan_type', 'today')->sum('amount');
-    $totalOld = $loans->where('loan_type', 'old')->sum('amount');
-    $totalAmount = $totalToday - $totalOld; // Adjust this if you need full balance logic
+                $totalSalesValueForGrn = $relatedSales->sum('total');
 
-    $finalLoans[] = (object) [
-        'customer_short_name' => $customerShortName,
-        'total_amount' => $totalAmount,
-        'highlight_color' => $highlightColor,
-    ];
-    $finalLoans = collect($finalLoans);
-}
+                $originalPacks += $grnEntry->original_packs;
+                $originalWeight += $grnEntry->original_weight;
 
-// --- Send Combined Email ---
-Mail::send(new CombinedReportsMail(
-    $dayStartReportData,
-    $grnReportData,
-    $grnEntries,
-    $dayStartDate,
-    $weightBasedReportData,
-    salesByBill: $salesByBill,
-    salesadjustments: $salesadjustments,
-    financialReportData: $financialReportData,
-    financialTotalDr: $totalDr,
-    financialTotalCr: $totalCr,
-    financialProfit: $profitTotal,
-    financialDamages: $totalDamages,
-    profitTotal: $profitTotal,
-    totalDamages: $totalDamages,
-    loans: $loans,
-    finalLoans: $finalLoans, // ✅ Use enriched dataset instead of raw $loans
-));
-Mail::send(new CombinedReportsMail2(
-    $dayStartReportData,
-    $grnReportData,
-    $grnEntries,
-    $dayStartDate,
-    $weightBasedReportData,
-    salesByBill: $salesByBill,
-    salesadjustments: $salesadjustments,
-    financialReportData: $financialReportData,
-    financialTotalDr: $totalDr,
-    financialTotalCr: $totalCr,
-    financialProfit: $profitTotal,
-    financialDamages: $totalDamages,
-    profitTotal: $profitTotal,
-    totalDamages: $totalDamages,
-    loans: $loans,
-    finalLoans: $finalLoans, // ✅ use the same data
-));
+                $soldPacks += $grnEntry->original_packs - $grnEntry->packs;
+                $soldWeight += $grnEntry->original_weight - $grnEntry->weight;
 
-            // --- Archive Sales and Clear Table ---
-            if ($grnEntries->isNotEmpty()) {
-                $sales = Sale::all();
-                $salesHistoryData = $sales->map(function ($sale) use ($dayStartDate) {
-                    return [
-                        'Date' => $sale->Date,
-                        'bill_no' => $sale->bill_no,
-                        'code' => $sale->code,
-                        'item_code' => $sale->item_code,
-                        'item_name' => $sale->item_name,
-                        'packs' => $sale->packs,
-                        'weight' => $sale->weight,
-                        'price_per_kg' => $sale->price_per_kg,
-                        'total' => $sale->total,
-                        'customer_code' => $sale->customer_code,
-                        'customer_name' => $sale->customer_name,
-                        'supplier_code' => $sale->supplier_code,
-                        'bill_printed' => $sale->bill_printed,
-                        'is_printed' => $sale->is_printed,
-                        'PerKGPrice' => $sale->PerKGPrice,
-                        'PerKGTotal' => $sale->PerKGTotal,
-                        'SellingKGTotal' => $sale->SellingKGTotal,
-                        'created_at' => $sale->created_at->format('Y-m-d H:i:s'),
-                        'updated_at' => $sale->updated_at->format('Y-m-d H:i:s'),
+                $remainingPacks += $grnEntry->packs;
+                $remainingWeight += $grnEntry->weight;
 
-                    ];
-                })->toArray();
-
-                SalesHistory::insert($salesHistoryData);
-                Sale::truncate();
+                $totalSalesValue += $totalSalesValueForGrn;
             }
 
-            // --- Update Day Start Date in Settings ---
-            Setting::updateOrCreate(
-                ['key' => 'last_day_started_date'],
-                ['value' => $dayStartDate->format('Y-m-d')]
-            );
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Day started for ' . $dayStartDate->format('Y-m-d') . '. Reports sent successfully.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Day Start Failed: ' . $e->getMessage());
-            return redirect()->back();
+            $grnReportData[] = [
+                'item_name' => $itemName,
+                'original_packs' => $originalPacks,
+                'original_weight' => $originalWeight,
+                'sold_packs' => $soldPacks,
+                'sold_weight' => $soldWeight,
+                'total_sales_value' => $totalSalesValue,
+                'remaining_packs' => $remainingPacks,
+                'remaining_weight' => $remainingWeight,
+            ];
         }
+
+        // --- Weight-Based Report Data ---
+        $weightBasedReportData = Sale::selectRaw('item_name, item_code, SUM(packs) as packs, SUM(weight) as weight, SUM(total) as total')
+            ->groupBy('item_name', 'item_code')
+            ->orderBy('item_name', 'asc')
+            ->get();
+
+        $salesByBill = Sale::query()
+            ->whereNotNull('bill_no')
+            ->where('bill_no', '<>', '')
+            ->get()
+            ->groupBy('bill_no');
+
+        // Get the setting date value
+        $settingDate = Setting::value('value');
+
+        // --- Sales Adjustments ---
+        $salesadjustments = Salesadjustment::whereDate('Date', $settingDate)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // --- Financial Report Data ---
+        $financialRecords = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
+            ->whereDate('Date', $settingDate)
+            ->get() ?? collect([]);
+
+        $financialReportData = [];
+        $totalDr = 0;
+        $totalCr = 0;
+
+        foreach ($financialRecords as $record) {
+            $dr = null;
+            $cr = null;
+
+            $desc = $record->customer_short_name;
+            if (!empty($record->bill_no)) {
+                $desc .= " ({$record->bill_no})";
+            }
+            $desc .= " - {$record->description}";
+
+            if (in_array($record->loan_type, ['old', 'ingoing'])) {
+                $dr = $record->amount;
+                $totalDr += $record->amount;
+            } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
+                $cr = $record->amount;
+                $totalCr += $record->amount;
+            }
+
+            $financialReportData[] = [
+                'description' => $desc,
+                'dr' => $dr,
+                'cr' => $cr
+            ];
+        }
+
+        $salesTotal = Sale::sum('total');
+        $totalDr += $salesTotal;
+        $financialReportData[] = [
+            'description' => 'Sales Total',
+            'dr' => $salesTotal,
+            'cr' => null
+        ];
+
+        $profitTotal = Sale::sum('SellingKGTotal');
+        $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
+            ->value(DB::raw('SUM(wasted_weight * PerKGPrice)')) ?? 0;
+
+        // --- Loans ---
+        $allLoans = CustomersLoan::all() ?? collect([]);
+        $groupedLoans = $allLoans->groupBy('customer_short_name');
+        $finalLoans = collect([]);
+
+        foreach ($groupedLoans as $customerShortName => $loans) {
+            $lastOldLoan = $loans->where('loan_type', 'old')
+                ->sortByDesc(fn($l) => Carbon::parse($l->created_at))
+                ->first();
+
+            $firstTodayAfterOld = $loans->filter(function ($l) use ($lastOldLoan) {
+                return $l->loan_type === 'today' &&
+                       Carbon::parse($l->created_at) > (
+                           $lastOldLoan ? Carbon::parse($lastOldLoan->created_at)
+                                        : Carbon::parse('1970-01-01')
+                       );
+            })->sortBy(fn($l) => Carbon::parse($l->created_at))
+              ->first();
+
+            $highlightColor = null;
+
+            if ($lastOldLoan && $firstTodayAfterOld) {
+                $daysBetweenLoans = Carbon::parse($lastOldLoan->created_at)
+                    ->diffInDays(Carbon::parse($firstTodayAfterOld->created_at));
+
+                if ($daysBetweenLoans > 30) {
+                    $highlightColor = 'red-highlight';
+                } elseif ($daysBetweenLoans >= 14) {
+                    $highlightColor = 'blue-highlight';
+                }
+
+                $extraTodayLoanExists = $loans->filter(function ($l) use ($firstTodayAfterOld) {
+                    return $l->loan_type === 'today' &&
+                           Carbon::parse($l->created_at) > Carbon::parse($firstTodayAfterOld->created_at);
+                })->count() > 0;
+
+                if ($extraTodayLoanExists) {
+                    $highlightColor = null;
+                }
+            } elseif ($lastOldLoan && !$firstTodayAfterOld) {
+                $daysSinceLastOldLoan = Carbon::parse($lastOldLoan->created_at)->diffInDays(Carbon::now());
+
+                if ($daysSinceLastOldLoan > 30) {
+                    $highlightColor = 'red-highlight';
+                } elseif ($daysSinceLastOldLoan >= 14) {
+                    $highlightColor = 'blue-highlight';
+                }
+            }
+
+            $totalToday = $loans->where('loan_type', 'today')->sum('amount');
+            $totalOld = $loans->where('loan_type', 'old')->sum('amount');
+            $totalAmount = $totalToday - $totalOld;
+
+            $finalLoans->push((object) [
+                'customer_short_name' => $customerShortName,
+                'total_amount' => $totalAmount,
+                'highlight_color' => $highlightColor,
+            ]);
+        }
+
+        // --- Send Combined Emails ---
+        Mail::send(new CombinedReportsMail(
+            $dayStartReportData,
+            $grnReportData,
+            $grnEntries,
+            $dayStartDate,
+            $weightBasedReportData,
+            salesByBill: $salesByBill,
+            salesadjustments: $salesadjustments,
+            financialReportData: $financialReportData,
+            financialTotalDr: $totalDr,
+            financialTotalCr: $totalCr,
+            financialProfit: $profitTotal,
+            financialDamages: $totalDamages,
+            profitTotal: $profitTotal,
+            totalDamages: $totalDamages,
+            loans: $allLoans,
+            finalLoans: $finalLoans,
+        ));
+
+        Mail::send(new CombinedReportsMail2(
+            $dayStartReportData,
+            $grnReportData,
+            $grnEntries,
+            $dayStartDate,
+            $weightBasedReportData,
+            salesByBill: $salesByBill,
+            salesadjustments: $salesadjustments,
+            financialReportData: $financialReportData,
+            financialTotalDr: $totalDr,
+            financialTotalCr: $totalCr,
+            financialProfit: $profitTotal,
+            financialDamages: $totalDamages,
+            profitTotal: $profitTotal,
+            totalDamages: $totalDamages,
+            loans: $allLoans,
+            finalLoans: $finalLoans,
+        ));
+
+        // --- Archive Sales and Clear Table ---
+        if ($grnEntries->isNotEmpty()) {
+            $sales = Sale::all();
+            $salesHistoryData = $sales->map(function ($sale) {
+                return [
+                    'Date' => $sale->Date,
+                    'bill_no' => $sale->bill_no,
+                    'code' => $sale->code,
+                    'item_code' => $sale->item_code,
+                    'item_name' => $sale->item_name,
+                    'packs' => $sale->packs,
+                    'weight' => $sale->weight,
+                    'price_per_kg' => $sale->price_per_kg,
+                    'total' => $sale->total,
+                    'customer_code' => $sale->customer_code,
+                    'customer_name' => $sale->customer_name,
+                    'supplier_code' => $sale->supplier_code,
+                    'bill_printed' => $sale->bill_printed,
+                    'is_printed' => $sale->is_printed,
+                    'PerKGPrice' => $sale->PerKGPrice,
+                    'PerKGTotal' => $sale->PerKGTotal,
+                    'SellingKGTotal' => $sale->SellingKGTotal,
+                    'created_at' => $sale->created_at->format('Y-m-d H:i:s'),
+                    'updated_at' => $sale->updated_at->format('Y-m-d H:i:s'),
+                ];
+            })->toArray();
+
+            if (!empty($salesHistoryData)) {
+                SalesHistory::insert($salesHistoryData);
+            }
+            Sale::truncate();
+        }
+
+        // --- Update Day Start Date in Settings ---
+        Setting::updateOrCreate(
+            ['key' => 'last_day_started_date'],
+            ['value' => $dayStartDate->format('Y-m-d')]
+        );
+
+        DB::commit();
+
+        return redirect()->back()->with('success', 'Day started for ' . $dayStartDate->format('Y-m-d') . '. Reports sent successfully.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Day Start Failed: ' . $e->getMessage());
+        return redirect()->back();
     }
+}
 
     public function getLoanAmount(Request $request)
     {
