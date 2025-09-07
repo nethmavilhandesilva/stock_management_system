@@ -24,7 +24,7 @@
             <span class="material-icons text-blue-600 mr-3">local_shipping</span> <span class="text-white">සැපයුම්කරුවන්
                 (Suppliers)</span>
         </a>
-        <a href="{{ route('grn.index') }}" class="list-group-item list-group-item-action d-flex align-items-center"
+        <a href="{{ route('grn.create') }}" class="list-group-item list-group-item-action d-flex align-items-center"
             style="background-color: transparent !important; color: white !important;"> {{-- Text color to white --}}
             <span class="material-icons text-blue-600 mr-3">assignment_turned_in</span> <span
                 class="text-white">GRN</span>

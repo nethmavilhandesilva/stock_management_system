@@ -58,7 +58,7 @@
                         <li><a class="dropdown-item" href="{{ route('items.index') }}">භාණ්ඩ</a></li>
                         <li><a class="dropdown-item" href="{{ route('customers.index') }}">ගනුදෙනුකරුවන්</a></li>
                         <li><a class="dropdown-item" href="{{ route('suppliers.index') }}">සැපයුම්කරුවන්</a></li>
-                        <li><a class="dropdown-item" href="{{ route('grn.index') }}">GRN</a></li>
+                        <li><a class="dropdown-item" href="{{ route('grn.create') }}">GRN</a></li>
                         <li><a class="dropdown-item" href="{{ route('customers-loans.report') }}"> ණය වාර්තාව දැකීම</a>
                         </li>
                         <li>
