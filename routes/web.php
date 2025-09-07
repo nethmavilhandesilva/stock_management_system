@@ -142,5 +142,5 @@ Route::get('/api/sale/{bill_no}', function ($bill_no) {
     $sale = Sale::where('bill_no', $bill_no)->first();
     return response()->json($sale);
 });
-
+Route::get('/sales-report/summary', [GrnEntryController::class, 'showSalesBillSummary'])->name('sales.report.summary');
 require __DIR__.'/auth.php';

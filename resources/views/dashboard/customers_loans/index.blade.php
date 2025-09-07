@@ -697,6 +697,41 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const loanTypeRadios = document.querySelectorAll('input[name="loan_type"]');
+        const descriptionSection = document.getElementById('description_section');
+
+        // Original HTML content of the description field
+        const originalDescriptionHTML = descriptionSection.innerHTML;
+
+        // Dropdown HTML for outgoing
+        const outgoingDropdownHTML = `
+            <label for="description" class="text-form-label">විස්තරය</label>
+            <select class="form-select form-select-sm" name="description" id="description" required>
+                <option value="">-- Select --</option>
+                <option value="Salary">Salary</option>
+                <option value="Fuel">Fuel</option>
+                <option value="Electricity">Electricity</option>
+                <option value="Food">Food</option>
+                <option value="WaterBill">WaterBill</option>
+                <option value="Other">Other</option>
+            </select>
+            <span id="totalAmountDisplay" class="text-white-50" style="font-weight: bold; font-size: 0.9rem;"></span>
+        `;
+
+        loanTypeRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'outgoing') {
+                    descriptionSection.innerHTML = outgoingDropdownHTML;
+                } else {
+                    descriptionSection.innerHTML = originalDescriptionHTML;
+                }
+            });
+        });
+    });
+</script>
+
 
 
 @endsection

@@ -876,9 +876,12 @@ class SalesEntryController extends Controller
 
         // --- Update Day Start Date in Settings ---
         Setting::updateOrCreate(
-            ['key' => 'last_day_started_date'],
-            ['value' => $dayStartDate->format('Y-m-d')]
-        );
+    ['key' => 'last_day_started_date'], // matching condition
+    [
+        'value' => $dayStartDate->format('Y-m-d'),
+        'Balance' => $request->end_day_balance, // updated or created
+    ]
+);
 
         DB::commit();
 

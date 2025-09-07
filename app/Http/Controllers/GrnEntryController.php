@@ -259,6 +259,68 @@ class GrnEntryController extends Controller
             return redirect()->back()->with('error', 'An error occurred while processing the request.');
         }
     }
+  public function showSalesBillSummary(Request $request)
+    {
+        Log::info('Sales Report generation started.');
+
+        // 1. Fetch sales data based on your criteria
+        // Add your filtering logic here if needed, e.g., for a specific date range.
+        $salesData = SalesBill::with('items')->get();
+
+        if ($salesData->isEmpty()) {
+            Log::warning('No sales data found for the report.');
+            return view('reports.sales_bill_summary', [
+                'salesByBill' => collect(),
+                'grnPrices' => collect(),
+            ]);
+        }
+
+        // Group sales items by bill number
+        $salesByBill = $salesData->groupBy('bill_no');
+
+        // 2. Get all unique item codes from the sales data
+        $itemCodes = $salesByBill->flatten()->pluck('code')->unique()->map(function ($code) {
+            return trim($code);
+        })->toArray();
+
+        Log::debug('Unique Item Codes found in sales:', $itemCodes);
+
+        // 3. Fetch the latest GRN price for each item code.
+        $grnPrices = DB::table('grn_entries as t1')
+            ->select('t1.code', 't1.PerKGPrice')
+            ->join(DB::raw('(SELECT code, MAX(created_at) as max_date FROM grn_entries GROUP BY code) as t2'), function($join) {
+                $join->on('t1.code', '=', 't2.code')
+                     ->on('t1.created_at', '=', 't2.max_date');
+            })
+            ->whereIn(DB::raw('TRIM(t1.code)'), $itemCodes)
+            ->pluck('PerKGPrice', 'code')
+            ->toArray();
+
+        // 4. Clean and log the fetched GRN prices
+        $grnPrices = array_change_key_case(array_map('trim', $grnPrices));
+        
+        Log::info('GRN Prices fetched for comparison:', $grnPrices);
+
+        // **Debugging a specific case:**
+        // Let's inspect the data for the item 'ALA-NET1-1000' and its prices.
+        $specificItemCode = 'ALA-NET1-1000';
+        $grnPriceForDebug = $grnPrices[$specificItemCode] ?? null;
+        
+        Log::debug('Debugging specific item:', [
+            'item_code' => $specificItemCode,
+            'grn_price_from_db' => $grnPriceForDebug
+        ]);
+        
+        // Use `dd()` to halt execution and inspect data
+        // For example, if you want to see the exact GRN prices array before the view is rendered:
+        // dd($grnPrices); 
+
+        // 5. Pass the data to the view
+        return view('reports.sales_bill_summary', [
+            'salesByBill' => $salesByBill,
+            'grnPrices' => $grnPrices,
+        ]);
+    }
 
 }
 

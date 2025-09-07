@@ -2367,7 +2367,8 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                 itemGroups[itemName].totalPacks += packs;
                 return `<tr style="font-size: 1.2em;">
   <td style="text-align:left;">${itemName} <br>${packs}</td>
-  <td style="text-align:right;">${weight.toFixed(2)}</td>
+  <td style="text-align:right; padding-right:18px;">${weight.toFixed(2)}</td>
+
   <td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
   <td style="text-align:right;">${sale.total.toFixed(2)}</td>
 </tr>`;

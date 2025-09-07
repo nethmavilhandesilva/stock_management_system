@@ -99,17 +99,17 @@
                     <th>ගෙවීම</th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach($reportData as $row)
-                    <tr>
-                        <td>{{ $row['description'] }}</td>
-                      <td>{{ $row['dr'] ? number_format(abs($row['dr']), 2) : '' }}</td>
+          <tbody>
+    {{-- Loop through all report data, including Balance row from controller --}}
+    @foreach($reportData as $row)
+        <tr>
+            <td>{{ $row['description'] }}</td>
+            <td>{{ $row['dr'] ? number_format(abs($row['dr']), 2) : '' }}</td>
+            <td>{{ $row['cr'] ? number_format(abs($row['cr']), 2) : '' }}</td>
+        </tr>
+    @endforeach
+</tbody>
 
-                      <td>{{ $row['cr'] ? number_format(abs($row['cr']), 2) : '' }}</td>
-
-                    </tr>
-                @endforeach
-            </tbody>
             <tfoot>
                 <tr class="fw-bold">
                     <td>Total</td>

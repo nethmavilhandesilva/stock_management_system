@@ -18,14 +18,20 @@
                         <label for="confirm_password" class="form-label">Enter Password:</label>
                         <input type="password" class="form-control" id="confirm_password"
                             placeholder="Enter password to unlock">
-                      
                     </div>
 
                     <!-- Date field (initially disabled) -->
-                    <div class="form-group">
+                    <div class="form-group mb-3">
                         <label for="new_day_date" class="form-label">Select Date:</label>
                         <input type="date" class="form-control" id="new_day_date" name="new_day_date"
                             value="{{ \Carbon\Carbon::now()->format('Y-m-d') }}" disabled>
+                    </div>
+
+                    <!-- End of Day Balance field (initially disabled) -->
+                    <div class="form-group mb-3">
+                        <label for="end_day_balance" class="form-label">End of Day Balance:</label>
+                        <input type="number" step="0.01" class="form-control" id="end_day_balance"
+                               name="end_day_balance" placeholder="Enter end of day balance" disabled>
                     </div>
                 </div>
                 <div class="modal-footer" style="background-color: #f1f1f1;">
@@ -43,13 +49,17 @@
     document.addEventListener("DOMContentLoaded", function () {
         const passwordField = document.getElementById("confirm_password");
         const dateField = document.getElementById("new_day_date");
+        const balanceField = document.getElementById("end_day_balance");
 
         passwordField.addEventListener("input", function () {
             if (passwordField.value === "123") {
                 dateField.removeAttribute("disabled"); // Enable date field
+                balanceField.removeAttribute("disabled"); // Enable balance field
             } else {
                 dateField.setAttribute("disabled", true); // Disable date field
+                balanceField.setAttribute("disabled", true); // Disable balance field
             }
         });
     });
 </script>
+

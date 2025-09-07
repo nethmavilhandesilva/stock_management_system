@@ -696,111 +696,134 @@ class ReportController extends Controller
     return view('dashboard.reports.salesadjustment', compact('entries', 'code', 'startDate', 'endDate'));
 }
 
-    public function financialReport()
-    {
-        $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
-            ->whereDate('created_at', Carbon::today())
-            ->get();
+public function financialReport()
+{
+    // Fetch today's Income/Expenses records
+    $records = IncomeExpenses::select('customer_short_name', 'bill_no', 'description', 'amount', 'loan_type')
+        ->whereDate('created_at', Carbon::today())
+        ->get();
 
-        $reportData = [];
-        $totalDr = 0;
-        $totalCr = 0;
+    $reportData = [];
+    $totalDr = 0;
+    $totalCr = 0;
 
-        foreach ($records as $record) {
-            $dr = null;
-            $cr = null;
+    // 🆕 Fetch last_day_started_date row (contains Balance column)
+    $balanceRow = Setting::where('key', 'last_day_started_date')->first();
 
-            // Build description
-            $desc = $record->customer_short_name;
-            if (!empty($record->bill_no)) {
-                $desc .= " ({$record->bill_no})";
-            }
-            $desc .= " - {$record->description}";
-
-            if (in_array($record->loan_type, ['old', 'ingoing'])) {
-                $dr = $record->amount;
-                $totalDr += $record->amount;
-            } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
-                $cr = $record->amount;
-                $totalCr += $record->amount;
-            }
-
-            $reportData[] = [
-                'description' => $desc,
-                'dr' => $dr,
-                'cr' => $cr
-            ];
-        }
-
-        // Add Sales total
-        $salesTotal = Sale::sum('total');
-        $totalDr += $salesTotal;
+    if ($balanceRow) {
         $reportData[] = [
-            'description' => 'Sales Total',
-            'dr' => $salesTotal,
+            'description' => 'Balance As At ' . \Carbon\Carbon::parse($balanceRow->value)->format('Y-m-d'),
+            'dr' => $balanceRow->Balance, // Use the Balance column
             'cr' => null
         ];
-
-        // Get Profit from SellingKGTotal
-        $profitTotal = Sale::sum('SellingKGTotal');
-
-        // 🆕 New: Calculate Total Damages
-        $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
-            ->value(DB::raw('SUM(wasted_weight * PerKGPrice)'));
-
-        // Handle case where result is null
-        $totalDamages = $totalDamages ?? 0;
-
-        return view('dashboard.reports.financial', compact(
-            'reportData',
-            'totalDr',
-            'totalCr',
-            'salesTotal',
-            'profitTotal',
-            'totalDamages' // 🆕 New: Pass the total damages to the view
-        ));
+        $totalDr += $balanceRow->Balance; // Add Balance to total DR
     }
-    public function salesReport(Request $request)
-    {
-        $query = Sale::query()->whereNotNull('bill_no')->where('bill_no', '<>', '');
 
-        // Supplier filter
-        if ($request->filled('supplier_code')) {
-            $query->where('supplier_code', $request->supplier_code);
+    // Loop through Income/Expenses records
+    foreach ($records as $record) {
+        $dr = null;
+        $cr = null;
+
+        // Build description
+        $desc = $record->customer_short_name;
+        if (!empty($record->bill_no)) {
+            $desc .= " ({$record->bill_no})";
+        }
+        $desc .= " - {$record->description}";
+
+        // Determine DR or CR based on loan_type
+        if (in_array($record->loan_type, ['old', 'ingoing'])) {
+            $dr = $record->amount;
+            $totalDr += $record->amount;
+        } elseif (in_array($record->loan_type, ['today', 'outgoing'])) {
+            $cr = $record->amount;
+            $totalCr += $record->amount;
         }
 
-        // Item filter
-        if ($request->filled('item_code')) {
-            $query->where('item_code', $request->item_code);
-        }
-
-        // Customer short name filter
-        if ($request->filled('customer_short_name')) {
-            $search = $request->customer_short_name;
-            $query->where(function ($q) use ($search) {
-                $q->where('customer_code', 'like', '%' . $search . '%')
-                    ->orWhereIn('customer_code', function ($sub) use ($search) {
-                        $sub->select('short_name')
-                            ->from('customers')
-                            ->where('name', 'like', '%' . $search . '%');
-                    });
-            });
-        }
-
-        // Customer code filter
-        if ($request->filled('customer_code')) {
-            $query->where('customer_code', $request->customer_code);
-        }
-
-        // Bill No filter
-        if ($request->filled('bill_no')) {
-            $query->where('bill_no', $request->bill_no);
-        }
-
-        $salesByBill = $query->get()->groupBy('bill_no');
-
-        return view('dashboard.reports.new_sales_report', compact('salesByBill'));
+        $reportData[] = [
+            'description' => $desc,
+            'dr' => $dr,
+            'cr' => $cr
+        ];
     }
+
+    // Add Sales total
+    $salesTotal = Sale::sum('total');
+    $totalDr += $salesTotal;
+    $reportData[] = [
+        'description' => 'Sales Total',
+        'dr' => $salesTotal,
+        'cr' => null
+    ];
+
+    // Get Profit from SellingKGTotal
+    $profitTotal = Sale::sum('SellingKGTotal');
+
+    // Calculate Total Damages
+    $totalDamages = GrnEntry::select(DB::raw('SUM(wasted_weight * PerKGPrice)'))
+        ->value(DB::raw('SUM(wasted_weight * PerKGPrice)'));
+    $totalDamages = $totalDamages ?? 0;
+
+    return view('dashboard.reports.financial', compact(
+        'reportData',
+        'totalDr',
+        'totalCr',
+        'salesTotal',
+        'profitTotal',
+        'totalDamages'
+    ));
+}
+
+   public function salesReport(Request $request)
+{
+    $query = Sale::query()->whereNotNull('bill_no')->where('bill_no', '<>', '');
+
+    // Supplier filter
+    if ($request->filled('supplier_code')) {
+        $query->where('supplier_code', $request->supplier_code);
+    }
+
+    // Item filter
+    if ($request->filled('item_code')) {
+        $query->where('item_code', $request->item_code);
+    }
+
+    // Customer short name filter
+    if ($request->filled('customer_short_name')) {
+        $search = $request->customer_short_name;
+        $query->where(function ($q) use ($search) {
+            $q->where('customer_code', 'like', '%' . $search . '%')
+              ->orWhereIn('customer_code', function ($sub) use ($search) {
+                  $sub->select('short_name')
+                      ->from('customers')
+                      ->where('name', 'like', '%' . $search . '%');
+              });
+        });
+    }
+
+    // Customer code filter
+    if ($request->filled('customer_code')) {
+        $query->where('customer_code', $request->customer_code);
+    }
+
+    // Bill No filter
+    if ($request->filled('bill_no')) {
+        $query->where('bill_no', $request->bill_no);
+    }
+
+    // Date range filter
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $query->whereBetween('Date', [$request->start_date, $request->end_date]);
+    } elseif ($request->filled('start_date')) {
+        $query->where('Date', '>=', $request->start_date);
+    } elseif ($request->filled('end_date')) {
+        $query->where('Date', '<=', $request->end_date);
+    }
+
+    $salesByBill = $query->get()->groupBy('bill_no');
+
+    return view('dashboard.reports.new_sales_report', compact('salesByBill'));
+}
 
     public function grnReport(Request $request)
     {
