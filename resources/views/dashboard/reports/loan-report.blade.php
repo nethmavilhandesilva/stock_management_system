@@ -31,34 +31,43 @@
         }
     }
 
-    /* New CSS classes for highlighting */
-    .blue-highlight {
-        color: #64b5f6 !important; /* A slightly brighter blue for visibility */
+    /* ===== HIGHLIGHT CLASSES ===== */
+    .blue-highlight td {
+        background-color: #e3f2fd !important; /* light blue */
+        color: #1565c0 !important;           /* dark blue text */
         font-weight: bold;
     }
 
-    .red-highlight {
-        color: #ef5350 !important; /* A brighter red for visibility */
+    .red-highlight td {
+        background-color: #ffebee !important; /* light red */
+        color: #c62828 !important;            /* dark red text */
         font-weight: bold;
     }
 
+    .orange-highlight td {
+        background-color: #fff3e0 !important; /* light orange */
+        color: #e65100 !important;            /* dark orange text */
+        font-weight: bold;
+    }
+
+    /* ===== CARD & TABLE STYLES ===== */
     .custom-card {
         background-color: #006400 !important;
         color: white;
-        padding: 1rem !important; /* slightly less padding */
+        padding: 1rem !important;
     }
 
     table.table {
-        font-size: 0.9rem; /* smaller font */
+        font-size: 0.9rem;
     }
 
     table.table td, table.table th {
-        padding: 0.3rem 0.6rem !important; /* less padding inside cells */
+        padding: 0.3rem 0.6rem !important;
         vertical-align: middle;
     }
 
     .custom-card table {
-        background-color: #006400 !important; /* dark green */
+        background-color: #006400 !important;
         color: white;
     }
 
@@ -68,19 +77,20 @@
         color: white;
     }
 
-    .custom-card table tbody tr:nth-child(odd) {
-        background-color: #00550088; /* slightly lighter translucent green */
+    .custom-card table tbody tr:nth-child(odd):not(.blue-highlight):not(.red-highlight):not(.orange-highlight) {
+        background-color: #00550088; /* default odd row */
     }
 
-    .custom-card table tbody tr:nth-child(even) {
+    .custom-card table tbody tr:nth-child(even):not(.blue-highlight):not(.red-highlight):not(.orange-highlight) {
         background-color: transparent;
     }
 
+    /* ===== HEADER BAR ===== */
     .report-title-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.5rem; /* reduced gap */
+        gap: 0.5rem;
         margin-bottom: 1rem;
         flex-wrap: wrap;
     }
@@ -103,7 +113,7 @@
         color: white;
         font-weight: 600;
         white-space: nowrap;
-        font-size: 0.85rem; /* smaller font */
+        font-size: 0.85rem;
     }
 
     .print-btn {
@@ -122,6 +132,24 @@
     .print-btn:hover {
         background-color: #003300;
     }
+
+    /* ===== LEGEND ===== */
+    .legend {
+        font-size: 0.85rem;
+        margin-top: 10px;
+        color: white;
+    }
+    .legend span {
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        margin-right: 5px;
+        border: 1px solid #ccc;
+        vertical-align: middle;
+    }
+    .legend .orange-box { background-color: #fff3e0; }
+    .legend .blue-box { background-color: #e3f2fd; }
+    .legend .red-box { background-color: #ffebee; }
 </style>
 
 <div class="container mt-2" style="background-color: #99ff99; min-height: 100vh; padding: 15px;">
@@ -129,13 +157,13 @@
         <div class="report-title-bar">
             <h2 class="company-name">TGK ට්‍රේඩර්ස්</h2>
             <h4 class="fw-bold text-white">ණය වාර්තාව</h4>
-                        @php
-    $settingDate = \App\Models\Setting::value('value');
-@endphp
+            @php
+                $settingDate = \App\Models\Setting::value('value');
+            @endphp
 
-<span class="right-info">
-    {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
-</span>
+            <span class="right-info">
+                {{ \Carbon\Carbon::parse($settingDate)->format('Y-m-d') }}
+            </span>
             <button class="print-btn" onclick="window.print()">🖨️ මුද්‍රණය</button>
         </div>
 
@@ -145,34 +173,41 @@
                     No loan records found.
                 </div>
             @else
-              <table class="table table-bordered table-striped table-hover table-sm mb-0">
-    <thead>
-        <tr>
-            <th>පාරිභෝගික නම</th>
-            <th>මුදල</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach ($loans as $loan)
-            <tr>
-                <td class="{{ $loan->highlight_color ?? '' }}">{{ $loan->customer_short_name }}</td>
-                <td>{{ number_format($loan->total_amount, 2) }}</td>
-            </tr>
-        @endforeach
-    </tbody>
-    <tfoot>
-        <tr>
-            <th class="text-end">Grand Total:</th>
-            <th>
-                {{
-                    number_format($loans->sum(function($loan) {
-                        return $loan->total_amount;
-                    }), 2)
-                }}
-            </th>
-        </tr>
-    </tfoot>
-</table>
+                <table class="table table-bordered table-striped table-hover table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>පාරිභෝගික නම</th>
+                            <th>මුදල</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($loans as $loan)
+                            <tr class="{{ $loan->highlight_color ?? '' }}">
+                                <td>{{ $loan->customer_short_name }}</td>
+                                <td>{{ number_format($loan->total_amount, 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th class="text-end">Grand Total:</th>
+                            <th>
+                                {{
+                                    number_format($loans->sum(function($loan) {
+                                        return $loan->total_amount;
+                                    }), 2)
+                                }}
+                            </th>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <!-- Legend -->
+                <div class="legend mt-2">
+                    <span class="orange-box"></span> Non realized cheques &nbsp; 
+                    <span class="blue-box"></span> Realized cheques &nbsp; 
+                    <span class="red-box"></span> Returned cheques
+                </div>
             @endif
         </div>
     </div>

@@ -29,6 +29,7 @@ class IncomeExpenses extends Model
         'weight ',
         'packs',
         'Reason',
+        'status',
     ];
 
     public function customer()

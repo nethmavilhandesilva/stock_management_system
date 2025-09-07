@@ -1796,6 +1796,20 @@ public function chequePaymentsReport(Request $request)
         'end_date' => $request->end_date
     ]);
 }
+// app/Http/Controllers/ReportController.php
+public function updateStatus(Request $request, $id)
+{
+    $request->validate([
+        'status' => 'required|in:Realized,Non realized,Return',
+    ]);
+
+    $payment = IncomeExpenses::findOrFail($id);
+    $payment->status = $request->status;
+    $payment->save();
+
+    return response()->json(['success' => true, 'status' => $payment->status]);
+}
+
 
 
 }

@@ -26,33 +26,68 @@
         </div>
     </form>
 
-    <table class="table table-bordered table-striped">
-        <thead>
+   <table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Customer</th>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Cheque No</th>
+            <th>Bank</th>
+            <th>Cheque Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse($chequePayments as $payment)
             <tr>
-                <th>Customer</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Cheque No</th>
-                <th>Bank</th>
-                <th>Cheque Date</th>
+                <td>{{ $payment->customer_short_name }}</td>
+                <td>{{ $payment->description }}</td>
+                <td style="text-align:right;">{{ number_format($payment->amount, 2) }}</td>
+                <td>{{ $payment->cheque_no }}</td>
+                <td>{{ $payment->bank }}</td>
+                <td>{{ \Carbon\Carbon::parse($payment->cheque_date)->format('Y-m-d') }}</td>
+                <td>
+                    <select class="form-select status-dropdown" data-id="{{ $payment->id }}">
+                        <option value="Non realized" {{ $payment->status == 'Non realized' ? 'selected' : '' }}>Non realized</option>
+                        <option value="Realized" {{ $payment->status == 'Realized' ? 'selected' : '' }}>Realized</option>
+                        <option value="Return" {{ $payment->status == 'Return' ? 'selected' : '' }}>Return</option>
+                    </select>
+                </td>
             </tr>
-        </thead>
-        <tbody>
-            @forelse($chequePayments as $payment)
-                <tr>
-                    <td>{{ $payment->customer_short_name }}</td>
-                    <td>{{ $payment->description }}</td>
-                    <td style="text-align:right;">{{ number_format($payment->amount, 2) }}</td>
-                    <td>{{ $payment->cheque_no }}</td>
-                    <td>{{ $payment->bank }}</td>
-                    <td>{{ \Carbon\Carbon::parse($payment->cheque_date)->format('Y-m-d') }}</td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="text-center">No cheque payments found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+        @empty
+            <tr>
+                <td colspan="7" class="text-center">No cheque payments found.</td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
+
 </div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).on('change', '.status-dropdown', function () {
+    let id = $(this).data('id');
+    let status = $(this).val();
+
+    $.ajax({
+        url: "/reports/update-status/" + id,   // fixed here
+        type: "POST",
+        data: {
+            _token: "{{ csrf_token() }}",
+            status: status
+        },
+        success: function (response) {
+            if (response.success) {
+                alert('Status updated to ' + response.status);
+            }
+        },
+        error: function () {
+            alert('Error updating status.');
+        }
+    });
+});
+</script>
+
+
 @endsection

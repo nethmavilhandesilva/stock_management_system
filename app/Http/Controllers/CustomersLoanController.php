@@ -123,8 +123,8 @@ public function store(Request $request)
         $incomeExpense->weight = $validated['return_weight'];
         $incomeExpense->packs = $validated['return_packs'];
         $incomeExpense->Reason = $validated['return_reason'] ?? null;
-        $incomeExpense->amount = 0; // no money movement
-        $incomeExpense->type = 'expense'; // you can change to 'income' if adding stock
+        $incomeExpense->amount = 0;
+        $incomeExpense->type = 'expense';
         $incomeExpense->date = $settingDate;
         $incomeExpense->save();
 
@@ -172,7 +172,8 @@ public function store(Request $request)
     }
 
     $loan = new CustomersLoan();
-    $loan->loan_type = $validated['loan_type'];
+    // If settling_way is cheque, force loan_type = 'today'
+    $loan->loan_type = ($settlingWay === 'cheque') ? 'today' : $validated['loan_type'];
     $loan->settling_way = $validated['settling_way'] ?? null;
     $loan->customer_id = $validated['customer_id'] ?? null;
     $loan->amount = $validated['amount'] ?? 0;
@@ -187,7 +188,8 @@ public function store(Request $request)
 
     $incomeExpense = new IncomeExpenses();
     $incomeExpense->loan_id = $loan->id;
-    $incomeExpense->loan_type = $loanType;
+    // Same: force loan_type = 'today' if settling_way is cheque
+    $incomeExpense->loan_type = ($settlingWay === 'cheque') ? 'today' : $loanType;
     $incomeExpense->customer_id = $validated['customer_id'] ?? null;
     $incomeExpense->description = $validated['description'];
     $incomeExpense->bill_no = $validated['bill_no'] ?? null;
@@ -201,7 +203,8 @@ public function store(Request $request)
     if ($loanType === 'old') {
         $incomeExpense->amount = $validated['amount'];
         $incomeExpense->type = 'income';
-    } elseif ($loanType === 'today') {
+    } elseif ($loanType === 'today' || $settlingWay === 'cheque') {
+        // Force expense if today or cheque
         $incomeExpense->amount = -$validated['amount'];
         $incomeExpense->type = 'expense';
     }
@@ -211,6 +214,7 @@ public function store(Request $request)
     return redirect()->route('customers-loans.index')
         ->with('success', 'Loan and income/expense record created successfully!');
 }
+
 
 public function update(Request $request, $id)
 {
@@ -375,9 +379,14 @@ public function destroy($id)
         $oldSum = CustomersLoan::where('customer_id', $customerId)
                                ->where('loan_type', 'old')
                                ->sum('amount');
-        $todaySum = CustomersLoan::where('customer_id', $customerId)
-                                 ->where('loan_type', 'today')
-                                 ->sum('amount');
+        $todaySum = IncomeExpenses::where('customer_id', $customerId)
+    ->where('loan_type', 'today')
+    ->where(function($query) {
+        $query->where('settling_way', '<>', 'cheque')
+              ->orWhere('status', '<>', 'Return');
+    })
+    ->sum('amount');
+
         if ($todaySum == 0) {
             $totalAmount = $oldSum;
         } else {
@@ -423,50 +432,71 @@ public function destroy($id)
      *
      * @return \Illuminate\View\View
      */
-    public function loanReport()
-    {
-        $allLoans = CustomersLoan::all();
-        $groupedLoans = $allLoans->groupBy('customer_short_name');
-        $finalLoans = [];
-        foreach ($groupedLoans as $customerShortName => $loans) {
-            $lastOldLoan = $loans->where('loan_type', 'old')->sortByDesc('created_at')->first();
-            $firstTodayAfterOld = $loans->where('loan_type', 'today')
-                                        ->where('created_at', '>', $lastOldLoan->created_at ?? '1970-01-01')
-                                        ->sortBy('created_at')
-                                        ->first();
-            $highlightColor = null;
-            if ($lastOldLoan && $firstTodayAfterOld) {
-                $daysBetweenLoans = Carbon::parse($lastOldLoan->created_at)
-                                          ->diffInDays(Carbon::parse($firstTodayAfterOld->created_at));
-                if ($daysBetweenLoans > 30) {
-                    $highlightColor = 'red-highlight';
-                } elseif ($daysBetweenLoans >= 14 && $daysBetweenLoans <= 30) {
-                    $highlightColor = 'blue-highlight';
-                }
-                $extraTodayLoanExists = $loans->where('loan_type', 'today')
-                                              ->where('created_at', '>', $firstTodayAfterOld->created_at)
-                                              ->count() > 0;
-                if ($extraTodayLoanExists) {
-                    $highlightColor = null;
-                }
-            } elseif ($lastOldLoan && !$firstTodayAfterOld) {
-                $daysSinceLastOldLoan = Carbon::parse($lastOldLoan->created_at)
-                                               ->diffInDays(Carbon::now());
-                if ($daysSinceLastOldLoan > 30) {
-                    $highlightColor = 'red-highlight';
-                } elseif ($daysSinceLastOldLoan >= 14 && $daysSinceLastOldLoan <= 30) {
-                    $highlightColor = 'blue-highlight';
-                }
+   public function loanReport()
+{
+    $allLoans = CustomersLoan::all();
+    $groupedLoans = $allLoans->groupBy('customer_short_name');
+
+    // 🔑 Get all customers with Non realized status from IncomeExpenses
+    $nonRealizedCustomers = IncomeExpenses::where('status', 'Non realized')
+        ->pluck('customer_short_name')
+        ->toArray();
+
+    $finalLoans = [];
+
+    foreach ($groupedLoans as $customerShortName => $loans) {
+        $lastOldLoan = $loans->where('loan_type', 'old')->sortByDesc('created_at')->first();
+        $firstTodayAfterOld = $loans->where('loan_type', 'today')
+                                    ->where('created_at', '>', $lastOldLoan->created_at ?? '1970-01-01')
+                                    ->sortBy('created_at')
+                                    ->first();
+
+        $highlightColor = null;
+
+        if ($lastOldLoan && $firstTodayAfterOld) {
+            $daysBetweenLoans = Carbon::parse($lastOldLoan->created_at)
+                                      ->diffInDays(Carbon::parse($firstTodayAfterOld->created_at));
+
+            if ($daysBetweenLoans > 30) {
+                $highlightColor = 'red-highlight';
+            } elseif ($daysBetweenLoans >= 14 && $daysBetweenLoans <= 30) {
+                $highlightColor = 'blue-highlight';
             }
-            $totalToday = $loans->where('loan_type', 'today')->sum('amount');
-            $totalOld = $loans->where('loan_type', 'old')->sum('amount');
-            $totalAmount = $totalToday - $totalOld;
-            $finalLoans[] = (object) [
-                'customer_short_name' => $customerShortName,
-                'total_amount' => $totalAmount,
-                'highlight_color' => $highlightColor,
-            ];
+
+            $extraTodayLoanExists = $loans->where('loan_type', 'today')
+                                          ->where('created_at', '>', $firstTodayAfterOld->created_at)
+                                          ->count() > 0;
+
+            if ($extraTodayLoanExists) {
+                $highlightColor = null;
+            }
+        } elseif ($lastOldLoan && !$firstTodayAfterOld) {
+            $daysSinceLastOldLoan = Carbon::parse($lastOldLoan->created_at)
+                                           ->diffInDays(Carbon::now());
+
+            if ($daysSinceLastOldLoan > 30) {
+                $highlightColor = 'red-highlight';
+            } elseif ($daysSinceLastOldLoan >= 14 && $daysSinceLastOldLoan <= 30) {
+                $highlightColor = 'blue-highlight';
+            }
         }
-        return view('dashboard.reports.loan-report', ['loans' => collect($finalLoans)]);
+
+        $totalToday = $loans->where('loan_type', 'today')->sum('amount');
+        $totalOld = $loans->where('loan_type', 'old')->sum('amount');
+        $totalAmount = $totalToday - $totalOld;
+
+        // 🔥 If this customer has Non realized cheques → force orange highlight
+        if (in_array($customerShortName, $nonRealizedCustomers)) {
+            $highlightColor = 'orange-highlight';
+        }
+
+        $finalLoans[] = (object) [
+            'customer_short_name' => $customerShortName,
+            'total_amount' => $totalAmount,
+            'highlight_color' => $highlightColor,
+        ];
     }
+
+    return view('dashboard.reports.loan-report', ['loans' => collect($finalLoans)]);
+}
 }
