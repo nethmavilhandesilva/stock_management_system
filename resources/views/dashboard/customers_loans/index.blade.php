@@ -324,20 +324,28 @@
                         @endforelse
                     </tbody>
                 </table>
-                <div class="mt-3 text-end">
-                    {{-- Financial Report Button --}}
-                    <a href="{{ route('financial.report') }}" target="_blank" class="btn btn-dark me-2">
-                        ආදායම් / වියදම්
-                    </a>
+               <div class="mt-3 text-end">
+    {{-- Financial Report Button --}}
+    <a href="{{ route('financial.report') }}" target="_blank" class="btn btn-dark me-2 mb-2">
+        ආදායම් / වියදම්
+    </a>
 
-                    {{-- Loan Report Button --}}
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark">
-                        ණය වාර්තාව
-                    </a>
-                    <a href="{{ route('returns.report') }}" class="btn btn-dark btn-sm"> View Returns Report</a>
+    {{-- Loan Report Button --}}
+    <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark me-2 mb-2">
+        ණය වාර්තාව
+    </a>
 
+    {{-- Returns Report Button --}}
+    <a href="{{ route('returns.report') }}" class="btn btn-dark me-2 mb-2">
+        View Returns Report
+    </a>
 
-                </div>
+    {{-- Cheque Payments Report Button --}}
+    <a href="{{ route('reports.cheque-payments') }}" class="btn btn-dark mb-2">
+        View Cheque Payments Report
+    </a>
+</div>
+
 
             </div>
         </div>

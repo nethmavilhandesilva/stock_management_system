@@ -132,6 +132,7 @@ Route::get('/grn-overview/download2', [ReportController::class, 'downloadGrnOver
 Route::get('/sales-report/download', [ReportController::class, 'downloadSalesReport'])->name('sales.report.download');  
 Route::get('/grn/export/pdf', [ReportController::class, 'exportPdf'])->name('grn.exportPdf');
 Route::get('/grn/export/excel', [ReportController::class, 'exportExcel'])->name('grn.exportExcel');
+Route::get('/reports/cheque-payments', [ReportController::class, 'chequePaymentsReport']) ->name('reports.cheque-payments');
 //returns
 Route::get('/api/grn-entry/{code}', function ($code) {
     $entry = \App\Models\GrnEntry::where('code', $code)->first();

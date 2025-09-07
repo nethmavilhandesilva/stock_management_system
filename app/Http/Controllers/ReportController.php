@@ -1774,6 +1774,29 @@ public function financialReport()
 
     return view('dashboard.reports.returns_report', compact('data'));
 }
+public function chequePaymentsReport(Request $request)
+{
+    $query = IncomeExpenses::whereNotNull('cheque_no')
+        ->where('cheque_no', '<>', '');
+
+    // Apply date range filter if provided
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $query->whereBetween('cheque_date', [
+            $request->start_date,
+            $request->end_date
+        ]);
+    }
+
+    $chequePayments = $query->orderBy('cheque_date', 'desc')->get();
+
+    // Pass start/end dates back to the view to retain values
+    return view('dashboard.reports.cheque_payments', [
+        'chequePayments' => $chequePayments,
+        'start_date' => $request->start_date,
+        'end_date' => $request->end_date
+    ]);
+}
+
 
 }
 
