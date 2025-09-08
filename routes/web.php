@@ -14,7 +14,6 @@ use App\Http\Controllers\EmailController;
 use App\Models\Sale;
 use App\Models\SalesHistory;
 use App\Http\Controllers\BillController;
-use App\Models\GrnEntry;
 
 
 // New default route to redirect to login
@@ -42,7 +41,7 @@ Route::resource('customers', CustomerController::class);
 Route::resource('suppliers', SupplierController::class);
 
 // GRN
-Route::resource('grn', GrnEntryController::class) ->except(['show']); // exclude show
+Route::resource('grn', GrnEntryController::class) ->except(['show']);
 Route::post('/grn/store', [GrnEntryController::class, 'store'])->name('grn.store2');
 Route::get('api/grn-entry/{code}', [GrnEntryController::class, 'getGrnEntryByCode']);
 Route::get('/grn-used-data/{code}', [GrnEntryController::class, 'getUsedData']);
@@ -88,7 +87,7 @@ Route::get('/financial-report', [ReportController::class, 'financialReport'])->n
 Route::get('/sales-report', [ReportController::class, 'salesReport'])->name('sales.report');
 Route::get('/grn-report', [ReportController::class, 'grnReport'])->name('grn.report');
 Route::get('/returns-report', [ReportController::class, 'returnsReport']) ->name('returns.report');
-   
+
 // Customer loans
 Route::get('/customers/{id}/loans-total', [CustomersLoanController::class, 'getTotalLoanAmount']);
 Route::post('/get-loan-amount', [SalesEntryController::class, 'getLoanAmount'])->name('get.loan.amount');
@@ -130,30 +129,33 @@ Route::get('/sales-adjustment-report/excel', [ReportController::class, 'exportTo
 Route::get('/sales-adjustment-report/pdf', [ReportController::class, 'exportToPdf'])->name('sales-adjustment.export.pdf');
 Route::get('/grn-sales-overview/download', [ReportController::class, 'downloadGrnSalesOverviewReport'])->name('grn-sales.download');
 Route::get('/grn-overview/download2', [ReportController::class, 'downloadGrnOverviewReport2'])->name('grn-overview.download2');
-Route::get('/sales-report/download', [ReportController::class, 'downloadSalesReport'])->name('sales.report.download');  
+Route::get('/sales-report/download', [ReportController::class, 'downloadSalesReport'])->name('sales.report.download');
 Route::get('/grn/export/pdf', [ReportController::class, 'exportPdf'])->name('grn.exportPdf');
 Route::get('/grn/export/excel', [ReportController::class, 'exportExcel'])->name('grn.exportExcel');
-Route::get('/reports/cheque-payments/', [ReportController::class, 'chequePaymentsReport']) ->name('reports.cheque-payments');
+Route::get('/reports/cheque-payments', [ReportController::class, 'chequePaymentsReport']) ->name('reports.cheque-payments');
 Route::post('/reports/update-status/{id}', [ReportController::class, 'updateStatus'])  ->name('reports.update-status');
 Route::get('/generate-report', [ReportController::class, 'generateReport']) ->name('generate.report');//returns
-   
+Route::get('/grn-entry/{code}/remaining', [App\Http\Controllers\GrnEntryController::class, 'getRemaining']);
+//returns
 Route::get('/api/grn-entry/{code}', function ($code) {
-    $entry = GrnEntry::where('code', $code)->first();
+    $entry = \App\Models\GrnEntry::where('code', $code)->first();
     return response()->json($entry);
 });
 
-Route::get('/api/sale/{bill_no}', function ($bill_no) {
-    $sale = Sale::where('bill_no', $bill_no)->first();
-    return response()->json($sale);
+Route::get('/api/all-bill-nos', function () {
+    $salesBillNos = Sale::pluck('bill_no')->toArray();
+    $historyBillNos = SalesHistory::pluck('bill_no')->toArray();
+
+    // Merge arrays and remove duplicates
+    $allBillNos = array_unique(array_merge($salesBillNos, $historyBillNos));
+
+    return response()->json($allBillNos);
 });
-Route::get('/sales-report/summary', [GrnEntryController::class, 'showSalesBillSummary'])->name('sales.report.summary');
 //GRN OPTIONS
 Route::post('/grn/update-status/{id}', [GrnEntryController::class, 'updateStatus'])->name('grn.updateStatus');
-//new feild to sow te real perkg price
-
 // web.php
 Route::get('/grn-entry/{code}', [GrnEntryController::class, 'getGrnEntry'])->name('grn.entry.fetch');
 Route::post('/settings/update-balance', [SalesEntryController::class, 'updateBalance'])->name('settings.updateBalance');
 
-
+   
 require __DIR__.'/auth.php';
