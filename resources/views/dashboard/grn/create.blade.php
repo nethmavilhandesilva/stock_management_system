@@ -176,7 +176,7 @@
                         {{-- Per KG --}}
                         <div class="col-md-3">
                             <label for="per_kg_price" class="form-label">Per KG Price</label>
-                            <input type="number" id="per_kg_price" name="per_kg_price" class="form-control form-control-sm" value="{{ old('per_kg_price') }}" step="0.01" readonly>
+                            <input type="number" id="per_kg_price" name="per_kg_price" class="form-control form-control-sm" value="{{ old('per_kg_price') }}" step="0.01">
                         </div>
 
                         {{-- Transaction Date --}}
@@ -187,25 +187,7 @@
 
                        
                     <div class="d-flex gap-2 align-items-end">
-    <div class="flex-grow-1">
-        <label for="total_grn" class="form-label">GRN Total</label>
-        <input type="number" id="total_grn" name="total_grn" step="0.01" 
-               value="{{ old('total_grn') }}"
-               class="form-control @error('total_grn') is-invalid @enderror">
-        @error('total_grn')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-
-    <div class="flex-grow-1">
-        <label for="per_kg_price" class="form-label">Per KG Price</label>
-        <input type="number" id="per_kg_price" name="per_kg_price" step="0.01" 
-               value="{{ old('per_kg_price') }}"
-               class="form-control form-control-sm @error('per_kg_price') is-invalid @enderror">
-        @error('per_kg_price')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
+   
 
     <div class="flex-grow-1 d-flex justify-content-center">
         <button type="submit" class="btn btn-primary btn-sm w-100">
@@ -226,64 +208,129 @@
                     </div>
                 </form>
 
-                {{-- GRN Table --}}
-                <hr class="my-4">
-                <div class="mb-3">
-                    <label for="list_password" class="form-label">මුරපදය (View hidden columns)</label>
-                    <input type="password" id="list_password" class="form-control form-control-sm">
-                </div>
-                <input type="text" id="searchInput" class="form-control form-control-sm mb-3" placeholder="Search by Code, Supplier, Item Code, or Name">
-
-                @if($entries->isEmpty())
-                    <div class="alert alert-info text-center" role="alert">
-                        කිසිඳු GRN ඇතුළත් කර නොමැත.
-                    </div>
-                @else
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped table-hover align-middle table-sm" id="entriesTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>කේතය</th>
-                                    <th class="d-none">සැපයුම්කරුගේ කේතය</th>
-                                    <th class="d-none">අයිතම කේතය</th>
-                                    <th>අයිතම නාමය</th>
-                                    <th>පැක්‌</th>
-                                    <th>බර (kg)</th>
-                                    <th>ගනුදෙනු දිනය</th>
-                                    <th>GRN අංකය</th>
-                                    <th class="total-grn-header">GRN මුළු එකතුව</th>
-                                    <th class="per-kg-price-header">Per KG Price</th>
-                                    <th>මෙහෙයුම්</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($entries as $entry)
-                                    <tr class="grn-row" data-entry-id="{{ $entry->id }}">
-                                        <td class="search-code">{{ $entry->code }}</td>
-                                        <td class="search-supplier-code d-none">{{ $entry->supplier_code }}</td>
-                                        <td class="search-item-code d-none">{{ $entry->item_code }}</td>
-                                        <td class="search-item-name">{{ $entry->item_name }}</td>
-                                        <td>{{ $entry->original_packs }}</td>
-                                        <td>{{ $entry->original_weight }}</td>
-                                        <td>{{ $entry->txn_date }}</td>
-                                        <td>{{ $entry->grn_no }}</td>
-                                        <td class="total-grn-column">{{ $entry->total_grn }}</td>
-                                        <td class="per-kg-price-column">{{ $entry->PerKGPrice }}</td>
-                                        <td>
-                                            <a href="{{ route('grn.edit', $entry->id) }}" class="btn btn-sm btn-info me-1"><i class="material-icons">edit</i></a>
-                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" data-entry-id="{{ $entry->id }}"><i class="material-icons">delete</i></button>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-
-            </div>
-        </div>
-    </div>
+             {{-- GRN Table --}}
+<hr class="my-4">
+<div class="mb-3">
+    <label for="list_password" class="form-label">මුරපදය (View hidden columns)</label>
+    <input type="password" id="list_password" class="form-control form-control-sm">
 </div>
+<input type="text" id="searchInput" class="form-control form-control-sm mb-3" placeholder="Search by Code, Supplier, Item Code, or Name">
+
+@if($entries->isEmpty())
+    <div class="alert alert-info text-center" role="alert">
+        කිසිඳු GRN ඇතුළත් කර නොමැත.
+    </div>
+@else
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover align-middle table-sm" id="entriesTable">
+            <thead class="table-light">
+                <tr>
+                    <th>කේතය</th>
+                    <th class="d-none">සැපයුම්කරුගේ කේතය</th>
+                    <th class="d-none">අයිතම කේතය</th>
+                    <th>අයිතම නාමය</th>
+                    <th>පැක්‌</th>
+                    <th>බර (kg)</th>
+                    <th>ගනුදෙනු දිනය</th>
+                    <th>GRN අංකය</th>
+                    <th class="total-grn-header">GRN මුළු එකතුව</th>
+                    <th class="per-kg-price-header">Per KG Price</th>
+                    <th>මෙහෙයුම්</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($entries as $entry)
+                    <tr class="grn-row" data-entry-id="{{ $entry->id }}">
+                        <td class="search-code">{{ $entry->code }}</td>
+                        <td class="search-supplier-code d-none">{{ $entry->supplier_code }}</td>
+                        <td class="search-item-code d-none">{{ $entry->item_code }}</td>
+                        <td class="search-item-name">{{ $entry->item_name }}</td>
+                        <td>{{ $entry->original_packs }}</td>
+                        <td>{{ $entry->original_weight }}</td>
+                        <td>{{ $entry->txn_date }}</td>
+                        <td>{{ $entry->grn_no }}</td>
+                        <td class="total-grn-column">{{ $entry->total_grn }}</td>
+                        <td class="per-kg-price-column">{{ $entry->PerKGPrice }}</td>
+                        <td>
+                            <a href="{{ route('grn.edit', $entry->id) }}" class="btn btn-sm btn-info me-1"><i class="material-icons">edit</i></a>
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" data-entry-id="{{ $entry->id }}"><i class="material-icons">delete</i></button>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@endif
+
+{{-- Context menu --}}
+<ul class="custom-context-menu" id="contextMenu">
+    <li data-action="hide">Hide</li>
+    <li data-action="dont-hide">Don't Hide</li>
+    <li data-action="show">Show</li>
+    <li data-action="dont-show">Don't Show</li>
+</ul>
+
+{{-- ===================== Scripts ===================== --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const contextMenu = document.getElementById('contextMenu');
+    let currentRowId = null;
+
+    // Right-click event on rows
+    document.querySelectorAll('.grn-row').forEach(row => {
+        row.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            currentRowId = this.dataset.entryId;
+            contextMenu.style.top = `${e.pageY}px`;
+            contextMenu.style.left = `${e.pageX}px`;
+            contextMenu.style.display = 'block';
+        });
+    });
+
+    // Hide context menu on click elsewhere
+    document.addEventListener('click', function () {
+        contextMenu.style.display = 'none';
+    });
+
+    // Handle menu clicks
+    contextMenu.addEventListener('click', function (e) {
+        if (!e.target.dataset.action) return;
+
+        let payload = {};
+        if (e.target.dataset.action === 'hide') {
+            payload = { is_hidden: 1 };
+        } else if (e.target.dataset.action === 'dont-hide') {
+            payload = { is_hidden: 0 };
+        } else if (e.target.dataset.action === 'show') {
+            payload = { show_status: 1 };
+        } else if (e.target.dataset.action === 'dont-show') {
+            payload = { show_status: 0 };
+        }
+
+        if (currentRowId) {
+            fetch(`/grn/update-status/${currentRowId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    console.log("Updated successfully");
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        contextMenu.style.display = 'none';
+    });
+});
+</script>
+
+
 
     {{-- Delete Confirmation Modal --}}
     <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
@@ -315,146 +362,79 @@
     </ul>
 
     {{-- ===================== Scripts ===================== --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Unlock Total & Per KG Price on password
-            const passwordField = document.getElementById('password_total');
-            const totalGrnField = document.getElementById('total_grn');
-            const perKgField = document.getElementById('per_kg_price');
+  <script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Unlock hidden columns in GRN List
+    const listPasswordField = document.getElementById('list_password');
+    const totalGrnCells = document.querySelectorAll('.total-grn-column');
+    const totalGrnHeader = document.querySelector('.total-grn-header');
+    const perKgCells = document.querySelectorAll('.per-kg-price-column');
+    const perKgHeader = document.querySelector('.per-kg-price-header');
 
-            passwordField.addEventListener('input', function () {
-                const correctPassword = 'nethma123';
-                if (this.value === correctPassword) {
-                    totalGrnField.removeAttribute('readonly');
-                    perKgField.removeAttribute('readonly');
-                    passwordField.style.backgroundColor = '#d4edda';
-                    passwordField.style.borderColor = '#28a745';
-                } else {
-                    totalGrnField.setAttribute('readonly', true);
-                    perKgField.setAttribute('readonly', true);
-                    passwordField.style.backgroundColor = '#f8d7da';
-                    passwordField.style.borderColor = '#dc3545';
-                }
-                if (this.value === '') {
-                    passwordField.style.backgroundColor = '';
-                    passwordField.style.borderColor = '';
-                }
-            });
+    function toggleHiddenColumns(show) {
+        const displayStyle = show ? 'table-cell' : 'none';
+        if (totalGrnHeader) totalGrnHeader.style.display = displayStyle;
+        if (perKgHeader) perKgHeader.style.display = displayStyle;
+        totalGrnCells.forEach(cell => cell.style.display = displayStyle);
+        perKgCells.forEach(cell => cell.style.display = displayStyle);
+    }
 
-            // Supplier code hidden field
-            const supplierNameInput = document.getElementById('supplier_name');
-            const supplierCodeInput = document.getElementById('supplier_code_input');
-            const suppliersDatalist = document.getElementById('suppliers_list');
+    listPasswordField.addEventListener('input', function () {
+        const isCorrect = this.value === 'nethma123';
+        toggleHiddenColumns(isCorrect);
+        if (isCorrect) {
+            this.style.backgroundColor = '#d4edda';
+            this.style.borderColor = '#28a745';
+        } else {
+            this.style.backgroundColor = '#f8d7da';
+            this.style.borderColor = '#dc3545';
+        }
+        if (this.value === '') {
+            this.style.backgroundColor = '';
+            this.style.borderColor = '';
+        }
+    });
 
-            supplierNameInput.addEventListener('input', function() {
-                let supplierCode = '';
-                for (const option of suppliersDatalist.options) {
-                    if (option.value === this.value) {
-                        supplierCode = option.getAttribute('data-code');
-                        break;
-                    }
-                }
-                supplierCodeInput.value = supplierCode;
-            });
-
-            // GRN List: Context menu and hide/unhide
-            const contextMenu = document.getElementById('contextMenu');
-            let currentEntryId = null;
-
-            document.querySelectorAll('.grn-row').forEach(row => {
-                row.addEventListener('contextmenu', function (e) {
-                    e.preventDefault();
-                    currentEntryId = this.dataset.entryId;
-                    contextMenu.style.top = `${e.pageY}px`;
-                    contextMenu.style.left = `${e.pageX}px`;
-                    contextMenu.style.display = 'block';
-                });
-            });
-            document.addEventListener('click', () => contextMenu.style.display = 'none');
-
-            const csrfToken = '{{ csrf_token() }}';
-            document.getElementById('hideOption').addEventListener('click', function () {
-                if (currentEntryId) {
-                    fetch(`/grn/${currentEntryId}/hide`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Content-Type': 'application/json',
-                        },
-                    }).then(r => r.json()).then(() => {
-                        alert("Entry marked as hidden in the database.");
-                        contextMenu.style.display = 'none';
-                    }).catch(() => alert("Failed to mark entry as hidden."));
-                }
-            });
-            document.getElementById('unhideOption').addEventListener('click', function () {
-                if (currentEntryId) {
-                    fetch(`/grn/${currentEntryId}/unhide`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Content-Type': 'application/json',
-                        },
-                    }).then(r => r.json()).then(() => {
-                        alert("Entry marked as visible in the database.");
-                        contextMenu.style.display = 'none';
-                    }).catch(() => alert("Failed to mark entry as visible."));
-                }
-            });
-
-            // Delete modal dynamic URL
-            const deleteModal = document.getElementById('deleteConfirmationModal');
-            const deleteForm = document.getElementById('deleteForm');
-            deleteModal.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget;
-                const entryId = button.getAttribute('data-entry-id');
-                deleteForm.action = `/grn/${entryId}`;
-            });
-
-            // Unlock hidden columns in GRN List
-            const listPasswordField = document.getElementById('list_password');
-            const totalGrnCells = document.querySelectorAll('.total-grn-column');
-            const totalGrnHeader = document.querySelector('.total-grn-header');
-            const perKgCells = document.querySelectorAll('.per-kg-price-column');
-            const perKgHeader = document.querySelector('.per-kg-price-header');
-
-            function toggleHiddenColumns(show) {
-                const displayStyle = show ? 'table-cell' : 'none';
-                totalGrnHeader.style.display = displayStyle;
-                perKgHeader.style.display = displayStyle;
-                totalGrnCells.forEach(cell => cell.style.display = displayStyle);
-                perKgCells.forEach(cell => cell.style.display = displayStyle);
-            }
-
-            listPasswordField.addEventListener('input', function () {
-                const isCorrect = this.value === 'nethma123';
-                toggleHiddenColumns(isCorrect);
-                if (isCorrect) {
-                    listPasswordField.style.backgroundColor = '#d4edda';
-                    listPasswordField.style.borderColor = '#28a745';
-                } else {
-                    listPasswordField.style.backgroundColor = '#f8d7da';
-                    listPasswordField.style.borderColor = '#dc3545';
-                }
-                if (this.value === '') {
-                    listPasswordField.style.backgroundColor = '';
-                    listPasswordField.style.borderColor = '';
-                }
-            });
-
-            // Search filter
-            const searchInput = document.getElementById('searchInput');
-            const rows = document.querySelectorAll('#entriesTable tbody tr');
-            searchInput.addEventListener('keyup', function () {
-                const filter = searchInput.value.toLowerCase();
-                rows.forEach(row => {
-                    const code = row.querySelector('.search-code').textContent.toLowerCase();
-                    const supplierCode = row.querySelector('.search-supplier-code').textContent.toLowerCase();
-                    const itemCode = row.querySelector('.search-item-code').textContent.toLowerCase();
-                    const itemName = row.querySelector('.search-item-name').textContent.toLowerCase();
-                    row.style.display = (code.includes(filter) || supplierCode.includes(filter) || itemCode.includes(filter) || itemName.includes(filter)) ? '' : 'none';
-                });
-            });
+    // ===================== Search filter =====================
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('#entriesTable tbody tr');
+    searchInput.addEventListener('keyup', function () {
+        const filter = this.value.toLowerCase();
+        rows.forEach(row => {
+            const code = row.querySelector('.search-code')?.textContent.toLowerCase() || '';
+            const supplierCode = row.querySelector('.search-supplier-code')?.textContent.toLowerCase() || '';
+            const itemCode = row.querySelector('.search-item-code')?.textContent.toLowerCase() || '';
+            const itemName = row.querySelector('.search-item-name')?.textContent.toLowerCase() || '';
+            row.style.display = (code.includes(filter) || supplierCode.includes(filter) || itemCode.includes(filter) || itemName.includes(filter)) ? '' : 'none';
         });
-    </script>
+    });
+});
+</script>
+
+    <script>
+   document.addEventListener('DOMContentLoaded', function () {
+    const totalGrnInput = document.getElementById('total_grn');
+    const weightInput = document.getElementById('weight');
+    const perKgInput = document.getElementById('per_kg_price');
+    const perKgHidden = document.getElementById('per_kg_price_hidden');
+
+    function calculatePerKg() {
+        const totalGrn = parseFloat(totalGrnInput.value) || 0;
+        const weight = parseFloat(weightInput.value) || 0;
+
+        if (totalGrn > 0 && weight > 0) {
+            const perKg = (totalGrn / weight).toFixed(2);
+            perKgInput.value = perKg;
+            perKgHidden.value = perKg; // store in hidden field so it goes in request
+        } else {
+            perKgInput.value = '';
+            perKgHidden.value = '';
+        }
+    }
+
+    totalGrnInput.addEventListener('input', calculatePerKg);
+    weightInput.addEventListener('input', calculatePerKg);
+});
+</script>
+
 @endsection

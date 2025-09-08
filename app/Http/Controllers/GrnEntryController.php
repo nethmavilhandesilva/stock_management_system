@@ -135,6 +135,9 @@ class GrnEntryController extends Controller
         'supplier_code' => $request->supplier_code,
         'packs' => $request->packs,
         'weight' => $request->weight,
+        'original_packs' =>$request->packs,
+        'original_weight' =>$request->weight,
+        'sequence_no' =>$request->sequence_no,
         'txn_date' => $request->txn_date,
         'grn_no' => $request->grn_no,
         'warehouse_no' => $request->warehouse_no,
@@ -324,6 +327,23 @@ class GrnEntryController extends Controller
             'grnPrices' => $grnPrices,
         ]);
     }
+    public function updateStatus(Request $request, $id)
+{
+    $entry = GrnEntry::findOrFail($id);
+
+    if ($request->has('is_hidden')) {
+        $entry->is_hidden = $request->is_hidden;
+    }
+
+    if ($request->has('show_status')) {
+        $entry->show_status = $request->show_status;
+    }
+
+    $entry->save();
+
+    return response()->json(['success' => true]);
+}
+
 
 }
 

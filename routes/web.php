@@ -145,4 +145,6 @@ Route::get('/api/sale/{bill_no}', function ($bill_no) {
     return response()->json($sale);
 });
 Route::get('/sales-report/summary', [GrnEntryController::class, 'showSalesBillSummary'])->name('sales.report.summary');
+//GRN OPTIONS
+Route::post('/grn/update-status/{id}', [GrnEntryController::class, 'updateStatus'])->name('grn.updateStatus');
 require __DIR__.'/auth.php';

@@ -29,7 +29,8 @@ class GrnEntry extends Model
          'PerKGPrice',
         'wasted_packs',
         'wasted_weight',
-        'total_wasted_weight'
+        'total_wasted_weight',
+         'show_status',
     ];
 
     // Optional: If you don't want timestamps (created_at, updated_at)
