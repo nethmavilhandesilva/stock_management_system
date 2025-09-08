@@ -970,13 +970,65 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
             style="font-size: 1.3rem;">BW: 0.00 kg</small>
     </div>
 
-    <!-- Price per kg -->
-    <div style="flex: 1 1 80px;">
-        <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-            class="form-control @error('price_per_kg') is-invalid @enderror"
-            value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
-            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-    </div>
+  <!-- Price per kg -->
+<div style="flex: 1 1 80px;">
+    <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+        class="form-control @error('price_per_kg') is-invalid @enderror"
+        value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
+        style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+</div>
+
+<!-- New field for GRN fetched price -->
+<div style="flex: 1 1 80px; margin-left: 10px; display: none;" id="grn_price_container">
+    <input type="text" name="grn_price" id="grn_price" readonly
+        class="form-control"
+        placeholder="GRN Price"
+        style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: red; background-color: #f0f0f0;">
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const grnSelect = $('#grn_select'); 
+    const grnPriceInput = $('#grn_price');
+    const grnPriceContainer = $('#grn_price_container');
+
+    // Initialize Select2 if not already done
+    grnSelect.select2({
+        placeholder: '-- Select GRN Entry --',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // Listen to the Select2 change event
+    grnSelect.on('change', function() {
+        const selectedCode = $(this).val();
+
+        if (selectedCode) {
+            fetch(`/grn-entry/${selectedCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.per_kg_price !== null) {
+                        grnPriceInput.val(data.per_kg_price);
+                        grnPriceContainer.show(); // Show field only when data is valid
+                    } else {
+                        grnPriceInput.val('');
+                        grnPriceContainer.hide();
+                        alert('No GRN entry found or show_status != 1');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching GRN data:', error);
+                    grnPriceContainer.hide();
+                });
+        } else {
+            grnPriceInput.val('');
+            grnPriceContainer.hide();
+        }
+    });
+});
+
+</script>
+
 
     <!-- Packs -->
     <div style="flex: 1 1 80px;">
@@ -2213,178 +2265,177 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                             });
                         }
 
-                     let globalLoanAmount = 0;
+                   let globalLoanAmount = 0;
 
-    // Reusable print function
-    function printReceipt(html, customerName) {
-        return new Promise((resolve) => {
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>${customerName} - Receipt</title>
-                </head>
-                <body>
-                    ${html}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
+// Reusable print function
+function printReceipt(html, customerName) {
+    return new Promise((resolve) => {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${customerName} - Receipt</title>
+            </head>
+            <body>
+                ${html}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
 
-            // Trigger print
-            printWindow.print();
+        // Trigger print
+        printWindow.print();
 
-            // Wait a bit before closing
-            setTimeout(() => {
-                printWindow.close();
-                resolve(); // Resolve promise after window closes
-            }, 500);
-        });
+        // Wait a bit before closing
+        setTimeout(() => {
+            printWindow.close();
+            resolve(); // Resolve promise after window closes
+        }, 500);
+    });
+}
+
+// Function to send receipt email
+function sendReceiptEmail(html, customerName, customerEmail) {
+    return fetch('{{ route('send.receipt.email') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ receipt_html: html, customer_name: customerName, email: customerEmail })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) console.log('Email sent:', data.message);
+        else console.error('Email failed:', data.message);
+    })
+    .catch(err => console.error('Email error:', err));
+}
+
+// Function to save receipt to D:\Receipts
+function saveReceiptToDDrive(html, customerName, billNo) {
+    return fetch('{{ route("save.receipt.file") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ receipt_html: html, customer_name: customerName, bill_no: billNo })
+    })
+    .then(res => res.json())
+    .then(data => console.log('Receipt saved:', data))
+    .catch(err => console.error('Save error:', err));
+}
+
+// Core F1 print function
+async function handlePrint() {
+    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+        alert('No sales records to print!');
+        return;
     }
 
-    // Function to send receipt email
-    function sendReceiptEmail(html, customerName, customerEmail) {
-        return fetch('{{ route('send.receipt.email') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ receipt_html: html, customer_name: customerName, email: customerEmail })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) console.log('Email sent:', data.message);
-            else console.error('Email failed:', data.message);
-        })
-        .catch(err => console.error('Email error:', err));
-    }
-
-    // Function to save receipt to D:\Receipts
-    function saveReceiptToDDrive(html, customerName, billNo) {
-        return fetch('{{ route("save.receipt.file") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ receipt_html: html, customer_name: customerName, bill_no: billNo })
-        })
-        .then(res => res.json())
-        .then(data => console.log('Receipt saved:', data))
-        .catch(err => console.error('Save error:', err));
-    }
-
-    // Core F1 print function
-    async function handlePrint() {
-        const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-        if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
-            alert('No sales records to print!');
-            return;
-        }
-
-        const salesData = [];
-        tableRows.forEach(row => {
-            if (row.hasAttribute('data-sale-id')) {
-                const cells = row.querySelectorAll('td');
-                salesData.push({
-                    id: row.getAttribute('data-sale-id'),
-                    customer_code: row.getAttribute('data-customer-code'),
-                    customer_name: row.getAttribute('data-customer-name'),
-                    mobile: row.getAttribute('data-customer-mobile') || '',
-                    email: "nethmavilhan2005@gmail.com",
-                    code: cells[0]?.textContent.trim() || '',
-                    item_code: cells[1]?.textContent.trim() || '',
-                    item_name: cells[1]?.textContent.trim() || '',
-                    weight: parseFloat(cells[2]?.textContent) || 0,
-                    price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                    total: parseFloat(cells[4]?.textContent) || 0,
-                    packs: parseInt(cells[5]?.textContent) || 0
-                });
-            }
-        });
-
-        if (!salesData.length) {
-            alert('No printable sales records found!');
-            return;
-        }
-
-        const salesIds = salesData.map(s => s.id);
-
-        // Send sales data to backend to get bill number and mark as printed
-        const response = await fetch("{{ route('sales.markAsPrinted') }}", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ sales_ids: salesIds })
-        });
-
-        const backendResponse = await response.json();
-
-        if (backendResponse.status !== 'success') {
-            alert('Failed to process print request.');
-            console.error('Backend error:', backendResponse.message);
-            return;
-        }
-
-        const billNo = backendResponse.bill_no;
-        console.log("Bill number to use:", billNo);
-
-        // Group sales by customer
-        const salesByCustomer = salesData.reduce((acc, sale) => {
-            (acc[sale.customer_code] ||= []).push(sale);
-            return acc;
-        }, {});
-
-        const customerCode = Object.keys(salesByCustomer)[0];
-        const customerSales = salesByCustomer[customerCode];
-        const customerName = customerSales[0].customer_code || 'N/A';
-        const mobile = customerSales[0]?.mobile || '-';
-        const customerEmail = customerSales[0]?.email || "nethmavilhan2005@gmail.com";
-
-        // Fetch loan amount
-        fetch('{{ route('get.loan.amount') }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ customer_short_name: customerCode })
-        })
-        .then(res => res.json())
-        .then(async data => {
-            globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
-            const date = "{{ $billDate }}";
-            const time = new Date().toLocaleTimeString();
-            let totalAmountSum = 0;
-            const itemGroups = {};
-
-            const itemsHtml = customerSales.map(sale => {
-                totalAmountSum += sale.total;
-                const itemName = sale.item_name || '';
-                const weight = parseFloat(sale.weight) || 0;
-                const packs = parseInt(sale.packs) || 0;
-                if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-                itemGroups[itemName].totalWeight += weight;
-                itemGroups[itemName].totalPacks += packs;
-                return `<tr style="font-size: 1.2em;">
-  <td style="text-align:left;">${itemName} <br>${packs}</td>
-  <td style="text-align:right; padding-right:18px;">${weight.toFixed(2)}</td>
-
-  <td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
-  <td style="text-align:right;">${sale.total.toFixed(2)}</td>
-</tr>`;
-            }).join('');
-
-            let itemSummaryHtml = '';
-            Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
-                itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
+    const salesData = [];
+    tableRows.forEach(row => {
+        if (row.hasAttribute('data-sale-id')) {
+            const cells = row.querySelectorAll('td');
+            salesData.push({
+                id: row.getAttribute('data-sale-id'),
+                customer_code: row.getAttribute('data-customer-code'),
+                customer_name: row.getAttribute('data-customer-name'),
+                mobile: row.getAttribute('data-customer-mobile') || '',
+                email: "nethmavilhan2005@gmail.com",
+                code: cells[0]?.textContent.trim() || '',
+                item_code: cells[1]?.textContent.trim() || '',
+                item_name: cells[1]?.textContent.trim() || '',
+                weight: parseFloat(cells[2]?.textContent) || 0,
+                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
+                total: parseFloat(cells[4]?.textContent) || 0,
+                packs: parseInt(cells[5]?.textContent) || 0
             });
+        }
+    });
 
-            let totalAmountRowHtmlF1 = '';
-            if (globalLoanAmount > 0) {
-                totalAmountRowHtmlF1 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
-            }
+    if (!salesData.length) {
+        alert('No printable sales records found!');
+        return;
+    }
 
-            const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
+    const salesIds = salesData.map(s => s.id);
+
+    // Send sales data to backend to get bill number and mark as printed
+    const response = await fetch("{{ route('sales.markAsPrinted') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ sales_ids: salesIds })
+    });
+
+    const backendResponse = await response.json();
+
+    if (backendResponse.status !== 'success') {
+        alert('Failed to process print request.');
+        console.error('Backend error:', backendResponse.message);
+        return;
+    }
+
+    const billNo = backendResponse.bill_no;
+    console.log("Bill number to use:", billNo);
+
+    // Group sales by customer
+    const salesByCustomer = salesData.reduce((acc, sale) => {
+        (acc[sale.customer_code] ||= []).push(sale);
+        return acc;
+    }, {});
+
+    const customerCode = Object.keys(salesByCustomer)[0];
+    const customerSales = salesByCustomer[customerCode];
+    const customerName = customerSales[0].customer_code || 'N/A';
+    const mobile = customerSales[0]?.mobile || '-';
+    const customerEmail = customerSales[0]?.email || "nethmavilhan2005@gmail.com";
+
+    // Fetch loan amount
+    fetch('{{ route('get.loan.amount') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ customer_short_name: customerCode })
+    })
+    .then(res => res.json())
+    .then(async data => {
+        globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
+        const date = "{{ $billDate }}";
+        const time = new Date().toLocaleTimeString();
+        let totalAmountSum = 0;
+        const itemGroups = {};
+
+        const itemsHtml = customerSales.map(sale => {
+            totalAmountSum += sale.total;
+            const itemName = sale.item_name || '';
+            const weight = parseFloat(sale.weight) || 0;
+            const packs = parseInt(sale.packs) || 0;
+            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+            itemGroups[itemName].totalWeight += weight;
+            itemGroups[itemName].totalPacks += packs;
+            return `<tr style="font-size: 1.2em;">
+<td style="text-align:left;">${itemName} <br>${packs}</td>
+<td style="text-align:right; padding-right:18px;">${weight.toFixed(2)}</td>
+<td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
+<td style="text-align:right;">${sale.total.toFixed(2)}</td>
+</tr>`;
+        }).join('');
+
+        let itemSummaryHtml = '';
+        Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
+            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
+        });
+
+        let totalAmountRowHtmlF1 = '';
+        if (globalLoanAmount > 0) {
+            totalAmountRowHtmlF1 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
+        }
+
+        const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
     <div style="text-align:center;margin-bottom:5px;">
         <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
         <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
@@ -2443,99 +2494,106 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
         <p>නැවත භාර ගනු නොලැබේ</p>
     </div>
 </div>`;
+        
+        // Create the duplicate HTML with "COPY" at the top
+        const duplicateHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>` + receiptHtml;
 
-            await Promise.all([
-                sendReceiptEmail(receiptHtml, customerName, customerEmail),
-                printReceipt(receiptHtml, customerName)
-            ]);
+        // Print the original receipt first
+        await printReceipt(receiptHtml, customerName);
+        
+        // Then print the duplicate
+        await printReceipt(duplicateHtml, customerName + ' - Copy');
 
-            window.location.reload();
-        }).catch(err => console.error('Loan fetch failed:', err));
-    }
+        // Send a single email for the duplicate
+        sendReceiptEmail(duplicateHtml, customerName, customerEmail);
 
-    // F5 function (no print, just email/save, same format as F1 but no bill no)
-    async function handleF5() {
-        const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-        if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) return;
+        window.location.reload();
+    }).catch(err => console.error('Loan fetch failed:', err));
+}
 
-        const salesData = [];
-        tableRows.forEach(row => {
-            if (row.hasAttribute('data-sale-id')) {
-                const cells = row.querySelectorAll('td');
-                salesData.push({
-                    id: row.getAttribute('data-sale-id'),
-                    customer_code: row.getAttribute('data-customer-code'),
-                    customer_name: row.getAttribute('data-customer-name'),
-                    mobile: row.getAttribute('data-customer-mobile') || '',
-                    email: "nethmavilhan2005@gmail.com",
-                    code: cells[0]?.textContent.trim() || '',
-                    item_code: cells[1]?.textContent.trim() || '',
-                    item_name: cells[1]?.textContent.trim() || '',
-                    weight: parseFloat(cells[2]?.textContent) || 0,
-                    price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                    total: parseFloat(cells[4]?.textContent) || 0,
-                    packs: parseInt(cells[5]?.textContent) || 0
-                });
-            }
-        });
+// F5 function (no print, just email/save, same format as F1 but no bill no)
+async function handleF5() {
+    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) return;
 
-        if (!salesData.length) return;
+    const salesData = [];
+    tableRows.forEach(row => {
+        if (row.hasAttribute('data-sale-id')) {
+            const cells = row.querySelectorAll('td');
+            salesData.push({
+                id: row.getAttribute('data-sale-id'),
+                customer_code: row.getAttribute('data-customer-code'),
+                customer_name: row.getAttribute('data-customer-name'),
+                mobile: row.getAttribute('data-customer-mobile') || '',
+                email: "nethmavilhan2005@gmail.com",
+                code: cells[0]?.textContent.trim() || '',
+                item_code: cells[1]?.textContent.trim() || '',
+                item_name: cells[1]?.textContent.trim() || '',
+                weight: parseFloat(cells[2]?.textContent) || 0,
+                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
+                total: parseFloat(cells[4]?.textContent) || 0,
+                packs: parseInt(cells[5]?.textContent) || 0
+            });
+        }
+    });
 
-        const salesByCustomer = salesData.reduce((acc, sale) => { 
-            (acc[sale.customer_code] ||= []).push(sale); 
-            return acc; 
-        }, {});
+    if (!salesData.length) return;
 
-        const customerCode = Object.keys(salesByCustomer)[0];
-        const customerSales = salesByCustomer[customerCode];
-        const customerName = customerSales[0].customer_code || 'N/A';
-        const mobile = customerSales[0]?.mobile || '-';
-        const customerEmail = customerSales[0]?.email || "nethmavilhan2005@gmail.com";
+    const salesByCustomer = salesData.reduce((acc, sale) => {
+        (acc[sale.customer_code] ||= []).push(sale);
+        return acc;
+    }, {});
 
-        let totalAmountSum = 0;
-        const itemGroups = {};
+    const customerCode = Object.keys(salesByCustomer)[0];
+    const customerSales = salesByCustomer[customerCode];
+    const customerName = customerSales[0].customer_code || 'N/A';
+    const mobile = customerSales[0]?.mobile || '-';
+    const customerEmail = customerSales[0]?.email || "nethmavilhan2005@gmail.com";
 
-        const itemsHtml = customerSales.map(sale => {
-            totalAmountSum += sale.total;
-            const itemName = sale.item_name || '';
-            const weight = parseFloat(sale.weight) || 0;
-            const packs = parseInt(sale.packs) || 0;
-            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-            itemGroups[itemName].totalWeight += weight;
-            itemGroups[itemName].totalPacks += packs;
-            return`<tr style="font-size:14px;">
+    let totalAmountSum = 0;
+    const itemGroups = {};
+
+    const itemsHtml = customerSales.map(sale => {
+        totalAmountSum += sale.total;
+        const itemName = sale.item_name || '';
+        const weight = parseFloat(sale.weight) || 0;
+        const packs = parseInt(sale.packs) || 0;
+        if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+        itemGroups[itemName].totalWeight += weight;
+        itemGroups[itemName].totalPacks += packs;
+        return`<tr style="font-size:14px;">
     <td style="text-align:left;">${itemName} <br>${packs}</td>
     <td style="text-align:right;">${weight.toFixed(2)}</td>
     <td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
     <td style="text-align:right;">${sale.total.toFixed(2)}</td>
 </tr>`;
 
-        }).join('');
+    }).join('');
 
-        let itemSummaryHtml = '';
-        Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
-            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:1.5rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
-        });
+    let itemSummaryHtml = '';
+    Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
+        itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:1.5rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
+    });
 
-        // Fetch loan amount
-        fetch('{{ route('get.loan.amount') }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ customer_short_name: customerCode })
-        })
-        .then(res => res.json())
-        .then(data => {
-            globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
-            const date = "{{ $billDate }}";
-            const time = new Date().toLocaleTimeString();
-            const billNo = 'N/A';
+    // Fetch loan amount
+    fetch('{{ route('get.loan.amount') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ customer_short_name: customerCode })
+    })
+    .then(res => res.json())
+    .then(data => {
+        globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
+        const date = "{{ $billDate }}";
+        const time = new Date().toLocaleTimeString();
+        const billNo = 'N/A';
 
-            let totalAmountRowHtmlF5 = '';
-            if (globalLoanAmount > 0) {
-                totalAmountRowHtmlF5 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
-            }
+        let totalAmountRowHtmlF5 = '';
+        if (globalLoanAmount > 0) {
+            totalAmountRowHtmlF5 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
+        }
 
-            const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
+        const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
                 <div style="text-align:center;margin-bottom:5px;">
                     <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
                     <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
@@ -2566,29 +2624,29 @@ $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : 
                 </div>
             </div>`;
 
-            // Only email (no print)
-            sendReceiptEmail(receiptHtml, customerName, customerEmail);
+        // Only email (no print)
+        sendReceiptEmail(receiptHtml, customerName, customerEmail);
 
-            // Mark all as processed
-            fetch('{{ route('sales.markAllAsProcessed') }}', {
-                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-            }).then(res => res.json()).then(data => { 
-                console.log('F5 processed:', data); 
-                window.location.reload(); 
-            });
-        }).catch(err => console.error('F5 error:', err));
-    }
+        // Mark all as processed
+        fetch('{{ route('sales.markAllAsProcessed') }}', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        }).then(res => res.json()).then(data => {
+            console.log('F5 processed:', data);
+            window.location.reload();
+        });
+    }).catch(err => console.error('F5 error:', err));
+}
 
-    // Keyboard events for F1 & F5
-    document.addEventListener('keydown', e => {
-        if (e.key === "F1") { e.preventDefault(); handlePrint(); }
-        else if (e.key === "F5") { e.preventDefault(); handleF5(); }
-    });
+// Keyboard events for F1 & F5
+document.addEventListener('keydown', e => {
+    if (e.key === "F1") { e.preventDefault(); handlePrint(); }
+    else if (e.key === "F5") { e.preventDefault(); handleF5(); }
+});
 
-    // Optional print button
-    document.getElementById('printButton').addEventListener('click', function () {
-        if (confirm("Do you want to print?")) handlePrint();
-    });
+// Optional print button
+document.getElementById('printButton').addEventListener('click', function () {
+    if (confirm("Do you want to print?")) handlePrint();
+});
 
 
 

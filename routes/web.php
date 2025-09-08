@@ -14,6 +14,7 @@ use App\Http\Controllers\EmailController;
 use App\Models\Sale;
 use App\Models\SalesHistory;
 use App\Http\Controllers\BillController;
+use App\Models\GrnEntry;
 
 
 // New default route to redirect to login
@@ -134,9 +135,10 @@ Route::get('/grn/export/pdf', [ReportController::class, 'exportPdf'])->name('grn
 Route::get('/grn/export/excel', [ReportController::class, 'exportExcel'])->name('grn.exportExcel');
 Route::get('/reports/cheque-payments/', [ReportController::class, 'chequePaymentsReport']) ->name('reports.cheque-payments');
 Route::post('/reports/update-status/{id}', [ReportController::class, 'updateStatus'])  ->name('reports.update-status');
-//returns
+Route::get('/generate-report', [ReportController::class, 'generateReport']) ->name('generate.report');//returns
+   
 Route::get('/api/grn-entry/{code}', function ($code) {
-    $entry = \App\Models\GrnEntry::where('code', $code)->first();
+    $entry = GrnEntry::where('code', $code)->first();
     return response()->json($entry);
 });
 
@@ -147,4 +149,11 @@ Route::get('/api/sale/{bill_no}', function ($bill_no) {
 Route::get('/sales-report/summary', [GrnEntryController::class, 'showSalesBillSummary'])->name('sales.report.summary');
 //GRN OPTIONS
 Route::post('/grn/update-status/{id}', [GrnEntryController::class, 'updateStatus'])->name('grn.updateStatus');
+//new feild to sow te real perkg price
+
+// web.php
+Route::get('/grn-entry/{code}', [GrnEntryController::class, 'getGrnEntry'])->name('grn.entry.fetch');
+Route::post('/settings/update-balance', [SalesEntryController::class, 'updateBalance'])->name('settings.updateBalance');
+
+
 require __DIR__.'/auth.php';

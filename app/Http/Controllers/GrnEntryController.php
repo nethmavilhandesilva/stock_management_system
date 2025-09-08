@@ -8,6 +8,7 @@ use App\Models\Supplier;
 use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class GrnEntryController extends Controller
 {
@@ -343,6 +344,24 @@ class GrnEntryController extends Controller
 
     return response()->json(['success' => true]);
 }
+// GrnEntryController.php
+// GrnEntryController.php
+public function getGrnEntry($code)
+{
+    $entry = GrnEntry::where('code', $code)->where('show_status', 1)->first();
+
+    if ($entry) {
+        return response()->json([
+            'per_kg_price' => $entry->PerKGPrice,
+        ]);
+    }
+
+    return response()->json(['per_kg_price' => null]);
+}
+
+
+
+
 
 
 }

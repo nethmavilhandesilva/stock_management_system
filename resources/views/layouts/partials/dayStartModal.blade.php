@@ -26,19 +26,24 @@
                         <input type="date" class="form-control" id="new_day_date" name="new_day_date"
                             value="{{ \Carbon\Carbon::now()->format('Y-m-d') }}" disabled>
                     </div>
+                  
+                    
+                </div>
+              <div class="modal-footer" style="background-color: #f1f1f1; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: nowrap;">
+    <button type="button" class="btn btn-secondary">Cancel</button>
 
-                    <!-- End of Day Balance field (initially disabled) -->
-                    <div class="form-group mb-3">
-                        <label for="end_day_balance" class="form-label">End of Day Balance:</label>
-                        <input type="number" step="0.01" class="form-control" id="end_day_balance"
-                               name="end_day_balance" placeholder="Enter end of day balance" disabled>
-                    </div>
-                </div>
-                <div class="modal-footer" style="background-color: #f1f1f1;">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn" style="background-color: #4CAF50; color: white;">✅ Yes, Start New
-                        Day</button>
-                </div>
+    <button type="submit" class="btn" style="background-color: #4CAF50; color: white;">
+        ✅ Yes Start 
+    </button>
+
+    <a href="{{ route('generate.report') }}" 
+       class="btn btn-primary"
+       onclick="return confirm('Are you sure you want to generate the report and send emails?');">
+       Generate Report
+    </a>
+</div>
+
+
             </div>
         </form>
     </div>

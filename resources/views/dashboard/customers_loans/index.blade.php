@@ -324,27 +324,58 @@
                         @endforelse
                     </tbody>
                 </table>
-               <div class="mt-3 text-end">
-    {{-- Financial Report Button --}}
-    <a href="{{ route('financial.report') }}" target="_blank" class="btn btn-dark me-2 mb-2">
+              <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <!-- Financial Report Button -->
+    <a href="{{ route('financial.report') }}" target="_blank" class="btn btn-dark">
         ආදායම් / වියදම්
     </a>
 
-    {{-- Loan Report Button --}}
-    <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark me-2 mb-2">
+    <!-- Loan Report Button -->
+    <a href="#" data-bs-toggle="modal" data-bs-target="#reportLoanModal" class="btn btn-dark">
         ණය වාර්තාව
     </a>
 
-    {{-- Returns Report Button --}}
-    <a href="{{ route('returns.report') }}" class="btn btn-dark me-2 mb-2">
+    <!-- Returns Report Button -->
+    <a href="{{ route('returns.report') }}" class="btn btn-dark">
         View Returns Report
     </a>
 
-    {{-- Cheque Payments Report Button --}}
-    <a href="{{ route('reports.cheque-payments') }}" class="btn btn-dark mb-2">
+    <!-- Cheque Payments Report Button -->
+    <a href="{{ route('reports.cheque-payments') }}" class="btn btn-dark">
         View Cheque Payments Report
     </a>
+
+    <!-- Set Balance Button -->
+    <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#balanceModal">
+        Set Balance
+    </button>
 </div>
+
+<!-- Button to open modal -->
+
+
+<!-- Modal -->
+<div class="modal fade" id="balanceModal" tabindex="-1" aria-labelledby="balanceModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form action="{{ route('settings.updateBalance') }}" method="POST">
+        @csrf
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="balanceModalLabel">Enter Balance for Today</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="number" name="balance" class="form-control" placeholder="Enter today's balance" step="0.01" required>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Save Balance</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </form>
+  </div>
+</div>
+
 
 
             </div>

@@ -879,7 +879,7 @@ class SalesEntryController extends Controller
     ['key' => 'last_day_started_date'], // matching condition
     [
         'value' => $dayStartDate->format('Y-m-d'),
-        'Balance' => $request->end_day_balance, // updated or created
+       
     ]
 );
 
@@ -1038,6 +1038,25 @@ class SalesEntryController extends Controller
 
         return response()->json(['nextBillNo' => $nextBillNo]);
     }
+    public function updateBalance(Request $request)
+{
+    $request->validate([
+        'balance' => 'required|numeric|min:0',
+    ]);
+
+    // Assuming you have a single Setting row or use first()
+    $setting = Setting::first(); 
+
+    if (!$setting) {
+        $setting = new Setting();
+    }
+
+    $setting->balance = $request->balance;
+    $setting->save();
+
+    return redirect()->back()->with('success', 'Balance updated successfully!');
+}
+
 
 
 }
