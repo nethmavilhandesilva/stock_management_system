@@ -58,7 +58,7 @@
                         <li><a class="dropdown-item" href="{{ route('items.index') }}">භාණ්ඩ</a></li>
                         <li><a class="dropdown-item" href="{{ route('customers.index') }}">ගනුදෙනුකරුවන්</a></li>
                         <li><a class="dropdown-item" href="{{ route('suppliers.index') }}">සැපයුම්කරුවන්</a></li>
-                        <li><a class="dropdown-item" href="{{ route('grn.create') }}">GRN</a></li>
+                      
                         <li><a class="dropdown-item" href="{{ route('customers-loans.report') }}"> ණය වාර්තාව දැකීම</a>
                         </li>
                         <li>
@@ -77,24 +77,32 @@
                         <span class="text-white">ආදායම් / වියදම්</span>
                     </a>
                 </li>
+                {{-- GRN Button --}}
+                <li class="nav-item">
+                    <a href="{{ route('grn.create') }}"
+                        class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('grn.create') ? 'active' : '' }}">
+                        <span class="material-icons me-1" style="font-size:1.1em;">receipt_long</span>
+                        <span class="text-white">GRN</span>
+                    </a>
+                </li>
+            </ul>
 
-                {{-- Day Start Process --}}
+            {{-- Day Start Process and Logout on the right --}}
+            <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
                     <a href="#" class="nav-link d-flex align-items-center small" data-bs-toggle="modal"
                         data-bs-target="#dayStartModal">
-                        <span class="material-icons me-1 text-blue-600"
-                            style="font-size:1.1em;">play_circle_filled</span>
+                        <span class="material-icons me-1 text-blue-600" style="font-size:1.1em;">play_circle_filled</span>
                         <span class="text-white">Day Start Process</span>
                     </a>
                 </li>
-
-                {{-- Logout --}}
                 <li class="nav-item">
                     <form action="{{ route('logout') }}" method="POST" style="display: inline;">
                         @csrf
                         <button type="submit" class="nav-link d-flex align-items-center small"
                             style="background:none; border:none; padding:0; cursor:pointer;">
                             <span class="material-icons me-1 text-red-600" style="font-size:1.1em;">logout</span>
+                            <span style="color: white;">Logout</span>
                         </button>
                     </form>
                 </li>
@@ -104,8 +112,8 @@
         {{-- Next Day Info --}}
         <div class="ms-3 fw-bold text-danger" style="white-space: nowrap;">
             @php
-$lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
-$nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
+                $lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
+                $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
             @endphp
             {{ $nextDay }}
         </div>
