@@ -10,13 +10,57 @@
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <!-- User ID -->
-        <div class="mt-4">
-            <x-input-label for="user_id" :value="__('User ID')" />
-            <x-text-input id="user_id" class="block mt-1 w-full" type="text" name="user_id"
-                :value="old('user_id')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
-        </div>
+       <!-- User ID -->
+<div class="mt-4">
+    <x-input-label for="user_id" :value="__('User ID')" />
+    <x-text-input id="user_id" class="block mt-1 w-full" type="text" name="user_id"
+        :value="old('user_id')" required autofocus autocomplete="username" />
+    <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
+
+    <!-- Show fetched IP here -->
+    <small id="user_ip_display" class="text-sm text-gray-500 mt-1 block"></small>
+</div>
+
+@push('scripts')
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const userIdInput = document.getElementById("user_id");
+    const ipDisplay = document.getElementById("user_ip_display");
+    let debounceTimer;
+
+    userIdInput.addEventListener("input", function () {
+        clearTimeout(debounceTimer); // reset timer
+        const userId = this.value.trim();
+
+        if (userId !== "") {
+            debounceTimer = setTimeout(() => {
+                fetch(`{{ url('get-user-ip') }}/${userId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.ip_address) {
+                            ipDisplay.textContent = "Registered IP: " + data.ip_address;
+                            ipDisplay.classList.remove("text-red-500");
+                            ipDisplay.classList.add("text-green-600");
+                        } else {
+                            ipDisplay.textContent = "No IP found for this User ID";
+                            ipDisplay.classList.remove("text-green-600");
+                            ipDisplay.classList.add("text-red-500");
+                        }
+                    })
+                    .catch(() => {
+                        ipDisplay.textContent = "Error fetching IP.";
+                        ipDisplay.classList.add("text-red-500");
+                    });
+            }, 400); // delay 400ms after typing stops
+        } else {
+            ipDisplay.textContent = "";
+        }
+    });
+});
+</script>
+
+@endpush
+
 
         <!-- Password -->
         <div class="mt-4">

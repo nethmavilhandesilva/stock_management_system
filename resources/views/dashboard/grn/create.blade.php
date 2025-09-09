@@ -253,7 +253,10 @@
                         <td class="per-kg-price-column">{{ $entry->PerKGPrice }}</td>
                         <td>
                             <a href="{{ route('grn.edit', $entry->id) }}" class="btn btn-sm btn-info me-1"><i class="material-icons">edit</i></a>
-                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" data-entry-id="{{ $entry->id }}"><i class="material-icons">delete</i></button>
+                           <button type="button" class="btn btn-sm btn-danger delete-btn" data-entry-id="{{ $entry->id }}">
+    <i class="material-icons">delete</i>
+</button>
+
                         </td>
                     </tr>
                 @endforeach
@@ -332,28 +335,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-    {{-- Delete Confirmation Modal --}}
-    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteConfirmationModalLabel">Delete GRN Entry</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to delete this GRN entry? This action cannot be undone.
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <form id="deleteForm" method="POST" action="">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                    </form>
-                </div>
+   <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete GRN Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this GRN entry? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                </form>
             </div>
         </div>
     </div>
+</div>
+
 
     {{-- Context menu --}}
     <ul class="custom-context-menu" id="contextMenu">
@@ -434,6 +437,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     totalGrnInput.addEventListener('input', calculatePerKg);
     weightInput.addEventListener('input', calculatePerKg);
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+    const deleteForm = document.getElementById('deleteForm');
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const entryId = this.dataset.entryId;
+            deleteForm.action = `/grn/${entryId}`; // dynamically set the action URL
+            deleteModal.show();
+        });
+    });
 });
 </script>
 

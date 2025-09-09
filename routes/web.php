@@ -14,6 +14,7 @@ use App\Http\Controllers\EmailController;
 use App\Models\Sale;
 use App\Models\SalesHistory;
 use App\Http\Controllers\BillController;
+use App\Models\User;
 
 
 // New default route to redirect to login
@@ -156,6 +157,12 @@ Route::post('/grn/update-status/{id}', [GrnEntryController::class, 'updateStatus
 // web.php
 Route::get('/grn-entry/{code}', [GrnEntryController::class, 'getGrnEntry'])->name('grn.entry.fetch');
 Route::post('/settings/update-balance', [SalesEntryController::class, 'updateBalance'])->name('settings.updateBalance');
-
+//sowin ip address
+Route::get('/get-user-ip/{user_id}', function ($user_id) {
+    $user = User::where('user_id', $user_id)->first();
+    return response()->json([
+        'ip_address' => $user?->ip_address ?? null,
+    ]);
+})->name('get-user-ip');
    
 require __DIR__.'/auth.php';

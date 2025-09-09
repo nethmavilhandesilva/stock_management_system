@@ -55,5 +55,7 @@
             <!-- Footer -->
           
         </div>
+        @stack('scripts')
+
     </body>
 </html>
