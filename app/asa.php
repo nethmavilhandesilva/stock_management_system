@@ -1788,8 +1788,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 grnEntryCodeHidden.value = selected.data('code') || '';
 
                                 // Reset inputs to trigger an immediate update of remaining stock
-                                weightField.value = '';
-                                packsField.value = '';
+                              
+                                
 
                                 // Call the stock update function immediately
                                 updateRemainingStock();
@@ -2048,9 +2048,8 @@ $('#grn_select').on('select2:open', function () {
                             itemNameField.value = data.itemName || '';
                             // Also set the hidden item_name field
 
-                            weightField.value = '';
-                            pricePerKgField.value = '';
-                            packsField.value = '';
+                        
+                           
 
                             // ADDED: Populate hidden fields for original_weight and original_packs
                             $('#original_weight_input').val(data.originalWeight); // Access using camelCase
@@ -2096,9 +2095,9 @@ $('#grn_select').on('select2:open', function () {
                             itemSelect.dispatchEvent(new Event('change')); // Clear item related hidden fields
                             itemNameDisplayFromGrn.value = ''; // NEW: Clear the item name display field
                             itemNameField.value = ''; // NEW: Clear hidden item_name field
-                            weightField.value = '';
-                            pricePerKgField.value = '';
-                            packsField.value = '';
+                          
+                          
+                           
                             calculateTotal();
                         });
 
@@ -2948,81 +2947,84 @@ document.getElementById('f5Button')?.addEventListener('click', function() {
 
 
     // ================= POPULATE FORM FOR EDIT =================
-    function populateFormForEdit(sale) {
-        console.log("Populating form for sale:", sale);
+ // ================= POPULATE FORM FOR EDIT =================
+function populateFormForEdit(sale) {
+    console.log("Populating form for sale:", sale);
 
-        saleIdField.value = sale.id;
-        newCustomerCodeField.value = sale.customer_code || '';
-        customerNameField.value = sale.customer_name || '';
-        newCustomerCodeField.readOnly = true;
+    saleIdField.value = sale.id;
+    newCustomerCodeField.value = sale.customer_code || '';
+    customerNameField.value = sale.customer_name || '';
+    newCustomerCodeField.readOnly = true;
 
-        const grnDisplay = document.getElementById('grn_display');
-        const grnSelect = document.getElementById('grn_select');
+    const grnDisplay = document.getElementById('grn_display');
+    const grnSelect = document.getElementById('grn_select');
 
-        grnDisplay.style.display = 'block';
-        grnDisplay.value = sale.code || '';
+    grnDisplay.style.display = 'block';
+    grnDisplay.value = sale.code || '';
 
-        $(grnSelect).next('.select2-container').hide();
+    $(grnSelect).next('.select2-container').hide();
 
-        const grnOption = $('#grn_select option').filter(function () {
-            return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code &&
-                $(this).data('itemCode') === sale.item_code;
-        });
+    const grnOption = $('#grn_select option').filter(function () {
+        return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code &&
+            $(this).data('itemCode') === sale.item_code;
+    });
 
-        if (grnOption.length) {
-            $('#grn_select').val(grnOption.val());
-        } else {
-            $('#grn_select').val(null);
-        }
-
-        if (sale.code) {
-            fetch(`https://wday.lk/AA/sms/api/grn-entry/${sale.code}`)
-                .then(response => response.json())
-                .then(grnData => {
-                    originalGrnPacks = parseInt(grnData.packs || 0);
-                    originalGrnWeight = parseFloat(grnData.weight || 0);
-
-                    initialSalePacks = parseInt(sale.packs || 0);
-                    initialSaleWeight = parseFloat(sale.weight || 0);
-
-                    weightField.value = initialSaleWeight.toFixed(2);
-                    weightField.select();
-
-                    packsField.value = initialSalePacks;
-
-                    pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
-                    calculateTotal();
-
-                    updateRemainingStock();
-                })
-                .catch(error => {
-                    console.error('Error fetching data:', error);
-                    remainingPacksDisplay.textContent = 'Remaining Packs: N/A';
-                    remainingWeightDisplay.textContent = 'Remaining: N/A kg';
-                });
-        } else {
-            pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
-            calculateTotal();
-        }
-
-        supplierSelect.value = sale.supplier_code || '';
-        supplierDisplaySelect.value = sale.supplier_code || '';
-        itemSelect.value = sale.item_code || '';
-        itemSelect.dispatchEvent(new Event('change'));
-
-        itemNameDisplayFromGrn.value = sale.item_name || '';
-        itemNameField.value = sale.item_name || '';
-
-        salesEntryForm.action = `sales/update/${sale.id}`;
-
-        addSalesEntryBtn.style.display = 'none';
-        updateSalesEntryBtn.style.display = 'inline-block';
-        deleteSalesEntryBtn.style.display = 'inline-block';
-        cancelEntryBtn.style.display = 'inline-block';
-
-        weightField.focus();
-        weightField.select();
+    if (grnOption.length) {
+        $('#grn_select').val(grnOption.val());
+    } else {
+        $('#grn_select').val(null);
     }
+
+    // This is the key part:
+    // We only fetch data initially and populate the fields once.
+    if (sale.code) {
+        fetch(`https://wday.lk/AA/sms/api/grn-entry/${sale.code}`)
+            .then(response => response.json())
+            .then(grnData => {
+                originalGrnPacks = parseInt(grnData.packs || 0);
+                originalGrnWeight = parseFloat(grnData.weight || 0);
+
+                initialSalePacks = parseInt(sale.packs || 0);
+                initialSaleWeight = parseFloat(sale.weight || 0);
+
+                weightField.value = initialSaleWeight.toFixed(2);
+                weightField.select();
+
+                packsField.value = initialSalePacks;
+
+                pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+                calculateTotal();
+
+                updateRemainingStock();
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                remainingPacksDisplay.textContent = 'Remaining Packs: N/A';
+                remainingWeightDisplay.textContent = 'Remaining: N/A kg';
+            });
+    } else {
+        pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+        calculateTotal();
+    }
+
+    supplierSelect.value = sale.supplier_code || '';
+    supplierDisplaySelect.value = sale.supplier_code || '';
+    itemSelect.value = sale.item_code || '';
+    itemSelect.dispatchEvent(new Event('change'));
+
+    itemNameDisplayFromGrn.value = sale.item_name || '';
+    itemNameField.value = sale.item_name || '';
+
+    salesEntryForm.action = `sales/update/${sale.id}`;
+
+    addSalesEntryBtn.style.display = 'none';
+    updateSalesEntryBtn.style.display = 'inline-block';
+    deleteSalesEntryBtn.style.display = 'inline-block';
+    cancelEntryBtn.style.display = 'inline-block';
+
+    weightField.focus();
+    weightField.select();
+}
 
 
     // ================= RESET FORM =================

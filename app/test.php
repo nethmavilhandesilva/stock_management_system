@@ -1694,72 +1694,8 @@
                             remainingPacksDisplay.textContent = `BP: ${remainingPacks}`;
                             remainingWeightDisplay.textContent = `BW: ${remainingWeight.toFixed(2)} `;
                         }
-
-                        // --- GRN Change Handler (Modified to use jQuery) ---
-                        // Make sure jQuery is available before this part
-                        if (window.jQuery && typeof jQuery === 'function') {
-                            $(grnSelect).select2();
-                            console.log('Select2 initialized.');
-
-                            // Use jQuery's 'change' event listener, which is compatible with Select2
-                            $(grnSelect).on('change', function () {
-                                const selected = $(this).find('option:selected');
-                                if (!selected.length || !selected.val()) {
-                                    // ... (rest of the code for resetting fields) ...
-                                    return;
-                                }
-
-                                // Get original GRN stock values from data attributes
-                                originalGrnWeight = parseFloat(selected.data('weight')) || 0;
-                                originalGrnPacks = parseInt(selected.data('packs')) || 0;
-                                const pricePerKg = parseFloat(selected.data('price')) || 0;
-
-                                // Calculate the total here before assigning it
-                                const total = originalGrnWeight * pricePerKg;
-
-                                // Populate other fields
-                                supplierCodeDisplay.value = selected.data('supplier-code') || '';
-                                supplierCodeHidden.value = selected.data('supplier-code') || '';
-                                itemSelect.value = selected.data('item-code') || '';
-                                itemCodeHidden.value = selected.data('item-code') || '';
-                                itemNameDisplay.value = selected.data('item-name') || '';
-
-                                // This line is now working because `total` is defined.
-                                totalInput.value = total.toFixed(2);
-                                grnEntryCodeHidden.value = selected.data('code') || '';
-
-                                // Reset inputs to trigger an immediate update of remaining stock
-                                weightField.value = '';
-                                packsField.value = '';
-
-                                // Call the stock update function immediately
-                                updateRemainingStock();
-                            });
-                        } else {
-                            // Fallback for when Select2 is not present, using native JS
-                            grnSelect?.addEventListener('change', function () {
-                                // ... (your previous non-jQuery change handler code here)
-                            });
-                            console.log('jQuery or Select2 not found. Using native JS event listener.');
-                        }
-
-                        // --- Attach listeners for input fields ---
-                        packsField.addEventListener('input', updateRemainingStock);
-                        weightField.addEventListener('input', updateRemainingStock);
-
-                        // --- Initial page load logic ---
-                        // This part should work correctly because it doesn't rely on an event
-                        if (grnSelect.value) {
-                            const selected = grnSelect.options[grnSelect.selectedIndex];
-                            if (selected) {
-                                originalGrnWeight = parseFloat(selected.getAttribute('data-original-weight')) || 0;
-                                originalGrnPacks = parseInt(selected.getAttribute('data-original-packs')) || 0;
-                                grnEntryCodeHidden.value = selected.getAttribute('data-code') || '';
-                            }
-                        }
-                        // Perform the initial calculation and display on page load
-                        updateRemainingStock();
                     });
+                        
                 </script>
 
 
