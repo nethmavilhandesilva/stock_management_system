@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class Setting extends Model
 {
     use HasFactory;
-    protected $fillable = ['key', 'value','Balance'];
+    protected $fillable = ['key', 'value','Balance','Date_of_balance'];
 }

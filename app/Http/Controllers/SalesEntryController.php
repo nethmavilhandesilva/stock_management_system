@@ -1038,26 +1038,27 @@ class SalesEntryController extends Controller
 
         return response()->json(['nextBillNo' => $nextBillNo]);
     }
-    public function updateBalance(Request $request)
+   public function updateBalance(Request $request)
 {
     $request->validate([
         'balance' => 'required|numeric|min:0',
     ]);
 
-    // Assuming you have a single Setting row or use first()
-    $setting = Setting::first(); 
+    $setting = Setting::first();
 
     if (!$setting) {
         $setting = new Setting();
     }
 
     $setting->balance = $request->balance;
+
+    // store the "value" column as Date_of_balance
+    $setting->Date_of_balance = $setting->value;
+
     $setting->save();
 
     return redirect()->back()->with('success', 'Balance updated successfully!');
 }
-
-
 
 }
 

@@ -6,6 +6,7 @@ use App\Models\GrnEntry;
 use App\Models\Item;
 use App\Models\Supplier;
 use App\Models\Sale;
+use App\Models\SalesHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -112,8 +113,7 @@ class GrnEntryController extends Controller
 
         return view('dashboard.grn.edit', compact('entry', 'items', 'suppliers'));
     }
-
-    public function update(Request $request, $id)
+  public function update(Request $request, $id)
 {
     $request->validate([
         'item_code' => 'required',
@@ -136,9 +136,9 @@ class GrnEntryController extends Controller
         'supplier_code' => $request->supplier_code,
         'packs' => $request->packs,
         'weight' => $request->weight,
-        'original_packs' =>$request->packs,
-        'original_weight' =>$request->weight,
-        'sequence_no' =>$request->sequence_no,
+        'original_packs' => $request->packs,
+        'original_weight' => $request->weight,
+        'sequence_no' => $request->sequence_no,
         'txn_date' => $request->txn_date,
         'grn_no' => $request->grn_no,
         'warehouse_no' => $request->warehouse_no,
@@ -154,7 +154,7 @@ class GrnEntryController extends Controller
 
     $entry->update($updateData);
 
-    // Update matching Sale rows
+    // 🔹 Update matching Sale rows
     if ($request->filled('per_kg_price') && !empty($entry->code)) {
         $newPerKgPrice = $request->per_kg_price;
 
@@ -166,11 +166,11 @@ class GrnEntryController extends Controller
         });
     }
 
+    // 🔹 Call your stock recalculation method after update
+    $this->updateGrnRemainingStock();
+
     return redirect()->route('grn.create')->with('success', 'Entry updated successfully.');
 }
-
-
-
     public function destroy($id)
     {
         $entry = GrnEntry::findOrFail($id);
@@ -358,6 +358,52 @@ public function getGrnEntry($code)
 
     return response()->json(['per_kg_price' => null]);
 }
+ public function updateGrnRemainingStock(): void
+    {
+        // Fetch all GRN entries and group them by their unique 'code'
+        $grnEntriesByCode = GrnEntry::all()->groupBy('code');
+
+        // Fetch all sales and sales history entries
+        $currentSales = Sale::all()->groupBy('code');
+        $historicalSales = SalesHistory::all()->groupBy('code');
+
+        foreach ($grnEntriesByCode as $grnCode => $entries) {
+            // Calculate the total original packs and weight for the current GRN code
+            $totalOriginalPacks = $entries->sum('original_packs');
+            $totalOriginalWeight = $entries->sum('original_weight');
+            $totalWastedPacks = $entries->sum('wasted_packs');
+            $totalWastedWeight = $entries->sum('wasted_weight');
+
+            // Sum up packs and weight from sales for this specific GRN code
+            $totalSoldPacks = 0;
+            if (isset($currentSales[$grnCode])) {
+                $totalSoldPacks += $currentSales[$grnCode]->sum('packs');
+            }
+            if (isset($historicalSales[$grnCode])) {
+                $totalSoldPacks += $historicalSales[$grnCode]->sum('packs');
+            }
+
+            $totalSoldWeight = 0;
+            if (isset($currentSales[$grnCode])) {
+                $totalSoldWeight += $currentSales[$grnCode]->sum('weight');
+            }
+            if (isset($historicalSales[$grnCode])) {
+                $totalSoldWeight += $historicalSales[$grnCode]->sum('weight');
+            }
+
+            // Calculate remaining stock based on all original, sold, and wasted amounts
+            $remainingPacks = $totalOriginalPacks - $totalSoldPacks - $totalWastedPacks;
+            $remainingWeight = $totalOriginalWeight - $totalSoldWeight - $totalWastedWeight;
+
+            // Update each individual GRN entry with the new remaining values
+            foreach ($entries as $grnEntry) {
+                $grnEntry->packs = max($remainingPacks, 0);
+                $grnEntry->weight = max($remainingWeight, 0);
+                $grnEntry->save();
+            }
+        }
+    }
+
 
 
 

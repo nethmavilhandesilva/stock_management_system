@@ -710,7 +710,10 @@ public function financialReport()
     $totalCr = 0;
 
     // 🆕 Fetch last_day_started_date row (contains Balance column)
-    $balanceRow = Setting::where('key', 'last_day_started_date')->first();
+   $balanceRow = Setting::where('key', 'last_day_started_date')
+    ->whereColumn('value', '<>', 'Date_of_balance')
+    ->first();
+
 
     if ($balanceRow) {
         $reportData[] = [
