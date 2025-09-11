@@ -2823,44 +2823,53 @@ document.getElementById('f5Button')?.addEventListener('click', function() {
                             }
                             console.log("After clearing, innerHTML:", mainSalesTableBodyElement.innerHTML);
 
-                            let totalSalesValue = 0;
+                           let totalSalesValue = 0;
 
-                            if (salesArray.length === 0) {
-                                console.log("Sales array is empty. Displaying 'No sales records found.'");
-                                const noRecordsRow = document.createElement('tr');
-                                noRecordsRow.innerHTML = '<td colspan="8" class="text-center">No sales records found for this selection.</td>';
-                                mainSalesTableBodyElement.appendChild(noRecordsRow);
-                                totalSalesValue = 0;
-                            } else {
-                                salesArray.forEach(sale => {
-                                    const newRow = document.createElement('tr');
-                                    newRow.dataset.saleId = sale.id;
-                                    newRow.dataset.id = sale.id;
-                                    newRow.dataset.customerCode = sale.customer_code;
-                                    newRow.dataset.customerName = sale.customer_name;
+if (salesArray.length === 0) {
+    console.log("Sales array is empty. Displaying 'No sales records found.'");
+    const noRecordsRow = document.createElement('tr');
+    noRecordsRow.innerHTML = '<td colspan="8" class="text-center">No sales records found for this selection.</td>';
+    mainSalesTableBodyElement.appendChild(noRecordsRow);
+    totalSalesValue = 0;
+} else {
+    salesArray.forEach(sale => {
+        const newRow = document.createElement('tr');
+        newRow.dataset.saleId = sale.id;
+        newRow.dataset.id = sale.id;
+        newRow.dataset.customerCode = sale.customer_code;
+        newRow.dataset.customerName = sale.customer_name;
 
-                                    // Ensure all values are handled gracefully, with a fallback to 'N/A' or 0
-                                    const code = sale.code || 'N/A';
-                                    const itemCode = sale.item_code || 'N/A';
-                                    const itemName = sale.item_name || 'N/A';
-                                    const weight = (parseFloat(sale.weight) || 0).toFixed(2);
-                                    const pricePerKg = (parseFloat(sale.price_per_kg) || 0).toFixed(2);
-                                    const total = (parseFloat(sale.total) || 0).toFixed(2);
-                                    const packs = (parseInt(sale.packs) || 0);
+        // Graceful fallback values
+        const code = sale.code || 'N/A';
+        const itemCode = sale.item_code || 'N/A';
+        const itemName = sale.item_name || 'N/A';
+        const weight = (parseFloat(sale.weight) || 0).toFixed(2);
+        const pricePerKg = (parseFloat(sale.price_per_kg) || 0).toFixed(2);
+        const total = (parseFloat(sale.total) || 0).toFixed(2);
+        const packs = (parseInt(sale.packs) || 0);
 
-                                    newRow.innerHTML = `
-                                            <td data-field="code">${code}</td>
-                                            <td data-field="item_name">${itemName}</td>
-                                            <td data-field="weight">${weight}</td>
-                                            <td data-field="price_per_kg">${pricePerKg}</td>
-                                            <td data-field="total">${total}</td>
-                                            <td data-field="packs">${packs}</td>
-                                        `;
+        // Get pack_cost from Item table (lookup by itemCode)
+        const packCost = itemsMap[itemCode] || 0;
+        const packCostTotal = packs * packCost;
 
-                                    mainSalesTableBodyElement.appendChild(newRow);
-                                    totalSalesValue += parseFloat(total);
-                                });
-                            }
+        newRow.innerHTML = `
+            <td data-field="code">${code}</td>
+            <td data-field="item_name">${itemName}</td>
+            <td data-field="weight">${weight}</td>
+            <td data-field="price_per_kg">${pricePerKg}</td>
+            <td data-field="total">${total}</td>
+            <td data-field="packs">${packs}</td>
+            <td data-field="pack_cost">${packCost.toFixed(2)}</td>
+            <td data-field="pack_cost_total">${packCostTotal.toFixed(2)}</td>
+        `;
+
+        mainSalesTableBodyElement.appendChild(newRow);
+
+        // Add both totals
+        totalSalesValue += parseFloat(total) + packCostTotal;
+    });
+}
+
 
                             // Moved the function definition here, so it's defined once.
                             // This function will now be called after the table is populated.

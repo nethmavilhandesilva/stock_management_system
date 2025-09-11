@@ -170,7 +170,7 @@
                         {{-- Total GRN --}}
                         <div class="col-md-3">
                             <label for="total_grn" class="form-label">GRN මුළු එකතුව</label>
-                            <input type="number" id="total_grn" name="total_grn" class="form-control form-control-sm" value="{{ old('total_grn') }}" step="0.01" readonly>
+                            <input type="number" id="total_grn" name="total_grn" class="form-control form-control-sm" value="{{ old('total_grn') }}" step="0.01">
                         </div>
 
                         {{-- Per KG --}}
@@ -184,22 +184,27 @@
                             <label for="txn_date" class="form-label">දිනය <span class="text-danger">*</span></label>
                             <input type="date" id="txn_date" name="txn_date" class="form-control form-control-sm" value="{{ old('txn_date', date('Y-m-d')) }}">
                         </div>
+                      
+
+
 
                        
                     <div class="d-flex gap-2 align-items-end">
    
 
-    <div class="flex-grow-1 d-flex justify-content-center">
-        <button type="submit" class="btn btn-primary btn-sm w-100">
-            <i class="material-icons align-middle me-1">check_circle</i>GRN ADD
-        </button>
-    </div>
+   <div class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
+    <button type="submit" class="btn btn-primary btn-sm">
+        <i class="material-icons align-middle me-1">check_circle</i> GRN ADD
+    </button>
 
-    <div class="flex-grow-1 d-flex justify-content-center">
-        <a href="{{ route('grn.index') }}" class="btn btn-secondary btn-sm w-100">
-            <i class="material-icons align-middle me-1">cancel</i>GRN REMOVE
-        </a>
-    </div>
+    <a href="{{ route('grn.index') }}" class="btn btn-secondary btn-sm">
+        <i class="material-icons align-middle me-1">cancel</i> GRN REMOVE
+    </a>
+
+   
+</div>
+
+
 </div>
 
 
@@ -207,6 +212,7 @@
 
                     </div>
                 </form>
+             
 
              {{-- GRN Table --}}
 <hr class="my-4">
@@ -454,5 +460,40 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('updateNotChangingBtn');
+    const createForm = document.querySelector('form[action="{{ route('grn.store2') }}"]');
+    const updateForm = document.getElementById('updateNotChangingForm');
+
+    const ncCode = document.getElementById('nc_code');
+    const ncItem = document.getElementById('nc_item');
+    const ncPacks = document.getElementById('nc_packs');
+    const ncWeight = document.getElementById('nc_weight');
+    const ncGrnNo = document.getElementById('nc_grn_no');
+
+    // Show the update form, hide create form
+    btn.addEventListener('click', function() {
+        createForm.style.display = 'none';
+        updateForm.style.display = 'block';
+    });
+
+    // Populate fields when code selected
+    ncCode.addEventListener('change', function() {
+        const selected = this.selectedOptions[0];
+        const itemCode = selected.dataset.itemCode || '';
+        const itemName = selected.dataset.itemName || '';
+        const packs = selected.dataset.packs || '';
+        const weight = selected.dataset.weight || '';
+        const grnNo = selected.dataset.grnNo || '';
+
+        ncItem.value = itemCode + ' - ' + itemName;
+        ncPacks.value = packs;
+        ncWeight.value = weight;
+        ncGrnNo.value = grnNo;
+    });
+});
+</script>
+
 
 @endsection

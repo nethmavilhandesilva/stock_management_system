@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GrnEntry; // Make sure this is correctly pointing to your GrnEntry model
 use App\Models\Supplier;
 use App\Models\Sale;
+use App\Models\Item;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,46 +31,110 @@ class SalesEntryController extends Controller
      * Now fetches ALL sales records, as none are removed from display.
      * The 'Processed' column is an internal flag, not a display filter.
      */
-    public function create()
-    {
-        $suppliers = Supplier::all();
-        $items = GrnEntry::select('item_name', 'item_code', 'code')
-            ->where('is_hidden', 0) // Add the condition here
-            ->distinct()
-            ->get();
-        $entries = GrnEntry::where('is_hidden', 0)->get();
-
-        // Fetch ALL sales records to display
-        $sales = Sale::where('Processed', 'N')->get();
-        $customers = Customer::all();
-        $totalSum = $sales->sum('total'); // Sum will now be for all displayed sales
-        $unprocessedSales = Sale::whereIn('Processed', ['Y', 'N']) // Include both processed and unprocessed
-            ->get();
-        $billDate = Setting::value('value');
-
-        $salesPrinted = Sale::where('bill_printed', 'Y')
-            ->orderBy('created_at', 'desc')
-            ->orderBy('bill_no') // Or ->orderBy('created_at') for chronological order
-            ->get()
-            ->groupBy('customer_code');
-        $totalUnprocessedSum = $unprocessedSales->sum('total');
-        $salesNotPrinted = Sale::where('bill_printed', 'N')
-            ->orderBy('customer_code')
-            ->get()
-            ->groupBy('customer_code');
-
-        // Calculate total for unprocessed sales
-        $totalUnprintedSum = Sale::where('bill_printed', 'N')->sum('total');
-        $lastDayStartedSetting = Setting::where('key', 'last_day_started_date')->first();
-        $lastDayStartedDate = $lastDayStartedSetting ? Carbon::parse($lastDayStartedSetting->value) : null;
-
-        $nextDay = $lastDayStartedDate ? $lastDayStartedDate->addDay() : Carbon::now();
-        $codes = Sale::select('code')
-            ->distinct()
-            ->orderBy('code')
-            ->get();
-        return view('dashboard', compact('suppliers', 'items', 'entries', 'sales', 'customers', 'totalSum', 'unprocessedSales', 'salesPrinted', 'totalUnprocessedSum', 'salesNotPrinted', 'totalUnprintedSum', 'nextDay', 'codes', 'billDate'));
+   public function create()
+{
+    $suppliers = Supplier::all();
+    $items = GrnEntry::select('item_name', 'item_code', 'code')
+        ->where('is_hidden', 0) // Add the condition here
+        ->distinct()
+        ->get();
+    $entries = GrnEntry::where('is_hidden', 0)->get();
+    
+    // Fetch all items. We only need the 'no' (item code) and 'pack_cost' columns.
+    $itemsArray = Item::select('no', 'pack_cost')->get();
+    
+    // Create a lookup array for item pack costs
+    $itemPackCosts = [];
+    foreach ($itemsArray as $item) {
+        $itemPackCosts[$item->no] = $item->pack_cost;
     }
+
+    // Fetch ALL sales records to display
+    $sales = Sale::where('Processed', 'N')->get();
+    
+    // Add pack_cost to each sale
+    foreach ($sales as $sale) {
+        $sale->pack_cost = $itemPackCosts[$sale->item_code] ?? 0;
+    }
+    
+    $customers = Customer::all();
+    $totalSum = $sales->sum('total'); // Sum will now be for all displayed sales
+    
+    $unprocessedSales = Sale::whereIn('Processed', ['Y', 'N']) // Include both processed and unprocessed
+        ->get();
+    
+    // Add pack_cost to each unprocessed sale
+    foreach ($unprocessedSales as $sale) {
+        $sale->pack_cost = $itemPackCosts[$sale->item_code] ?? 0;
+    }
+    
+    $billDate = Setting::value('value');
+
+    $salesPrinted = Sale::where('bill_printed', 'Y')
+        ->orderBy('created_at', 'desc')
+        ->orderBy('bill_no') // Or ->orderBy('created_at') for chronological order
+        ->get()
+        ->groupBy('customer_code');
+    
+    // Add pack_cost to each printed sale
+    foreach ($salesPrinted as $customerSales) {
+        foreach ($customerSales as $sale) {
+            $sale->pack_cost = $itemPackCosts[$sale->item_code] ?? 0;
+        }
+    }
+    
+    $totalUnprocessedSum = $unprocessedSales->sum('total');
+    
+    $salesNotPrinted = Sale::where('bill_printed', 'N')
+        ->orderBy('customer_code')
+        ->get()
+        ->groupBy('customer_code');
+    
+    // Add pack_cost to each not printed sale
+    foreach ($salesNotPrinted as $customerSales) {
+        foreach ($customerSales as $sale) {
+            $sale->pack_cost = $itemPackCosts[$sale->item_code] ?? 0;
+        }
+    }
+
+    // Calculate total for unprocessed sales
+    $totalUnprintedSum = Sale::where('bill_printed', 'N')->sum('total');
+    
+    $lastDayStartedSetting = Setting::where('key', 'last_day_started_date')->first();
+    $lastDayStartedDate = $lastDayStartedSetting ? Carbon::parse($lastDayStartedSetting->value) : null;
+
+    $nextDay = $lastDayStartedDate ? $lastDayStartedDate->addDay() : Carbon::now();
+    
+    $codes = Sale::select('code')
+        ->distinct()
+        ->orderBy('code')
+        ->get();
+    
+    // For $salesArray, add pack_cost to each sale
+    $salesArray = Sale::all();
+    foreach ($salesArray as $sale) {
+        $sale->pack_cost = $itemPackCosts[$sale->item_code] ?? 0;
+    }
+
+    return view('dashboard', compact(
+        'suppliers', 
+        'items', 
+        'entries', 
+        'sales', 
+        'customers', 
+        'totalSum', 
+        'unprocessedSales', 
+        'salesPrinted', 
+        'totalUnprocessedSum', 
+        'salesNotPrinted', 
+        'totalUnprintedSum', 
+        'nextDay', 
+        'codes', 
+        'billDate',
+        'salesArray',
+        'itemsArray'
+    ));
+}
 
     public function store(Request $request)
     {
@@ -1059,7 +1124,20 @@ class SalesEntryController extends Controller
 
     return redirect()->back()->with('success', 'Balance updated successfully!');
 }
+public function showSales()
+    {
+        // Fetch all sales records. Adjust this query as needed for filtering.
+        $salesArray = Sale::all(); 
 
+        // Fetch all items. We only need the 'no' (item code) and 'pack_cost' columns.
+        $itemsArray = Item::select('no', 'pack_cost')->get();
+
+        // Pass both arrays to the sales view.
+        return view('dashboard', [
+            'salesArray' => $salesArray,
+            'itemsArray' => $itemsArray
+        ]);
+    }
 }
 
 

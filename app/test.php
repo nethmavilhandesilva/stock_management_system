@@ -2771,7 +2771,7 @@ document.getElementById('f5Button')?.addEventListener('click', function() {
 
                            $('#mainTotalSalesValue').text(totalSalesValue.toFixed(2));
                             $('#mainTotalSalesValueBottom').text(totalSalesValue.toFixed(2));
-                            console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2));
+                           
 
                         }
 

@@ -85,6 +85,13 @@
                         <span class="text-white">GRN</span>
                     </a>
                 </li>
+                 <li class="nav-item">
+                    <a href="{{ route('grn.updateform') }}"
+                        class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('grn.create') ? 'active' : '' }}">
+                        <span class="material-icons me-1" style="font-size:1.1em;">receipt_long</span>
+                        <span class="text-white">GRN</span>
+                    </a>
+                </li>
             </ul>
 
             {{-- Day Start Process and Logout on the right --}}
@@ -2833,7 +2840,7 @@ document.getElementById('printButton').addEventListener('click', function () {
                         console.log("Initial allSalesData (for default table view):", allSalesData);
 
 
-                 function populateMainSalesTable(salesArray) {
+               function populateMainSalesTable(salesArray) {
     console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
 
     // Create a fresh DEEP copy of the array to ensure reactivity
@@ -2851,12 +2858,12 @@ document.getElementById('printButton').addEventListener('click', function () {
     mainSalesTableBodyElement.innerHTML = '';
 
     let totalSalesValue = 0;
+    let totalPackCostValue = 0;
 
     if (salesArray.length === 0) {
         const noRecordsRow = document.createElement('tr');
         noRecordsRow.innerHTML = '<td colspan="8" class="text-center">No sales records found for this selection.</td>';
         mainSalesTableBodyElement.appendChild(noRecordsRow);
-        totalSalesValue = 0;
     } else {
         salesArray.forEach(sale => {
             const newRow = document.createElement('tr');
@@ -2886,10 +2893,16 @@ document.getElementById('printButton').addEventListener('click', function () {
             const total = sale.total !== null && sale.total !== undefined
                 ? parseFloat(sale.total).toFixed(2)
                 : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
+                
+            // Get pack cost from the sale object (should be added by server)
+            const packCost = sale.pack_cost !== null && sale.pack_cost !== undefined
+                ? parseFloat(sale.pack_cost)
+                : 0;
+                
+            const packCostValue = packs * packCost;
 
-            // Debug log
             console.log(
-                `Sale ID ${sale.id}: weight=${weight}, packs=${packs}, price_per_kg=${pricePerKg}, total=${total}`
+                `Sale ID ${sale.id}: weight=${weight}, packs=${packs}, price_per_kg=${pricePerKg}, total=${total}, pack_cost=${packCost}, packCostValue=${packCostValue}`
             );
 
             newRow.innerHTML = `
@@ -2899,10 +2912,12 @@ document.getElementById('printButton').addEventListener('click', function () {
                 <td data-field="price_per_kg">${pricePerKg}</td>
                 <td data-field="total">${total}</td>
                 <td data-field="packs">${packs}</td>
+               
             `;
 
             mainSalesTableBodyElement.appendChild(newRow);
             totalSalesValue += parseFloat(total);
+            totalPackCostValue += packCostValue;
         });
     }
 
@@ -2915,20 +2930,22 @@ document.getElementById('printButton').addEventListener('click', function () {
             const itemName = row.querySelector('td[data-field="item_name"]')?.textContent.trim() || '';
             const weight = parseFloat(row.querySelector('td[data-field="weight"]')?.textContent) || 0;
             const packs = parseInt(row.querySelector('td[data-field="packs"]')?.textContent) || 0;
+            const packCostValue = parseFloat(row.querySelector('td[data-field="pack_cost_value"]')?.textContent) || 0;
 
             if (!itemGroups[itemName]) {
-                itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+                itemGroups[itemName] = { totalWeight: 0, totalPacks: 0, totalPackCost: 0 };
             }
 
             itemGroups[itemName].totalWeight += weight;
             itemGroups[itemName].totalPacks += packs;
+            itemGroups[itemName].totalPackCost += packCostValue;
         });
 
         let summaryHtml = '<div style="font-size: 0.9rem; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 1rem;">';
         for (const [itemName, totals] of Object.entries(itemGroups)) {
             summaryHtml += `
                 <div style="padding: 0.25rem 0.5rem; border-radius: 0.5rem; background-color: #f3f4f6; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-size: 0.8rem;">
-                    <strong>${itemName}</strong>: බර (kg) = ${totals.totalWeight.toFixed(2)}, මලු = ${totals.totalPacks}
+                    <strong>${itemName}</strong>: බර (kg) = ${totals.totalWeight.toFixed(2)}, මලු = ${totals.totalPacks}, පැක් අයිතම වටිනාකම = ${totals.totalPackCost.toFixed(2)}
                 </div>
             `;
         }
@@ -2942,11 +2959,14 @@ document.getElementById('printButton').addEventListener('click', function () {
 
     displayItemSums();
 
-    $('#mainTotalSalesValue').text(totalSalesValue.toFixed(2));
-    $('#mainTotalSalesValueBottom').text(totalSalesValue.toFixed(2));
-    console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2));
+    // Calculate the combined total (sales value + pack cost value)
+    const combinedTotal = totalSalesValue + totalPackCostValue;
+    
+    $('#mainTotalSalesValue').text(combinedTotal.toFixed(2));
+    $('#mainTotalSalesValueBottom').text(combinedTotal.toFixed(2));
+    
+    console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2), "Total pack cost value:", totalPackCostValue.toFixed(2), "Combined total:", combinedTotal.toFixed(2));
 }
-
 // Call initially with all data
 populateMainSalesTable(allSalesData);
 

@@ -164,5 +164,7 @@ Route::get('/get-user-ip/{user_id}', function ($user_id) {
         'ip_address' => $user?->ip_address ?? null,
     ]);
 })->name('get-user-ip');
-   
+//new  GRN TABLE
+Route::post('/grn/store2', [GrnEntryController::class, 'store2'])->name('grn.store3');
+Route::get('/grn/update/form', [GrnEntryController::class, 'showupdateform'])->name('grn.updateform'); // page with form + table
 require __DIR__.'/auth.php';
