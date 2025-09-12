@@ -2280,7 +2280,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             });
                         }
 
-                   let globalLoanAmount = 0;
+                  let globalLoanAmount = 0;
+window.globalTotalPackCostValue = window.globalTotalPackCostValue || 0; // ✅ keep pack cost global
 
 // Reusable print function
 function printReceipt(html, customerName) {
@@ -2445,9 +2446,14 @@ async function handlePrint() {
             itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
         });
 
+        // ✅ Add pack cost
+        const packCostTotal = window.globalTotalPackCostValue || 0;
+
         let totalAmountRowHtmlF1 = '';
-        if (globalLoanAmount > 0) {
-            totalAmountRowHtmlF1 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
+        if (globalLoanAmount > 0 || packCostTotal > 0) {
+            totalAmountRowHtmlF1 = `<tr><td colspan="3">මුලු එකතුව :</td>
+<td style="text-align:right;font-weight:bold;">
+${(globalLoanAmount + totalAmountSum + packCostTotal).toFixed(2)}</td></tr>`;
         }
 
         const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
@@ -2458,58 +2464,30 @@ async function handlePrint() {
     </div>
     <div style="text-align:left;margin-bottom:5px;">
         <table style="width:100%;font-size:10px;border-collapse:collapse;">
-            <tr>
-                <td colspan="2">දිනය : ${date}</td>
-                <td colspan="2" style="text-align:right;">${time}</td>
-            </tr>
-            <tr>
-                <td colspan="4">දුර : ${mobile}</td>
-            </tr>
-            <tr>
-                <td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td>
-                <td colspan="2" style="text-align:right;">
-                    <strong style="font-size: 1.8em;">${customerName.toUpperCase()}</strong>
-                </td>
-            </tr>
+            <tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr>
+            <tr><td colspan="4">දුර : ${mobile}</td></tr>
+            <tr><td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td>
+            <td colspan="2" style="text-align:right;"><strong style="font-size: 1.8em;">${customerName.toUpperCase()}</strong></td></tr>
         </table>
     </div>
     <hr>
     <table style="width:100%;font-size:10px;border-collapse:collapse;">
-        <thead style="font-size: 1.3em;">
-            <tr>
-                <th>වර්ගය<br>මලු</th>
-                <th>කිලෝ</th>
-                <th>මිල</th>
-                <th>අගය</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="4">
-                    <hr style="height:1px;background-color:#000;">
-                </td>
-            </tr>
-            ${itemsHtml}
-        </tbody>
+        <thead style="font-size: 1.3em;"><tr><th>වර්ගය<br>මලු</th><th>කිලෝ</th><th>මිල</th><th>අගය</th></tr></thead>
+        <tbody><tr><td colspan="4"><hr style="height:1px;background-color:#000;"></td></tr>${itemsHtml}</tbody>
     </table>
     <hr>
     <table style="width:100%;font-size:10px;border-collapse:collapse;">
-        <tr>
-            <td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td>
-            <td style="text-align:right;font-weight:bold;font-size:1.8em;">
-                ${totalAmountSum.toFixed(2)}
-            </td>
-        </tr>
+        <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | පැක් වියදම :</td>
+            <td style="text-align:right;font-weight:bold;">${packCostTotal.toFixed(2)}</td></tr>
+        <tr><td colspan="3">අගය :</td>
+            <td style="text-align:right;font-weight:bold;font-size:1.8em;">${totalAmountSum.toFixed(2)}</td></tr>
         ${totalAmountRowHtmlF1}
     </table>
     <hr>
     <div>${itemSummaryHtml}</div>
-    <div style="text-align:center;margin-top:10px;">
-        <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-        <p>නැවත භාර ගනු නොලැබේ</p>
-    </div>
+    <div style="text-align:center;margin-top:10px;"><p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p><p>නැවත භාර ගනු නොලැබේ</p></div>
 </div>`;
-        
+
         // Create the duplicate HTML with "COPY" at the top
         const duplicateHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>` + receiptHtml;
 
@@ -2582,7 +2560,6 @@ async function handleF5() {
     <td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
     <td style="text-align:right;">${sale.total.toFixed(2)}</td>
 </tr>`;
-
     }).join('');
 
     let itemSummaryHtml = '';
@@ -2603,9 +2580,13 @@ async function handleF5() {
         const time = new Date().toLocaleTimeString();
         const billNo = 'N/A';
 
+        // ✅ Add pack cost
+        const packCostTotal = window.globalTotalPackCostValue || 0;
+
         let totalAmountRowHtmlF5 = '';
-        if (globalLoanAmount > 0) {
-            totalAmountRowHtmlF5 = `<tr><td colspan="3">මුලු එකතුව :</td><td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum).toFixed(2)}</td></tr>`;
+        if (globalLoanAmount > 0 || packCostTotal > 0) {
+            totalAmountRowHtmlF5 = `<tr><td colspan="3">මුලු එකතුව :</td>
+<td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum + packCostTotal).toFixed(2)}</td></tr>`;
         }
 
         const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
@@ -2628,7 +2609,10 @@ async function handleF5() {
                 </table>
                 <hr>
                 <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                    <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | අගය :</td><td style="text-align:right;font-weight:bold;">${totalAmountSum.toFixed(2)}</td></tr>
+                    <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | පැක් වියදම :</td>
+                        <td style="text-align:right;font-weight:bold;">${packCostTotal.toFixed(2)}</td></tr>
+                    <tr><td colspan="3">අගය :</td>
+                        <td style="text-align:right;font-weight:bold;">${totalAmountSum.toFixed(2)}</td></tr>
                     ${totalAmountRowHtmlF5}
                 </table>
                 <div>${itemSummaryHtml}</div>
@@ -2637,7 +2621,7 @@ async function handleF5() {
                     <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
                     <p>නැවත භාර ගනු නොලැබේ</p>
                 </div>
-            </div>`;
+`;
 
         // Only email (no print)
         sendReceiptEmail(receiptHtml, customerName, customerEmail);
@@ -2840,7 +2824,7 @@ document.getElementById('printButton').addEventListener('click', function () {
                         console.log("Initial allSalesData (for default table view):", allSalesData);
 
 
-               function populateMainSalesTable(salesArray) {
+             function populateMainSalesTable(salesArray) {
     console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
 
     // Create a fresh DEEP copy of the array to ensure reactivity
@@ -2876,7 +2860,6 @@ document.getElementById('printButton').addEventListener('click', function () {
             const itemCode = sale.item_code || 'N/A';
             const itemName = sale.item_name || 'N/A';
 
-            // Always take values directly from server response
             const weight = sale.weight !== null && sale.weight !== undefined
                 ? parseFloat(sale.weight).toFixed(2)
                 : '0.00';
@@ -2889,16 +2872,14 @@ document.getElementById('printButton').addEventListener('click', function () {
                 ? parseInt(sale.packs)
                 : 0;
 
-            // Prefer server total, fallback only if missing
             const total = sale.total !== null && sale.total !== undefined
                 ? parseFloat(sale.total).toFixed(2)
                 : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
-                
-            // Get pack cost from the sale object (should be added by server)
+
             const packCost = sale.pack_cost !== null && sale.pack_cost !== undefined
                 ? parseFloat(sale.pack_cost)
                 : 0;
-                
+
             const packCostValue = packs * packCost;
 
             console.log(
@@ -2912,7 +2893,7 @@ document.getElementById('printButton').addEventListener('click', function () {
                 <td data-field="price_per_kg">${pricePerKg}</td>
                 <td data-field="total">${total}</td>
                 <td data-field="packs">${packs}</td>
-               
+                <td data-field="pack_cost_value" style="display:none;">${packCostValue.toFixed(2)}</td>
             `;
 
             mainSalesTableBodyElement.appendChild(newRow);
@@ -2959,14 +2940,18 @@ document.getElementById('printButton').addEventListener('click', function () {
 
     displayItemSums();
 
-    // Calculate the combined total (sales value + pack cost value)
+    // Combined totals
     const combinedTotal = totalSalesValue + totalPackCostValue;
-    
+
+    // ✅ Make pack cost globally available for receipt
+    window.globalTotalPackCostValue = totalPackCostValue;
+
     $('#mainTotalSalesValue').text(combinedTotal.toFixed(2));
     $('#mainTotalSalesValueBottom').text(combinedTotal.toFixed(2));
-    
+
     console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2), "Total pack cost value:", totalPackCostValue.toFixed(2), "Combined total:", combinedTotal.toFixed(2));
 }
+
 // Call initially with all data
 populateMainSalesTable(allSalesData);
 
