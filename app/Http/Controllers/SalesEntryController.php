@@ -41,12 +41,12 @@ class SalesEntryController extends Controller
     $entries = GrnEntry::where('is_hidden', 0)->get();
     
     // Fetch all items. We only need the 'no' (item code) and 'pack_cost' columns.
-    $itemsArray = Item::select('no', 'pack_cost')->get();
+    $itemsArray = Item::select('no', 'pack_due')->get();
     
     // Create a lookup array for item pack costs
     $itemPackCosts = [];
     foreach ($itemsArray as $item) {
-        $itemPackCosts[$item->no] = $item->pack_cost;
+        $itemPackCosts[$item->no] = $item->pack_due;
     }
 
     // Fetch ALL sales records to display
@@ -54,7 +54,7 @@ class SalesEntryController extends Controller
     
     // Add pack_cost to each sale
     foreach ($sales as $sale) {
-        $sale->pack_cost = $itemPackCosts[$sale->item_code] ?? 0;
+        $sale->pack_due = $itemPackCosts[$sale->item_code] ?? 0;
     }
     
     $customers = Customer::all();
@@ -65,7 +65,7 @@ class SalesEntryController extends Controller
     
     // Add pack_cost to each unprocessed sale
     foreach ($unprocessedSales as $sale) {
-        $sale->pack_cost = $itemPackCosts[$sale->item_code] ?? 0;
+        $sale->pack_due = $itemPackCosts[$sale->item_code] ?? 0;
     }
     
     $billDate = Setting::value('value');
@@ -79,7 +79,7 @@ class SalesEntryController extends Controller
     // Add pack_cost to each printed sale
     foreach ($salesPrinted as $customerSales) {
         foreach ($customerSales as $sale) {
-            $sale->pack_cost = $itemPackCosts[$sale->item_code] ?? 0;
+            $sale->pack_due = $itemPackCosts[$sale->item_code] ?? 0;
         }
     }
     
@@ -93,7 +93,7 @@ class SalesEntryController extends Controller
     // Add pack_cost to each not printed sale
     foreach ($salesNotPrinted as $customerSales) {
         foreach ($customerSales as $sale) {
-            $sale->pack_cost = $itemPackCosts[$sale->item_code] ?? 0;
+            $sale->pack_due = $itemPackCosts[$sale->item_code] ?? 0;
         }
     }
 
@@ -113,7 +113,7 @@ class SalesEntryController extends Controller
     // For $salesArray, add pack_cost to each sale
     $salesArray = Sale::all();
     foreach ($salesArray as $sale) {
-        $sale->pack_cost = $itemPackCosts[$sale->item_code] ?? 0;
+        $sale->pack_due = $itemPackCosts[$sale->item_code] ?? 0;
     }
 
     return view('dashboard', compact(
@@ -1130,7 +1130,7 @@ public function showSales()
         $salesArray = Sale::all(); 
 
         // Fetch all items. We only need the 'no' (item code) and 'pack_cost' columns.
-        $itemsArray = Item::select('no', 'pack_cost')->get();
+        $itemsArray = Item::select('no', 'pack_due')->get();
 
         // Pass both arrays to the sales view.
         return view('dashboard', [

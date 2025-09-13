@@ -2876,8 +2876,8 @@ document.getElementById('printButton').addEventListener('click', function () {
                 ? parseFloat(sale.total).toFixed(2)
                 : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
 
-            const packCost = sale.pack_cost !== null && sale.pack_cost !== undefined
-                ? parseFloat(sale.pack_cost)
+            const packCost = sale.pack_due !== null && sale.pack_due !== undefined
+                ? parseFloat(sale.pack_due)
                 : 0;
 
             const packCostValue = packs * packCost;
