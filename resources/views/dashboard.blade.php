@@ -1028,7 +1028,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         grnPriceInput.val('');
                         grnPriceContainer.hide();
-                        alert('No GRN entry found or show_status != 1');
+                        
                     }
                 })
                 .catch(error => {
@@ -1088,6 +1088,149 @@ document.addEventListener('DOMContentLoaded', function() {
                             </button>
                         </div>
                     </form>
+             <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const salesEntryForm = document.getElementById('salesEntryForm');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // Initialize or get the global sales data array
+    // This assumes the initial data is already set on page load.
+    // If not, you should initialize it as an empty array: window.allSalesData = [];
+    if (typeof window.allSalesData === 'undefined') {
+        window.allSalesData = [];
+    }
+    
+    // Function to update the sales table
+    function updateSalesTable(saleData) {
+        const tableBody = document.getElementById('mainSalesTableBody');
+        const newRow = document.createElement('tr');
+        newRow.setAttribute('data-id', saleData.id);
+         newRow.setAttribute('data-Date', saleData.Date);
+        newRow.setAttribute('data-customer-code', saleData.customer_code);
+     
+
+        newRow.innerHTML = `
+            <td>${saleData.customer_code}</td>
+            <td>${saleData.item_name}</td>
+           
+            <td>${parseFloat(saleData.weight).toFixed(2)}</td>
+            <td>${parseFloat(saleData.price_per_kg).toFixed(2)}</td>
+            <td>${parseFloat(saleData.total).toFixed(2)}</td>
+            <td>${saleData.packs}</td>
+        `;
+
+        tableBody.appendChild(newRow);
+
+        // Update total sales value
+        updateTotalSalesValue();
+    }
+
+    // Function to update total sales value
+    function updateTotalSalesValue() {
+        let total = 0;
+        document.querySelectorAll('#mainSalesTableBody tr').forEach(row => {
+            const totalCell = row.cells[4]; // 5th column = total
+            if (totalCell) {
+                total += parseFloat(totalCell.textContent) || 0;
+            }
+        });
+
+        document.getElementById('mainTotalSalesValue').textContent = total.toFixed(2);
+        document.getElementById('mainTotalSalesValueBottom').textContent = total.toFixed(2);
+    }
+
+    // Handle form submission via AJAX
+    salesEntryForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const submitButton = salesEntryForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.innerHTML = 'Processing...';
+        submitButton.disabled = true;
+
+        const formData = new FormData(salesEntryForm);
+
+        fetch(salesEntryForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add the new sale data to the global array
+                window.allSalesData.push(data.data);
+
+                // Update table
+                updateSalesTable(data.data);
+
+                // Preserve customer info
+                const customerCode = document.getElementById('new_customer_code').value;
+                const customerName = document.getElementById('customer_name_hidden').value;
+
+                salesEntryForm.reset();
+
+                document.getElementById('new_customer_code').value = customerCode;
+                document.getElementById('customer_name_hidden').value = customerName;
+
+                // Reset GRN select
+                $('#grn_select').val(null).trigger('change');
+                document.getElementById('grn_entry_code').value = '';
+
+                // Hide GRN price field
+                document.getElementById('grn_price_container').style.display = 'none';
+                document.getElementById('grn_price').value = '';
+
+                // Clear remaining weight/packs
+                document.getElementById('remaining_weight_display').textContent = 'BW: 0.00 kg';
+                document.getElementById('remaining_packs_display').textContent = 'BP: 0';
+
+                // Open GRN select dropdown
+                setTimeout(() => {
+                    // Open the Select2 dropdown
+                    $('#grn_select').select2('open');
+
+                    // Wait a tick and focus the search input
+                    setTimeout(() => {
+                        const searchBox = document.querySelector('.select2-container--open .select2-search__field');
+                        if (searchBox) {
+                            searchBox.focus();
+                            // Optional: move cursor to end
+                            searchBox.setSelectionRange(searchBox.value.length, searchBox.value.length);
+                        }
+                    }, 50); // small delay to ensure dropdown is rendered
+                }, 200);
+
+
+            } else {
+                // Handle error
+                console.error('Submission failed:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Handle network or other errors
+        })
+        .finally(() => {
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        });
+    });
+
+    // Ensure CSRF meta exists
+    if (!document.querySelector('meta[name="csrf-token"]')) {
+        const meta = document.createElement('meta');
+        meta.name = 'csrf-token';
+        meta.content = '{{ csrf_token() }}';
+        document.head.appendChild(meta);
+    }
+});
+</script>
+
+      
 
                     {{-- Main Sales Table - ALWAYS RENDERED --}}
                     <div class="mt-0">
@@ -2036,7 +2179,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $selection.addClass('select2-black-text');
             $selection.css('text-align', 'center');
 
-            $selection.html(`${code || ''}(කිලෝ,: ${originalWeight || 0} /මලු: ${originalPacks || ''} /දිනය: ${txnDate || ''})`);
+            $selection.html(`${code || ''}(කිලෝ,: ${originalWeight || ''} /මලු: ${originalPacks || ''} /දිනය: ${txnDate || ''})`);
 
             return $selection;
         }
@@ -2810,26 +2953,29 @@ document.getElementById('printButton').addEventListener('click', function () {
                         });
 
                         // Store the PHP data in JavaScript variables for easier access
-                        const printedSalesData = @json($salesPrinted->toArray());
-                        const unprintedSalesData = @json($salesNotPrinted->toArray());
-                        // allSalesData is the initial data loaded for the main table
-                        const allSalesData = @json($sales->toArray());
+                           // This is the initial data loaded from the server
+window.allSalesData = @json($sales->toArray());
+const printedSalesData = @json($salesPrinted->toArray());
+const unprintedSalesData = @json($salesNotPrinted->toArray());
+const allSalesData = @json($sales->toArray());
+window.allSalesData = allSalesData;
 
-                        // NEW: Variable to hold the currently displayed sales data in the main table
-                        let currentDisplayedSalesData = [];
+// Local array for currently displayed sales data (modifiable)
+let currentDisplayedSalesData = [];
 
 
                         console.log("Initial printedSalesData:", printedSalesData);
                         console.log("Initial unprintedSalesData:", unprintedSalesData);
-                        console.log("Initial allSalesData (for default table view):", allSalesData);
+                         console.log("all sales:", allSalesData);
+                         
+                   
 
 
              function populateMainSalesTable(salesArray) {
-    console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
+   console.log("salesArray snapshot:", JSON.parse(JSON.stringify(salesArray)));
+currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
+console.log("currentDisplayedSalesData snapshot:", JSON.parse(JSON.stringify(currentDisplayedSalesData)));
 
-    // Create a fresh DEEP copy of the array to ensure reactivity
-    currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
-    console.log("currentDisplayedSalesData updated to:", currentDisplayedSalesData);
 
     const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
 
@@ -3065,7 +3211,7 @@ function resetForm() {
     console.log("Resetting form...");
     salesEntryForm.reset();
     saleIdField.value = '';
-    newCustomerCodeField.readOnly = false;
+   
     $('#customer_code_select').val(null).trigger('change.select2');
     
     // Re-enable GRN select when resetting form
@@ -3147,9 +3293,9 @@ $(document).ready(function () {
                 success: function (response) {
                     if (response.length > 0) {
                         populateMainSalesTable(response);
-                        populateFormForEdit(response[0]);
+                      
                     } else {
-                        tableBody.html('<tr><td colspan="7" class="text-center">No unprinted sales records found for this customer.</td></tr>');
+                        tableBody.html('');
                     }
                 },
                 error: function (xhr) {
@@ -3380,6 +3526,7 @@ deleteSalesEntryBtn.addEventListener('click', function () {
             
             // Repopulate table
             populateMainSalesTable(currentDisplayedSalesData);
+             const preservedCustomerCode = newCustomerCodeField.value;
             
             // Reset form
             resetForm();
@@ -3404,49 +3551,63 @@ deleteSalesEntryBtn.addEventListener('click', function () {
 
                         resetForm();
 
-                        $('.customer-header').on('click', function () {
-                            console.log("Customer header clicked!");
+                      $('.customer-header').on('click', function () {
+    console.log("Customer header clicked!");
 
-                            const customerCode = $(this).data('customer-code');
-                            const billType = $(this).data('bill-type');
-                            const billNo = $(this).data('bill-no'); // This will now correctly have a value or ''
+    const customerCode = $(this).data('customer-code');
+    const billType = $(this).data('bill-type');
+    const billNo = $(this).data('bill-no');
 
-                            console.log("Clicked Customer Code:", customerCode);
-                            console.log("Clicked Bill Type:", billType);
-                            console.log("Clicked Bill No:", billNo);
-                            newCustomerCodeField.value = customerCode;
+    console.log("Clicked Customer Code:", customerCode);
+    console.log("Clicked Bill Type:", billType);
+    console.log("Clicked Bill No:", billNo);
 
-                            let salesToDisplay = [];
+    newCustomerCodeField.value = customerCode;
 
-                            if (billType === 'printed') {
-                                console.log("Attempting to filter PRINTED sales...");
-                                if (printedSalesData[customerCode] && Array.isArray(printedSalesData[customerCode])) {
-                                    salesToDisplay = printedSalesData[customerCode].filter(sale => {
-                                        // Ensure both are treated as strings for comparison
-                                        return String(sale.bill_no) === String(billNo);
-                                    });
-                                    console.log("Printed sales data for customerCode:", printedSalesData[customerCode]);
-                                } else {
-                                    console.log("No printed sales data found or not an array for customerCode:",
-                                        customerCode);
-                                }
-                            } else if (billType === 'unprinted') {
-                                console.log("Attempting to filter UNPRINTED sales...");
-                                if (unprintedSalesData[customerCode] && Array.isArray(unprintedSalesData[customerCode])) {
-                                    salesToDisplay = unprintedSalesData[customerCode];
-                                    console.log("Unprinted sales data for customerCode:", unprintedSalesData[
-                                        customerCode]);
-                                } else {
-                                    console.log("No unprinted sales data found or not an array for customerCode:",
-                                        customerCode);
-                                }
-                            } else {
-                                console.log("Unknown billType:", billType);
-                            }
+    let salesToDisplay = [];
 
-                            console.log("Sales to Display after filter:", salesToDisplay);
-                            populateMainSalesTable(salesToDisplay);
-                        });
+    if (billType === 'printed') {
+        console.log("Attempting to filter PRINTED sales...");
+        if (printedSalesData[customerCode] && Array.isArray(printedSalesData[customerCode])) {
+            salesToDisplay = printedSalesData[customerCode].filter(sale => {
+                return String(sale.bill_no) === String(billNo);
+            });
+            console.log("Printed sales data for customerCode:", printedSalesData[customerCode]);
+        } else {
+            console.log("No printed sales data found or not an array for customerCode:", customerCode);
+        }
+    } else if (billType === 'unprinted') {
+        console.log("Attempting to filter UNPRINTED sales...");
+        if (unprintedSalesData[customerCode] && Array.isArray(unprintedSalesData[customerCode])) {
+            salesToDisplay = unprintedSalesData[customerCode];
+            console.log("Unprinted sales data for customerCode:", unprintedSalesData[customerCode]);
+        } else {
+            console.log("No unprinted sales data found or not an array for customerCode:", customerCode);
+        }
+    } else {
+        console.log("Unknown billType:", billType);
+    }
+
+    console.log("Sales to Display after filter:", salesToDisplay);
+
+    // Populate the sales table
+    populateMainSalesTable(salesToDisplay);
+
+    // --- Focus GRN Select2 after populating table ---
+    function focusGrnSelect() {
+        $('#grn_select').off('select2:open').on('select2:open', function() {
+            const searchBox = document.querySelector('.select2-container--open .select2-search__field');
+            if (searchBox) {
+                searchBox.focus();
+                searchBox.setSelectionRange(searchBox.value.length, searchBox.value.length);
+            }
+        });
+        $('#grn_select').select2('open');
+    }
+
+    // Call the focus function
+    focusGrnSelect();
+});
 
 
                         $(document).on('click', '.print-bill-btn', function () {

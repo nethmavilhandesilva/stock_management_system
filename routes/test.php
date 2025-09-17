@@ -415,41 +415,52 @@
             background-color: #111439ff !important;
         }
 
-        /* Select2 specific styling adjustments for smaller size */
-        .select2-container--bootstrap-5 .select2-selection--single {
-            min-height: calc(1.5em + 1rem + 2px);
-            /* Increased from 0.5rem to 1rem */
-            /* Matches form-control-sm height */
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            /* Matches form-control-sm font-size */
-            border: 1.5px solid #000000 !important;
-            /* Apply border to select2 */
-        }
+      /* ---------------------- */
+/* Select2 input text (selected option) */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #007bff !important; /* Blue text in the input box */
+    font-weight: bold !important;
+    text-align: center !important;
+    font-size: 16px !important;
+    line-height: 34px !important;
+    padding: 0 12px !important;
+}
 
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            line-height: calc(1.5em + 0.5rem + 2px);
-            padding-left: 0;
-            /* Remove default padding as it's set on the selection */
-        }
+/* Optional: red text if you want a special class */
+.select2-black-text {
+    color: #FF0000 !important;
+}
 
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-            height: calc(1.5em + 0.5rem + 2px);
-            top: 50%;
-            transform: translateY(-50%);
-        }
+/* ---------------------- */
+/* Tabular option rows */
+.grn-option-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 60px 60px 60px 60px 70px;
+    gap: 1px;
+    padding: 2px 4px;
+    align-items: center;
+    white-space: nowrap;
+    font-size: 13px;
+    color:#000000 !important; /* All options text in blue */
+    background: #fff7cc;
+}
 
-        /* Custom CSS for the tabular Select2 dropdown */
+/* Columns */
+.grn-column {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 2px;
+}
+.grn-code { font-weight: bold; text-align: left; }
+.grn-item { text-align: center; margin-left: 10px; }
+.grn-ow, .grn-op, .grn-bw, .grn-bp { text-align: right; }
+.grn-txn-date { text-align: center; }
 
-        /* Remove default padding from Select2 options to control inner spacing */
-        .select2-container--default .select2-results__option {
-            padding: 0 !important;
-        }
-
-  /* Header and Data Rows */
+/* ---------------------- */
+/* Header row styling */
 .grn-header-row {
     display: grid;
-    /* This line is adjusted to give more space to the first column */
     grid-template-columns: 1fr 1fr 60px 60px 60px 60px 70px;
     gap: 1px;
     background: #333;
@@ -458,171 +469,23 @@
     font-size: 13px;
     padding: 2px 4px;
     border-bottom: 1px solid #ccc;
-    white-space: nowrap; /* Keeps the header row on a single line for neatness */
+    white-space: nowrap;
 }
 
-/* Data rows */
-.grn-option-row {
-    display: grid;
-    /* This line is adjusted to make the first column flexible */
-    grid-template-columns: 1fr 1fr 60px 60px 60px 60px 70px;
-    gap: 1px;
-    background: #fff7cc;
-    color: #000;
-    font-size: 13px;
-    padding: 2px 4px;
-    border-bottom: 1px solid #ddd;
-    align-items: center;
-    white-space: normal; /* Allows text to wrap within the row */
+/* ---------------------- */
+/* Highlighted option when using arrow keys */
+.select2-container--default .select2-results__option--highlighted .grn-option-row {
+    background-color: #007bff !important; /* Blue highlight */
+    color: #fff !important; /* White text on highlighted row */
 }
 
-/* Column Styling */
-.grn-code {
-    font-weight: bold;
-    text-align: left;
+/* Remove default padding in Select2 options (we handle padding in .grn-option-row) */
+.select2-container--default .select2-results__option {
+    padding: 0 !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
 }
 
-.grn-item {
-    /* **UPDATED:** Aligning the text to the center */
-    text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis; /* Still want ellipsis for the Item name if it's too long */
-    /* **NEW:** Adding a margin to push content to the right */
-    margin-left: 10px; 
-}
-
-.grn-ow,
-.grn-op,
-.grn-bw,
-.grn-bp {
-    text-align: right;
-}
-
-.grn-txn-date {
-    text-align: center;
-    color: #000;
-    font-style: normal;
-}
-
-/* Header-specific alignment */
-.grn-header-row .grn-code {
-    text-align: center;
-}
-
-.grn-header-row .grn-item {
-    /* **UPDATED:** Aligning the header to the center */
-    text-align: center;
-    padding-right: 0;
-    /* **NEW:** Adding a margin to push the header to the right */
-    margin-left: 10px;
-}
-
-/* Option-specific alignment */
-.grn-option-row .grn-item {
-    /* This is now handled by the .grn-item class above, so this can be removed or kept for specificity */
-}
-
-.grn-header-row .grn-ow,
-.grn-header-row .grn-op,
-.grn-header-row .grn-bw,
-.grn-header-row .grn-bp {
-    text-align: right;
-}
-
-.grn-header-row .grn-txn-date {
-    text-align: center;
-    color: #fff;
-}
-        /* Make sure Code column text does not wrap and stays in one line */
-        .grn-code {
-            white-space: nowrap;
-            font-weight: 700;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            /* optional: show ellipsis if too long */
-        }
-
-        /* Other columns */
-        .grn-column {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Highlighted (hovered) option in Select2 dropdown */
-        .select2-container--default .select2-results__option--highlighted {
-            background-color: #007bff !important;
-            /* Blue highlight */
-            color: white !important;
-        }
-
-        /* Text color for selected option displayed in the Select2 input */
-        .select2-selection__rendered {
-            color: #333;
-            /* Default text color, overridden by .select2-black-text if present */
-        }
-
-        .select2-black-text {
-            color: #FF0000 !important;
-            text-align: center !important;
-            font-weight: bold !important;
-            font-size: 14px !important;
-            /* REMOVED: position: relative; and transform: translateY(-8px); for vertical centering */
-        }
-
-        /* Style for the main Select2 input field to match grn_display */
-        .select2-container--default .select2-selection--single {
-            height: 34px !important;
-            /* Keep the height from previous request */
-            /* Removed duplicate text-align, padding, font-size, border, border-radius as they are defined elsewhere or not needed here */
-        }
-
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 32px;
-            /* Adjusted to be slightly less than container height for better alignment */
-            top: 50%;
-            transform: translateY(-50%);
-            /* Center vertically */
-            right: 4px;
-            /* Adjust if needed */
-        }
-
-        /* Ensure search input inside dropdown (if visible) matches size */
-        .select2-search__field {
-            height: 24px !important;
-            font-size: 11px !important;
-            padding: 2px 6px !important;
-            border: 1px solid #ced4da !important;
-            border-radius: 0.25rem !important;
-        }
-
-        /* Style the placeholder option in the dropdown */
-        .select2-results__option[role=option][aria-disabled=true] {
-            color: #999;
-            text-align: center;
-            /* Grey out the placeholder option */
-        }
-
-        /* This targets the actual text display area inside the Select2 box. */
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 34px !important;
-            /* Match line-height to the height for vertical centering */
-            font-size: 16px !important;
-            /* Made text "some what big" (increased from 14px to 16px) */
-            padding: 0 12px !important;
-            /* CRITICAL CHANGE: Set top/bottom padding to 0 for vertical centering */
-            text-align: center !important;
-            /* Center the text horizontally */
-            font-weight: bold !important;
-            /* Make the text bold */
-        }
-
-        /* Optional: If you also want the options in the dropdown list to have the same font styling */
-        .select2-results__option {
-            font-size: 16px !important;
-            font-weight: bold !important;
-            /* text-align: center !important; -- This is now handled by .grn-column where appropriate for individual cells */
-        }
     </style>
     <style>
         @media print {
@@ -823,6 +686,7 @@
                                             data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
                                             data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
                                             data-txn-date="{{ $entry->txn_date }}"
+                                          data-sprice="{{ $entry->SalesKGPrice }}"
                                             data-original-weight="{{ $entry->original_weight }}"
                                             data-original-packs="{{ $entry->original_packs }}">
                                             {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
@@ -884,6 +748,7 @@
             placeholder="අයිතමයේ නම (Item Name)"
             style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
     </div>
+    
 
   <!-- Weight -->
 <div style="width: 100px;">
@@ -892,10 +757,12 @@
         value="{{ old('weight') }}" placeholder="බර (kg)" required
         style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
 
-    <small id="remaining_weight_display" class="form-text text-danger fw-bold"
-        style="font-size: 1.1rem; display: block; width: 150px; margin-top: 4px;">
-        BW: 0.00
-    </small>
+   <small id="remaining_weight_display" 
+       class="form-text text-danger fw-bold"
+       style="font-size: 1.1rem; display: block; margin-top: 4px; margin-left: -180px; text-align: left;">
+    BW: 0.00
+</small>
+
 </div>
 
 
@@ -932,7 +799,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.per_kg_price !== null) {
-                        grnPriceDisplay.text(`GRN Price: ${data.per_kg_price}`).show();
+                        grnPriceDisplay.text(`${data.per_kg_price}`).show();
                     } else {
                         grnPriceDisplay.text('').hide();
                     }
@@ -982,6 +849,33 @@ document.addEventListener('DOMContentLoaded', function() {
                                 style="display:none;">
                                 <i class="material-icons me-2">edit</i>Update Sales Entry
                             </button>
+                            <script>
+document.addEventListener('DOMContentLoaded', function () {
+    let submitted = false;
+
+    const form = document.getElementById('salesEntryForm');
+    const submitBtn = document.getElementById('addSalesEntryBtn');
+
+    form.addEventListener('submit', function (e) {
+        if (submitted) {
+            e.preventDefault(); // Block second+ submits
+            return false;
+        }
+        submitted = true;
+
+        // Optional: Disable the hidden button so Enter key won’t trigger again
+        submitBtn.disabled = true;
+    });
+
+    // Extra safety: also block Enter key repeat submissions
+    form.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && submitted) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+
                             <button type="button" class="btn btn-danger btn-sm shadow-sm" id="deleteSalesEntryBtn"
                                 style="display:none;">
                                 <i class="material-icons me-2">delete</i>Delete Sales Entry
@@ -992,6 +886,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </button>
                         </div>
                     </form>
+                    
 
                     {{-- Main Sales Table - ALWAYS RENDERED --}}
                     <div class="mt-0">
@@ -1155,17 +1050,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         </div>
-        <form action="{{ route('clear.data') }}" method="POST"
-            onsubmit="return confirm('Are you sure you want to delete all data?');">
-            @csrf
-            {{-- This is the new input field for the password --}}
-            <input type="text" id="verificationField" class="form-control form-control-sm mt-3"
-                placeholder="Enter 'nethma123' to enable" style="width: 150px;">
-            {{-- The button is initially disabled --}}
-            <button type="submit" id="deleteAllButton" class="btn btn-danger btn-sm mt-3" disabled>
-                🗑️ Delete All Sales & GRN Entries
-            </button>
-        </form>
+       
     </div>
 
 
@@ -1856,6 +1741,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // NEW: Get reference to the new item name display field
                     const itemNameDisplayFromGrn = document.getElementById('item_name_display_from_grn');
+                    const priceDisplayFromGrn = document.getElementById('price_per_kg');
 
 
                     function calculateTotal() {
@@ -1885,101 +1771,102 @@ document.addEventListener('DOMContentLoaded', function() {
                     pricePerKgField.addEventListener('input', calculateTotal);
                     calculateTotal(); // Initial calculation on page load
 
-                    $(document).ready(function () {
-                        // Initialize Select2 for GRN with custom templateResult and templateSelection
-                      $('#grn_select').select2({
-    dropdownParent: $('#grn_select').parent(),
-    placeholder: "-- Select GRN Entry --",
-    width: '100%',
-    allowClear: true,
-    minimumResultsForSearch: 0, // Set to 0 to enable search but still use templateResult
-    templateResult: function (data, container) {
-        // If it's the placeholder, loading message, or has no ID, just return the text
-        if (data.loading || !data.id) {
-            return data.text;
-        }
-
-        // Get the raw option element to access data-attributes
-        const option = $(data.element);
-
-        // Extract data from data-attributes
-        const code = option.data('code');
-        const itemName = option.data('itemName');
-        const packs = option.data('packs');
-        const weight = option.data('weight');
-        const originalWeight = option.data('originalWeight');
-        const originalPacks = option.data('originalPacks');
-        const txnDate = option.data('txnDate');
-
-        let formattedDate = '';
-        if (txnDate) {
-            const d = new Date(txnDate);
-            if (!isNaN(d)) {
-                // Get month (0-based so +1) and day
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                formattedDate = `${month}-${day}`;
+                   $(document).ready(function () {
+    // Initialize Select2 for GRN with custom templateResult and templateSelection
+    $('#grn_select').select2({
+        dropdownParent: $('#grn_select').parent(),
+        placeholder: "-- Select GRN Entry --",
+        width: '100%',
+        allowClear: true,
+        minimumResultsForSearch: 0, // Enable search
+        // Custom matcher: only show results when user types
+        matcher: function(params, data) {
+            if (!params.term || params.term.trim() === '') {
+                return null; // Hide all options if search is empty
             }
+            if (data.text.toUpperCase().indexOf(params.term.toUpperCase()) > -1) {
+                return data;
+            }
+            return null; // Hide unmatched options
+        },
+        templateResult: function (data, container) {
+            if (data.loading || !data.id) return data.text;
+
+            const option = $(data.element);
+            const code = option.data('code');
+            const itemName = option.data('itemName');
+            const packs = option.data('packs');
+            const weight = option.data('weight');
+            const originalWeight = option.data('originalWeight');
+            const originalPacks = option.data('originalPacks');
+            const txnDate = option.data('txnDate');
+
+            let formattedDate = '';
+            if (txnDate) {
+                const d = new Date(txnDate);
+                if (!isNaN(d)) {
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    formattedDate = `${month}-${day}`;
+                }
+            }
+
+            const $result = $(`
+                <div class="grn-option-row">
+                    <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
+                    <div class="grn-column grn-item">${itemName || ''}</div>
+                    <div class="grn-column grn-ow">${originalWeight || ''}</div>
+                    <div class="grn-column grn-op">${originalPacks || ''}</div>
+                    <div class="grn-column grn-bw">${weight || ''}</div>
+                    <div class="grn-column grn-bp">${packs || 0}</div>
+                    <div class="grn-column grn-txn-date">${formattedDate}</div>
+                </div>
+            `);
+
+            return $result;
+        },
+        templateSelection: function (data) {
+            if (!data.id) return data.text;
+
+            const option = $(data.element);
+            const code = option.data('code');
+            const originalWeight = option.data('originalWeight');
+            const originalPacks = option.data('originalPacks');
+            const txnDate = option.data('txnDate');
+
+            const $selection = $('<span></span>')
+                .addClass('select2-black-text')
+                .css('text-align', 'center')
+                .html(`${code || ''}(කිලෝ: ${originalWeight || 0} / මලු: ${originalPacks || ''} / දිනය: ${txnDate || ''})`);
+
+            return $selection;
         }
-
-        const $result = $(`
-            <div class="grn-option-row">
-                <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
-                <div class="grn-column grn-item">${itemName || ''}</div>
-                <div class="grn-column grn-ow">${originalWeight || ''}</div>
-                <div class="grn-column grn-op">${originalPacks || ''}</div>
-                <div class="grn-column grn-bw">${weight || ''}</div>
-                <div class="grn-column grn-bp">${packs || 0}</div>
-                <div class="grn-column grn-txn-date">${formattedDate}</div>
-            </div>
-        `);
-
-        return $result;
-    },
-    templateSelection: function (data) {
-        if (!data.id) {
-            return data.text;
-        }
-        const option = $(data.element);
-        const code = option.data('code');
-        const originalWeight = option.data('originalWeight');
-        const originalPacks = option.data('originalPacks');
-        const txnDate = option.data('txnDate');
-
-        var $selection = $('<span></span>');
-        $selection.addClass('select2-black-text');
-        $selection.css('text-align', 'center');
-
-        $selection.html(`${code || ''}(කිලෝ,: ${originalWeight || 0} /මලු: ${originalPacks || ''} /දිනය: ${txnDate || ''})`);
-
-        return $selection;
-    }
-});
-
-// Listen for when the Select2 dropdown is opened to add the header and handle search input
-$('#grn_select').on('select2:open', function () {
-    const $dropdown = $('.select2-dropdown');
-    
-    // Add an event listener to the search input to convert to uppercase
-    const searchInput = $dropdown.find('.select2-search__field');
-    searchInput.on('input', function() {
-        this.value = this.value.toUpperCase();
     });
 
-    // Check if the header already exists before adding it
-    if ($dropdown.find('.grn-header-row').length === 0) {
-        console.log("Header not found, creating and prepending.");
+    // Listen for when the Select2 dropdown is opened to add the header and handle search input
+    $('#grn_select').on('select2:open', function () {
+        const $dropdown = $('.select2-dropdown');
 
-        const $header = $(`
-            <div class="grn-header-row">
-                <div class="grn-column grn-code">Code</div>
-                <div class="grn-column grn-item">Item</div>
-                <div class="grn-column grn-ow">OW</div>
-                <div class="grn-column grn-op">OP</div>
-                <div class="grn-column grn-bw">BW</div>
-                <div class="grn-column grn-bp">BP</div>
-                <div class="grn-column grn-txn-date">Date</div>
-            </div>
+        // Focus search input and convert input to uppercase
+        const searchInput = $dropdown.find('.select2-search__field');
+        searchInput.focus();
+        searchInput.off('input.lazySearch').on('input.lazySearch', function () {
+            this.value = this.value.toUpperCase();
+            $('#grn_select').trigger('select2:open'); // refresh dropdown after typing
+        });
+
+        // Add custom header once
+        if ($dropdown.find('.grn-header-row').length === 0) {
+            const $header = $(`
+                <div class="grn-header-row">
+                    <div class="grn-column grn-code">Code</div>
+                    <div class="grn-column grn-item">Item</div>
+                    <div class="grn-column grn-ow">OW</div>
+                    <div class="grn-column grn-op">OP</div>
+                    <div class="grn-column grn-bw">BW</div>
+                    <div class="grn-column grn-bp">BP</div>
+                    <div class="grn-column grn-txn-date">Date</div>
+                </div>
         `);
 
         // Prepend the header to the results container before the options list
@@ -2029,9 +1916,11 @@ $('#grn_select').on('select2:open', function () {
                             const supplierCodeForDisplay = data.supplierCode || '';
                             const itemCodeForDisplay = data.itemCode || '';
                             const itemNameForDisplay = data.itemName || '';
+                            const itempriceForDisplay = data.sprice || '';
                             const packsForDisplay = data.packs || '';
                             const grnNoForDisplay = data.grnNo || '';
                             const txnDateForDisplay = data.txnDate || '';
+                            
                             grnDisplay.value =
                                 `${grnCodeForDisplay}| ${supplierCodeForDisplay}  | ${packsForDisplay} | ${grnNoForDisplay}`;
 
@@ -2040,9 +1929,11 @@ $('#grn_select').on('select2:open', function () {
                             supplierDisplaySelect.value = data.supplierCode || ''; // Display select for supplier_code
 
                             itemSelect.value = data.itemCode || ''; // Set item code in disabled select
+                            
                             itemSelect.dispatchEvent(new Event('change')); // Trigger change to update hidden item_code
 
                             itemNameDisplayFromGrn.value = data.itemName || ''; // Populate the dedicated item name display field
+                             priceDisplayFromGrn.value = data.sprice || '';
                             itemNameField.value = data.itemName || '';
                             // Also set the hidden item_name field
 
@@ -2313,16 +2204,18 @@ async function handlePrint() {
     const customerName = customerSales[0].customer_code || 'N/A';
     const mobile = '0773358518';
     const recipientEmails = ["thrcorner@gmail.com", "nethmavilhan2005@gmail.com"];
-
-    // Fetch loan amount
-    fetch('{{ route('get.loan.amount') }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-        body: JSON.stringify({ customer_short_name: customerCode })
-    })
-    .then(res => res.json())
-    .then(async data => {
-        globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
+    
+    // Use a try...catch...finally block to ensure the page always reloads.
+    try {
+        // Fetch loan amount
+        const loanResponse = await fetch('{{ route('get.loan.amount') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            body: JSON.stringify({ customer_short_name: customerCode })
+        });
+        
+        const loanData = await loanResponse.json();
+        globalLoanAmount = parseFloat(loanData.total_loan_amount) || 0;
 
         const date = "{{ $billDate }}";
         const time = new Date().toLocaleTimeString();
@@ -2453,8 +2346,13 @@ async function handlePrint() {
             printReceipt(duplicateHtml, customerName + ' - Copy'),
         ]);
 
+    } catch (err) {
+        console.error('An error occurred during loan fetch or printing:', err);
+        // You could also add an alert here to notify the user.
+    } finally {
+        // This block will always execute, ensuring the page reloads.
         window.location.reload();
-    }).catch(err => console.error('Loan fetch failed:', err));
+    }
 }
 
 // F5 function (Email only, no bill number)
@@ -2790,23 +2688,27 @@ document.getElementById('f5Button')?.addEventListener('click', function() {
 
                         });
 
-                        // Store the PHP data in JavaScript variables for easier access
-                        const printedSalesData = @json($salesPrinted->toArray());
-                        const unprintedSalesData = @json($salesNotPrinted->toArray());
-                        // allSalesData is the initial data loaded for the main table
-                        const allSalesData = @json($sales->toArray());
+                       // ==========================
+// PHP-rendered initial data
+// ==========================
+const printedSalesData = @json($salesPrinted->toArray());
+const unprintedSalesData = @json($salesNotPrinted->toArray());
+const allSalesData = @json($sales->toArray());
 
-                        // NEW: Variable to hold the currently displayed sales data in the main table
-                        let currentDisplayedSalesData = [];
+// Variable to hold the currently displayed sales data in the main table
+let currentDisplayedSalesData = [];
 
+// ==========================
+// Logging initial data
+// ==========================
+console.log("Initial printedSalesData:", printedSalesData);
+console.log("Initial unprintedSalesData:", unprintedSalesData);
+console.log("Initial allSalesData (for default table view):", allSalesData);
 
-                        console.log("Initial printedSalesData:", printedSalesData);
-                        console.log("Initial unprintedSalesData:", unprintedSalesData);
-                        console.log("Initial allSalesData (for default table view):", allSalesData);
-
-
-                        // Function to populate the main sales table
-                   function populateMainSalesTable(salesArray) {
+// ==========================
+// Function to populate main table
+// ==========================
+function populateMainSalesTable(salesArray) {
     console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
 
     // Deep copy for reactivity
@@ -2850,9 +2752,7 @@ document.getElementById('f5Button')?.addEventListener('click', function() {
 
         const total = sale.total != null ? parseFloat(sale.total).toFixed(2) : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
 
-        // Store pack_due in dataset for this row
         newRow.dataset.packDue = packDue;
-
         const packCostValue = packs * packDue;
 
         newRow.innerHTML = `
@@ -2878,9 +2778,7 @@ document.getElementById('f5Button')?.addEventListener('click', function() {
             const packDue = parseFloat(row.dataset.packDue || 0);
             const packCostValue = packs * packDue;
 
-            // Update hidden cell
             row.querySelector('td[data-field="pack_cost_value"]').textContent = packCostValue.toFixed(2);
-
             totalPackCostValue += packCostValue;
         });
 
@@ -2936,9 +2834,31 @@ document.getElementById('f5Button')?.addEventListener('click', function() {
     console.log("populateMainSalesTable finished. Total sales:", totalSalesValue.toFixed(2), "Total pack cost:", totalPackCostValue.toFixed(2), "Combined total:", combinedTotal.toFixed(2));
 }
 
+// ==========================
+// Initial population
+// ==========================
+populateMainSalesTable(allSalesData);
 
-                          // Call initially with all data
+// ==========================
+// Listen for new sales added via AJAX
+// ==========================
+$(document).on('saleAdded', function(event, newSaleData) {
+    console.log("New sale added via AJAX:", newSaleData);
+
+    // Option 1: Add to master array
+    allSalesData.push(newSaleData);
+
+    // Option 2: Update printed/unprinted arrays if needed
+    if (newSaleData.printed) {
+        printedSalesData.push(newSaleData);
+    } else {
+        unprintedSalesData.push(newSaleData);
+    }
+
+    // Update currently displayed table
     populateMainSalesTable(allSalesData);
+});
+
 
 
     // ================= REMAINING STOCK CALCULATIONS =================

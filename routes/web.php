@@ -167,4 +167,6 @@ Route::get('/get-user-ip/{user_id}', function ($user_id) {
 //new  GRN TABLE
 Route::post('/grn/store2', [GrnEntryController::class, 'store2'])->name('grn.store3');
 Route::get('/grn/update/form', [GrnEntryController::class, 'showupdateform'])->name('grn.updateform'); // page with form + table
+Route::get('/sales/data', [SalesEntryController::class, 'getSalesData'])
+    ->name('sales.data');
 require __DIR__.'/auth.php';

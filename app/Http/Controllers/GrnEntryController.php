@@ -34,8 +34,8 @@ public function store(Request $request)
     $request->validate([
         'item_code'     => 'nullable|string',
         'supplier_name' => 'nullable|string|max:255',
-        'packs'         => 'nullable|integer|min:1',
-        'weight'        => 'nullable|numeric|min:0.01',
+        'packs'         => 'nullable|integer',
+        'weight'        => 'nullable|numeric',
         'txn_date'      => 'nullable|date',
         'grn_no'        => 'nullable|string',
         'warehouse_no'  => 'nullable|string',
