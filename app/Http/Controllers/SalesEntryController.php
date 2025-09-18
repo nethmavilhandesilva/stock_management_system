@@ -51,15 +51,7 @@ class SalesEntryController extends Controller
     }
 
     // Fetch ALL sales records to display
-   $sales = Sale::where('Processed', 'N')->get()->groupBy('customer_code');
-
-// Add pack_due to each sale
-foreach ($sales as $customerSales) {
-    foreach ($customerSales as $sale) {
-        $sale->pack_due = $itemPackCosts[$sale->item_code] ?? 0;
-    }
-}
-
+    $sales = Sale::where('Processed', 'N')->get();
     
     // Add pack_cost to each sale
     foreach ($sales as $sale) {
@@ -241,6 +233,7 @@ public function store(Request $request)
             'success' => true,
             'data' => [
                 'id'       => $sale->id,
+                'code'       => $sale->code,
                 'Date'       => $sale->Date,
                 'customer_code' => $sale->customer_code,
                 'customer_name' => $sale->customer_name,

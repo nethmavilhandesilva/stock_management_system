@@ -1087,149 +1087,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="material-icons me-2">cancel</i>Cancel / New Entry
                             </button>
                         </div>
-                    </form>
-             <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const salesEntryForm = document.getElementById('salesEntryForm');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-    // Initialize or get the global sales data array
-    // This assumes the initial data is already set on page load.
-    // If not, you should initialize it as an empty array: window.allSalesData = [];
-    if (typeof window.allSalesData === 'undefined') {
-        window.allSalesData = [];
-    }
-    
-    // Function to update the sales table
-    function updateSalesTable(saleData) {
-        const tableBody = document.getElementById('mainSalesTableBody');
-        const newRow = document.createElement('tr');
-        newRow.setAttribute('data-id', saleData.id);
-         newRow.setAttribute('data-Date', saleData.Date);
-        newRow.setAttribute('data-customer-code', saleData.customer_code);
-     
-
-        newRow.innerHTML = `
-            <td>${saleData.customer_code}</td>
-            <td>${saleData.item_name}</td>
-           
-            <td>${parseFloat(saleData.weight).toFixed(2)}</td>
-            <td>${parseFloat(saleData.price_per_kg).toFixed(2)}</td>
-            <td>${parseFloat(saleData.total).toFixed(2)}</td>
-            <td>${saleData.packs}</td>
-        `;
-
-        tableBody.appendChild(newRow);
-
-        // Update total sales value
-        updateTotalSalesValue();
-    }
-
-    // Function to update total sales value
-    function updateTotalSalesValue() {
-        let total = 0;
-        document.querySelectorAll('#mainSalesTableBody tr').forEach(row => {
-            const totalCell = row.cells[4]; // 5th column = total
-            if (totalCell) {
-                total += parseFloat(totalCell.textContent) || 0;
-            }
-        });
-
-        document.getElementById('mainTotalSalesValue').textContent = total.toFixed(2);
-        document.getElementById('mainTotalSalesValueBottom').textContent = total.toFixed(2);
-    }
-
-    // Handle form submission via AJAX
-    salesEntryForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const submitButton = salesEntryForm.querySelector('button[type="submit"]');
-        const originalText = submitButton.innerHTML;
-        submitButton.innerHTML = 'Processing...';
-        submitButton.disabled = true;
-
-        const formData = new FormData(salesEntryForm);
-
-        fetch(salesEntryForm.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': csrfToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Add the new sale data to the global array
-                window.allSalesData.push(data.data);
-
-                // Update table
-                updateSalesTable(data.data);
-
-                // Preserve customer info
-                const customerCode = document.getElementById('new_customer_code').value;
-                const customerName = document.getElementById('customer_name_hidden').value;
-
-                salesEntryForm.reset();
-
-                document.getElementById('new_customer_code').value = customerCode;
-                document.getElementById('customer_name_hidden').value = customerName;
-
-                // Reset GRN select
-                $('#grn_select').val(null).trigger('change');
-                document.getElementById('grn_entry_code').value = '';
-
-                // Hide GRN price field
-                document.getElementById('grn_price_container').style.display = 'none';
-                document.getElementById('grn_price').value = '';
-
-                // Clear remaining weight/packs
-                document.getElementById('remaining_weight_display').textContent = 'BW: 0.00 kg';
-                document.getElementById('remaining_packs_display').textContent = 'BP: 0';
-
-                // Open GRN select dropdown
-                setTimeout(() => {
-                    // Open the Select2 dropdown
-                    $('#grn_select').select2('open');
-
-                    // Wait a tick and focus the search input
-                    setTimeout(() => {
-                        const searchBox = document.querySelector('.select2-container--open .select2-search__field');
-                        if (searchBox) {
-                            searchBox.focus();
-                            // Optional: move cursor to end
-                            searchBox.setSelectionRange(searchBox.value.length, searchBox.value.length);
-                        }
-                    }, 50); // small delay to ensure dropdown is rendered
-                }, 200);
-
-
-            } else {
-                // Handle error
-                console.error('Submission failed:', data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            // Handle network or other errors
-        })
-        .finally(() => {
-            submitButton.innerHTML = originalText;
-            submitButton.disabled = false;
-        });
-    });
-
-    // Ensure CSRF meta exists
-    if (!document.querySelector('meta[name="csrf-token"]')) {
-        const meta = document.createElement('meta');
-        meta.name = 'csrf-token';
-        meta.content = '{{ csrf_token() }}';
-        document.head.appendChild(meta);
-    }
-});
-</script>
-
+            
+          
       
 
                     {{-- Main Sales Table - ALWAYS RENDERED --}}
@@ -1296,6 +1155,109 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </div>
+                    </form>
+                   <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const salesEntryForm = document.getElementById('salesEntryForm');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // Ensure the global arrays exist
+    if (!window.allSalesData) window.allSalesData = [];
+    if (!window.printedSalesData) window.printedSalesData = [];
+    if (!window.unprintedSalesData) window.unprintedSalesData = [];
+
+    // Global variable for currently displayed sales
+    if (!window.currentDisplayedSalesData) window.currentDisplayedSalesData = [];
+
+    salesEntryForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const submitButton = salesEntryForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.innerHTML = 'Processing...';
+        submitButton.disabled = true;
+
+        const formData = new FormData(salesEntryForm);
+
+        fetch(salesEntryForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const newSale = data.data;
+                console.log("✅ New sale received:", newSale);
+
+                // 1. Push to allSalesData
+                window.allSalesData.push(newSale);
+
+                // 2. Push into printed/unprinted arrays
+                if (newSale.bill_printed) {
+                    // Printed sale
+                    if (Array.isArray(window.printedSalesData)) {
+                        window.printedSalesData.push(newSale);
+                    } else {
+                        if (!window.printedSalesData[newSale.customer_code]) {
+                            window.printedSalesData[newSale.customer_code] = [];
+                        }
+                        window.printedSalesData[newSale.customer_code].push(newSale);
+                    }
+                } else {
+                    // Unprinted sale
+                    if (Array.isArray(window.unprintedSalesData)) {
+                        window.unprintedSalesData.push(newSale);
+                    } else {
+                        if (!window.unprintedSalesData[newSale.customer_code]) {
+                            window.unprintedSalesData[newSale.customer_code] = [];
+                        }
+                        window.unprintedSalesData[newSale.customer_code].push(newSale);
+                    }
+                }
+
+                // 3. If currently viewing this customer, update table
+                let isCurrentlyViewing = window.currentDisplayedSalesData.some(sale =>
+                    sale.customer_code === newSale.customer_code
+                );
+
+                if (isCurrentlyViewing) {
+                    window.currentDisplayedSalesData.push(newSale);
+                    populateMainSalesTable(window.currentDisplayedSalesData);
+                }
+
+                // Preserve customer info
+                const customerCode = document.getElementById('new_customer_code').value;
+                const customerName = document.getElementById('customer_name_hidden').value;
+
+                salesEntryForm.reset();
+                document.getElementById('new_customer_code').value = customerCode;
+                document.getElementById('customer_name_hidden').value = customerName;
+
+                // Reset GRN select & UI elements
+                $('#grn_select').val(null).trigger('change');
+                document.getElementById('grn_entry_code').value = '';
+                document.getElementById('grn_price_container').style.display = 'none';
+                document.getElementById('grn_price').value = '';
+                document.getElementById('remaining_weight_display').textContent = 'BW: 0.00 kg';
+                document.getElementById('remaining_packs_display').textContent = 'BP: 0';
+
+            } else {
+                console.error('Submission failed:', data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error))
+        .finally(() => {
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        });
+    });
+});
+</script>
+
+
 
             {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
             <div class="col-custom-2-5">
@@ -2954,152 +2916,72 @@ document.getElementById('printButton').addEventListener('click', function () {
 
                         // Store the PHP data in JavaScript variables for easier access
                            // This is the initial data loaded from the server
-window.allSalesData = @json($sales->toArray());
-const printedSalesData = @json($salesPrinted->toArray());
-const unprintedSalesData = @json($salesNotPrinted->toArray());
-const allSalesData = @json($sales->toArray());
-window.allSalesData = allSalesData;
+  window.allSalesData = @json($sales->toArray()) || [];
+    window.printedSalesData = @json($salesPrinted->toArray()) || [];
+    window.unprintedSalesData = @json($salesNotPrinted->toArray()) || [];
 
-// Local array for currently displayed sales data (modifiable)
-let currentDisplayedSalesData = [];
+    // Global variable for currently displayed sales
+    window.currentDisplayedSalesData = [];
 
+    // Function to populate table
+    window.populateMainSalesTable = function(salesArray) {
+        // Keep global snapshot of what’s shown
+        window.currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
 
-                        console.log("Initial printedSalesData:", printedSalesData);
-                        console.log("Initial unprintedSalesData:", unprintedSalesData);
-                         console.log("all sales:", allSalesData);
-                         
-                   
+        const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
+        if (!mainSalesTableBodyElement) return;
 
+        mainSalesTableBodyElement.innerHTML = '';
 
-             function populateMainSalesTable(salesArray) {
-   console.log("salesArray snapshot:", JSON.parse(JSON.stringify(salesArray)));
-currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
-console.log("currentDisplayedSalesData snapshot:", JSON.parse(JSON.stringify(currentDisplayedSalesData)));
+        let totalSalesValue = 0;
+        let totalPackCostValue = 0;
 
+        if (salesArray.length === 0) {
+            mainSalesTableBodyElement.innerHTML = '<tr><td colspan="8" class="text-center">No sales records found.</td></tr>';
+        } else {
+            salesArray.forEach(sale => {
+                const code = sale.code || 'N/A';
+                const itemName = sale.item_name || 'N/A';
+                const weight = sale.weight ? parseFloat(sale.weight).toFixed(2) : '0.00';
+                const pricePerKg = sale.price_per_kg ? parseFloat(sale.price_per_kg).toFixed(2) : '0.00';
+                const packs = sale.packs ? parseInt(sale.packs) : 0;
+                const total = sale.total ? parseFloat(sale.total).toFixed(2) : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
+                const packCost = sale.pack_due ? parseFloat(sale.pack_due) : 0;
+                const packCostValue = packs * packCost;
 
-    const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
+                const newRow = document.createElement('tr');
+                newRow.dataset.saleId = sale.id;
 
-    if (!mainSalesTableBodyElement) {
-        console.error("Error: tbody with ID 'mainSalesTableBody' not found!");
-        return;
-    }
+                newRow.innerHTML = `
+                    <td>${code}</td>
+                    <td>${itemName}</td>
+                    <td>${weight}</td>
+                    <td>${pricePerKg}</td>
+                    <td>${total}</td>
+                    <td>${packs}</td>
+                    <td style="display:none;">${packCostValue.toFixed(2)}</td>
+                `;
 
-    // Clear existing rows completely
-    mainSalesTableBodyElement.innerHTML = '';
+                mainSalesTableBodyElement.appendChild(newRow);
 
-    let totalSalesValue = 0;
-    let totalPackCostValue = 0;
-
-    if (salesArray.length === 0) {
-        const noRecordsRow = document.createElement('tr');
-        noRecordsRow.innerHTML = '<td colspan="8" class="text-center">No sales records found for this selection.</td>';
-        mainSalesTableBodyElement.appendChild(noRecordsRow);
-    } else {
-        salesArray.forEach(sale => {
-            const newRow = document.createElement('tr');
-            newRow.dataset.saleId = sale.id;
-            newRow.dataset.id = sale.id;
-            newRow.dataset.customerCode = sale.customer_code;
-            newRow.dataset.customerName = sale.customer_name;
-
-            const code = sale.code || 'N/A';
-            const itemCode = sale.item_code || 'N/A';
-            const itemName = sale.item_name || 'N/A';
-
-            const weight = sale.weight !== null && sale.weight !== undefined
-                ? parseFloat(sale.weight).toFixed(2)
-                : '0.00';
-
-            const pricePerKg = sale.price_per_kg !== null && sale.price_per_kg !== undefined
-                ? parseFloat(sale.price_per_kg).toFixed(2)
-                : '0.00';
-
-            const packs = sale.packs !== null && sale.packs !== undefined
-                ? parseInt(sale.packs)
-                : 0;
-
-            const total = sale.total !== null && sale.total !== undefined
-                ? parseFloat(sale.total).toFixed(2)
-                : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
-
-            const packCost = sale.pack_due !== null && sale.pack_due !== undefined
-                ? parseFloat(sale.pack_due)
-                : 0;
-
-            const packCostValue = packs * packCost;
-
-            console.log(
-                `Sale ID ${sale.id}: weight=${weight}, packs=${packs}, price_per_kg=${pricePerKg}, total=${total}, pack_cost=${packCost}, packCostValue=${packCostValue}`
-            );
-
-            newRow.innerHTML = `
-                <td data-field="code">${code}</td>
-                <td data-field="item_name">${itemName}</td>
-                <td data-field="weight">${weight}</td>
-                <td data-field="price_per_kg">${pricePerKg}</td>
-                <td data-field="total">${total}</td>
-                <td data-field="packs">${packs}</td>
-                <td data-field="pack_cost_value" style="display:none;">${packCostValue.toFixed(2)}</td>
-            `;
-
-            mainSalesTableBodyElement.appendChild(newRow);
-            totalSalesValue += parseFloat(total);
-            totalPackCostValue += packCostValue;
-        });
-    }
-
-    // Build item summary
-    function displayItemSums() {
-        const rows = document.querySelectorAll('#mainSalesTableBody tr');
-        const itemGroups = {};
-
-        rows.forEach(row => {
-            const itemName = row.querySelector('td[data-field="item_name"]')?.textContent.trim() || '';
-            const weight = parseFloat(row.querySelector('td[data-field="weight"]')?.textContent) || 0;
-            const packs = parseInt(row.querySelector('td[data-field="packs"]')?.textContent) || 0;
-            const packCostValue = parseFloat(row.querySelector('td[data-field="pack_cost_value"]')?.textContent) || 0;
-
-            if (!itemGroups[itemName]) {
-                itemGroups[itemName] = { totalWeight: 0, totalPacks: 0, totalPackCost: 0 };
-            }
-
-            itemGroups[itemName].totalWeight += weight;
-            itemGroups[itemName].totalPacks += packs;
-            itemGroups[itemName].totalPackCost += packCostValue;
-        });
-
-        let summaryHtml = '<div style="font-size: 0.9rem; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 1rem;">';
-        for (const [itemName, totals] of Object.entries(itemGroups)) {
-            summaryHtml += `
-                <div style="padding: 0.25rem 0.5rem; border-radius: 0.5rem; background-color: #f3f4f6; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-size: 0.8rem;">
-                    <strong>${itemName}</strong>: බර (kg) = ${totals.totalWeight.toFixed(2)}, මලු = ${totals.totalPacks}, පැක් අයිතම වටිනාකම = ${totals.totalPackCost.toFixed(2)}
-                </div>
-            `;
+                totalSalesValue += parseFloat(total);
+                totalPackCostValue += packCostValue;
+            });
         }
-        summaryHtml += '</div>';
 
-        const itemSummaryElement = document.getElementById('itemSummary');
-        if (itemSummaryElement) {
-            itemSummaryElement.innerHTML = summaryHtml;
-        }
-    }
+        // Combined totals
+        const combinedTotal = totalSalesValue + totalPackCostValue;
+        window.globalTotalPackCostValue = totalPackCostValue;
 
-    displayItemSums();
+        document.getElementById('mainTotalSalesValue').textContent = combinedTotal.toFixed(2);
+        document.getElementById('mainTotalSalesValueBottom').textContent = combinedTotal.toFixed(2);
 
-    // Combined totals
-    const combinedTotal = totalSalesValue + totalPackCostValue;
+        console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2), "Total pack cost:", totalPackCostValue.toFixed(2), "Combined:", combinedTotal.toFixed(2));
+    };
 
-    // ✅ Make pack cost globally available for receipt
-    window.globalTotalPackCostValue = totalPackCostValue;
+    // Initial render with ALL data (now from window.allSalesData)
+    window.populateMainSalesTable(window.allSalesData);
 
-    $('#mainTotalSalesValue').text(combinedTotal.toFixed(2));
-    $('#mainTotalSalesValueBottom').text(combinedTotal.toFixed(2));
-
-    console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2), "Total pack cost value:", totalPackCostValue.toFixed(2), "Combined total:", combinedTotal.toFixed(2));
-}
-
-// Call initially with all data
-populateMainSalesTable(allSalesData);
 
 // ================= REMAINING STOCK CALCULATIONS =================
 let originalGrnPacks = 0;
@@ -3551,7 +3433,7 @@ deleteSalesEntryBtn.addEventListener('click', function () {
 
                         resetForm();
 
-                      $('.customer-header').on('click', function () {
+                     $('.customer-header').on('click', function () {
     console.log("Customer header clicked!");
 
     const customerCode = $(this).data('customer-code');
@@ -3568,22 +3450,41 @@ deleteSalesEntryBtn.addEventListener('click', function () {
 
     if (billType === 'printed') {
         console.log("Attempting to filter PRINTED sales...");
-        if (printedSalesData[customerCode] && Array.isArray(printedSalesData[customerCode])) {
-            salesToDisplay = printedSalesData[customerCode].filter(sale => {
-                return String(sale.bill_no) === String(billNo);
-            });
-            console.log("Printed sales data for customerCode:", printedSalesData[customerCode]);
+
+        if (Array.isArray(printedSalesData)) {
+            // printedSalesData is a flat array
+            salesToDisplay = printedSalesData.filter(sale =>
+                sale.customer_code === customerCode &&
+                String(sale.bill_no) === String(billNo)
+            );
+            console.log("Printed sales data (array) for customerCode:", salesToDisplay);
+        } else if (printedSalesData[customerCode] && Array.isArray(printedSalesData[customerCode])) {
+            // printedSalesData is an object keyed by customer_code
+            salesToDisplay = printedSalesData[customerCode].filter(sale =>
+                String(sale.bill_no) === String(billNo)
+            );
+            console.log("Printed sales data (object) for customerCode:", printedSalesData[customerCode]);
         } else {
-            console.log("No printed sales data found or not an array for customerCode:", customerCode);
+            console.log("No printed sales data found for customerCode:", customerCode);
         }
+
     } else if (billType === 'unprinted') {
         console.log("Attempting to filter UNPRINTED sales...");
-        if (unprintedSalesData[customerCode] && Array.isArray(unprintedSalesData[customerCode])) {
+
+        if (Array.isArray(unprintedSalesData)) {
+            // unprintedSalesData is a flat array
+            salesToDisplay = unprintedSalesData.filter(sale =>
+                sale.customer_code === customerCode
+            );
+            console.log("Unprinted sales data (array) for customerCode:", salesToDisplay);
+        } else if (unprintedSalesData[customerCode] && Array.isArray(unprintedSalesData[customerCode])) {
+            // unprintedSalesData is an object keyed by customer_code
             salesToDisplay = unprintedSalesData[customerCode];
-            console.log("Unprinted sales data for customerCode:", unprintedSalesData[customerCode]);
+            console.log("Unprinted sales data (object) for customerCode:", unprintedSalesData[customerCode]);
         } else {
-            console.log("No unprinted sales data found or not an array for customerCode:", customerCode);
+            console.log("No unprinted sales data found for customerCode:", customerCode);
         }
+
     } else {
         console.log("Unknown billType:", billType);
     }
@@ -3608,6 +3509,7 @@ deleteSalesEntryBtn.addEventListener('click', function () {
     // Call the focus function
     focusGrnSelect();
 });
+
 
 
                         $(document).on('click', '.print-bill-btn', function () {
