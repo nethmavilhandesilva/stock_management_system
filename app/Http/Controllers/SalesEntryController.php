@@ -375,7 +375,7 @@ public function store(Request $request)
             'customer_code' => 'required|string|max:255',
             'customer_name' => 'nullable|string|max:255',
             'code' => 'required|string|max:255',
-            'supplier_code' => 'required|string|max:255',
+            'supplier_code' => 'nullable|string|max:255',
             'item_code' => 'required|string|max:255',
             'item_name' => 'required|string|max:255',
             'weight' => 'required|numeric|min:0',

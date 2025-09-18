@@ -1161,14 +1161,75 @@ document.addEventListener('DOMContentLoaded', function() {
     const salesEntryForm = document.getElementById('salesEntryForm');
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    // Ensure the global arrays exist
-    if (!window.allSalesData) window.allSalesData = [];
-    if (!window.printedSalesData) window.printedSalesData = [];
-    if (!window.unprintedSalesData) window.unprintedSalesData = [];
+    // Initialize global arrays
+    window.allSalesData = @json($sales->toArray()) || [];
+    window.printedSalesData = @json($salesPrinted->toArray()) || [];
+    window.unprintedSalesData = @json($salesNotPrinted->toArray()) || [];
+    window.currentDisplayedSalesData = [];
 
-    // Global variable for currently displayed sales
-    if (!window.currentDisplayedSalesData) window.currentDisplayedSalesData = [];
+    // Function to populate main sales table
+    window.populateMainSalesTable = function(salesArray) {
+        const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
+        if (!mainSalesTableBodyElement) return;
 
+        mainSalesTableBodyElement.innerHTML = '';
+
+        let totalSalesValue = 0;
+        let totalPackCostValue = 0;
+
+        if (!salesArray || salesArray.length === 0) {
+            mainSalesTableBodyElement.innerHTML = '<tr><td colspan="8" class="text-center">No sales records found.</td></tr>';
+            window.currentDisplayedSalesData = [];
+            return;
+        }
+
+        // Keep global snapshot of currently displayed data
+        window.currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
+
+        salesArray.forEach(sale => {
+            const code = sale.code || 'N/A';
+            const itemName = sale.item_name || 'N/A';
+            const weight = sale.weight ? parseFloat(sale.weight).toFixed(2) : '0.00';
+            const pricePerKg = sale.price_per_kg ? parseFloat(sale.price_per_kg).toFixed(2) : '0.00';
+            const packs = sale.packs ? parseInt(sale.packs) : 0;
+            const total = sale.total ? parseFloat(sale.total).toFixed(2) : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
+            const packCost = sale.pack_due ? parseFloat(sale.pack_due) : 0;
+            const packCostValue = packs * packCost;
+
+            const newRow = document.createElement('tr');
+            newRow.dataset.saleId = sale.id;
+
+            newRow.innerHTML = `
+                <td>${code}</td>
+                <td>${itemName}</td>
+                <td>${weight}</td>
+                <td>${pricePerKg}</td>
+                <td>${total}</td>
+                <td>${packs}</td>
+                <td style="display:none;">${packCostValue.toFixed(2)}</td>
+            `;
+
+            mainSalesTableBodyElement.appendChild(newRow);
+
+            totalSalesValue += parseFloat(total);
+            totalPackCostValue += packCostValue;
+        });
+
+        const combinedTotal = totalSalesValue + totalPackCostValue;
+        window.globalTotalPackCostValue = totalPackCostValue;
+
+        document.getElementById('mainTotalSalesValue').textContent = combinedTotal.toFixed(2);
+        document.getElementById('mainTotalSalesValueBottom').textContent = combinedTotal.toFixed(2);
+
+        console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2), "Total pack cost:", totalPackCostValue.toFixed(2), "Combined:", combinedTotal.toFixed(2));
+    };
+
+    // Populate table on page load
+    if (window.allSalesData.length > 0) {
+        window.populateMainSalesTable(window.allSalesData);
+    }
+
+    // Handle sales entry form submission
     salesEntryForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const submitButton = salesEntryForm.querySelector('button[type="submit"]');
@@ -1197,7 +1258,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // 2. Push into printed/unprinted arrays
                 if (newSale.bill_printed) {
-                    // Printed sale
                     if (Array.isArray(window.printedSalesData)) {
                         window.printedSalesData.push(newSale);
                     } else {
@@ -1207,7 +1267,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.printedSalesData[newSale.customer_code].push(newSale);
                     }
                 } else {
-                    // Unprinted sale
                     if (Array.isArray(window.unprintedSalesData)) {
                         window.unprintedSalesData.push(newSale);
                     } else {
@@ -1218,15 +1277,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
 
-                // 3. If currently viewing this customer, update table
-                let isCurrentlyViewing = window.currentDisplayedSalesData.some(sale =>
-                    sale.customer_code === newSale.customer_code
-                );
-
-                if (isCurrentlyViewing) {
-                    window.currentDisplayedSalesData.push(newSale);
-                    populateMainSalesTable(window.currentDisplayedSalesData);
-                }
+                // 3. Update table if currently viewing this customer or show all
+                window.currentDisplayedSalesData.push(newSale);
+                window.populateMainSalesTable(window.currentDisplayedSalesData);
 
                 // Preserve customer info
                 const customerCode = document.getElementById('new_customer_code').value;
@@ -2924,63 +2977,62 @@ document.getElementById('printButton').addEventListener('click', function () {
     window.currentDisplayedSalesData = [];
 
     // Function to populate table
-    window.populateMainSalesTable = function(salesArray) {
-        // Keep global snapshot of what’s shown
-        window.currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
+   window.populateMainSalesTable = function(salesArray) {
+    const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
+    if (!mainSalesTableBodyElement) return;
 
-        const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
-        if (!mainSalesTableBodyElement) return;
+    mainSalesTableBodyElement.innerHTML = '';
 
-        mainSalesTableBodyElement.innerHTML = '';
+    let totalSalesValue = 0;
+    let totalPackCostValue = 0;
 
-        let totalSalesValue = 0;
-        let totalPackCostValue = 0;
+    if (!salesArray || salesArray.length === 0) {
+        mainSalesTableBodyElement.innerHTML = '<tr><td colspan="8" class="text-center">No sales records found.</td></tr>';
+        window.currentDisplayedSalesData = [];
+        return;
+    }
 
-        if (salesArray.length === 0) {
-            mainSalesTableBodyElement.innerHTML = '<tr><td colspan="8" class="text-center">No sales records found.</td></tr>';
-        } else {
-            salesArray.forEach(sale => {
-                const code = sale.code || 'N/A';
-                const itemName = sale.item_name || 'N/A';
-                const weight = sale.weight ? parseFloat(sale.weight).toFixed(2) : '0.00';
-                const pricePerKg = sale.price_per_kg ? parseFloat(sale.price_per_kg).toFixed(2) : '0.00';
-                const packs = sale.packs ? parseInt(sale.packs) : 0;
-                const total = sale.total ? parseFloat(sale.total).toFixed(2) : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
-                const packCost = sale.pack_due ? parseFloat(sale.pack_due) : 0;
-                const packCostValue = packs * packCost;
+    // Keep global snapshot of what’s shown
+    window.currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
 
-                const newRow = document.createElement('tr');
-                newRow.dataset.saleId = sale.id;
+    salesArray.forEach(sale => {
+        const code = sale.code || 'N/A';
+        const itemName = sale.item_name || 'N/A';
+        const weight = sale.weight ? parseFloat(sale.weight).toFixed(2) : '0.00';
+        const pricePerKg = sale.price_per_kg ? parseFloat(sale.price_per_kg).toFixed(2) : '0.00';
+        const packs = sale.packs ? parseInt(sale.packs) : 0;
+        const total = sale.total ? parseFloat(sale.total).toFixed(2) : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
+        const packCost = sale.pack_due ? parseFloat(sale.pack_due) : 0;
+        const packCostValue = packs * packCost;
 
-                newRow.innerHTML = `
-                    <td>${code}</td>
-                    <td>${itemName}</td>
-                    <td>${weight}</td>
-                    <td>${pricePerKg}</td>
-                    <td>${total}</td>
-                    <td>${packs}</td>
-                    <td style="display:none;">${packCostValue.toFixed(2)}</td>
-                `;
+        const newRow = document.createElement('tr');
+        newRow.dataset.saleId = sale.id;
 
-                mainSalesTableBodyElement.appendChild(newRow);
+        newRow.innerHTML = `
+            <td>${code}</td>
+            <td>${itemName}</td>
+            <td>${weight}</td>
+            <td>${pricePerKg}</td>
+            <td>${total}</td>
+            <td>${packs}</td>
+            <td style="display:none;">${packCostValue.toFixed(2)}</td>
+        `;
 
-                totalSalesValue += parseFloat(total);
-                totalPackCostValue += packCostValue;
-            });
-        }
+        mainSalesTableBodyElement.appendChild(newRow);
 
-        // Combined totals
-        const combinedTotal = totalSalesValue + totalPackCostValue;
-        window.globalTotalPackCostValue = totalPackCostValue;
+        totalSalesValue += parseFloat(total);
+        totalPackCostValue += packCostValue;
+    });
 
-        document.getElementById('mainTotalSalesValue').textContent = combinedTotal.toFixed(2);
-        document.getElementById('mainTotalSalesValueBottom').textContent = combinedTotal.toFixed(2);
+    // Combined totals
+    const combinedTotal = totalSalesValue + totalPackCostValue;
+    window.globalTotalPackCostValue = totalPackCostValue;
 
-        console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2), "Total pack cost:", totalPackCostValue.toFixed(2), "Combined:", combinedTotal.toFixed(2));
-    };
+    document.getElementById('mainTotalSalesValue').textContent = combinedTotal.toFixed(2);
+    document.getElementById('mainTotalSalesValueBottom').textContent = combinedTotal.toFixed(2);
 
-    // Initial render with ALL data (now from window.allSalesData)
-    window.populateMainSalesTable(window.allSalesData);
+    console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2), "Total pack cost:", totalPackCostValue.toFixed(2), "Combined:", combinedTotal.toFixed(2));
+};
 
 
 // ================= REMAINING STOCK CALCULATIONS =================
