@@ -1156,7 +1156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
                     </form>
-                   <script>
+                  <script>
 document.addEventListener('DOMContentLoaded', function() {
     const salesEntryForm = document.getElementById('salesEntryForm');
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -1229,6 +1229,11 @@ document.addEventListener('DOMContentLoaded', function() {
         window.populateMainSalesTable(window.allSalesData);
     }
 
+    // Auto-open GRN Select2 after render
+    setTimeout(() => {
+        $('#grn_select').select2('open');
+    }, 100);
+
     // Handle sales entry form submission
     salesEntryForm.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -1253,10 +1258,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const newSale = data.data;
                 console.log("✅ New sale received:", newSale);
 
-                // 1. Push to allSalesData
+                // Push to allSalesData
                 window.allSalesData.push(newSale);
 
-                // 2. Push into printed/unprinted arrays
+                // Push into printed/unprinted arrays
                 if (newSale.bill_printed) {
                     if (Array.isArray(window.printedSalesData)) {
                         window.printedSalesData.push(newSale);
@@ -1277,7 +1282,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
 
-                // 3. Update table if currently viewing this customer or show all
+                // Update table immediately
                 window.currentDisplayedSalesData.push(newSale);
                 window.populateMainSalesTable(window.currentDisplayedSalesData);
 
@@ -1297,6 +1302,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('remaining_weight_display').textContent = 'BW: 0.00 kg';
                 document.getElementById('remaining_packs_display').textContent = 'BP: 0';
 
+                // Re-open GRN Select2 for next entry
+                setTimeout(() => {
+                    $('#grn_select').select2('open');
+                }, 50);
+
             } else {
                 console.error('Submission failed:', data.message);
             }
@@ -1309,6 +1319,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
 
 
 
