@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('horizontal_sidebar')
-    {{-- This section will contain the content that was originally in the vertical sidebar --}}
+    {{-- This section will contain the styles related to nav bar --}}
     <style>
         .nav-item.dropdown {
             position: relative;
@@ -19,7 +19,7 @@
 
         .nav-item.dropdown:hover .dropdown-menu {
             display: block;
-            /* show on hover */
+
         }
 
         .dropdown-menu a {
@@ -33,229 +33,56 @@
             background-color: #333;
         }
     </style>
-
-    <nav
-    class="navbar navbar-expand-lg navbar-light shadow-sm rounded-bottom px-3 py-1 custom-dark-green-bg navbar-compact">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-        {{-- Navbar links --}}
-        <div class="collapse navbar-collapse" id="navbarNavHorizontal">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                {{-- Dashboard --}}
-                <li class="nav-item">
-                    <a href="{{ route('dashboard') }}" class="nav-link d-flex align-items-center small">
-                        <span class="material-icons me-1 text-primary" style="font-size:1.1em;">dashboard</span>
-                        <span class="text-white">Dashboard</span>
-                    </a>
-                </li>
-
-                {{-- Master Dropdown --}}
-                <li class="nav-item dropdown">
-                    <a href="#" class="nav-link d-flex align-items-center small text-white">
-                        <span class="material-icons me-1">storage</span>
-                        Master
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ route('items.index') }}">භාණ්ඩ</a></li>
-                        <li><a class="dropdown-item" href="{{ route('customers.index') }}">ගනුදෙනුකරුවන්</a></li>
-                        <li><a class="dropdown-item" href="{{ route('suppliers.index') }}">සැපයුම්කරුවන්</a></li>
-                      
-                        <li><a class="dropdown-item" href="{{ route('customers-loans.report') }}"> ණය වාර්තාව දැකීම</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#codeSelectModal">
-                                GRN වාර්තාව
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                {{-- Income / Expense --}}
-                <li class="nav-item">
-                    <a href="{{ route('customers-loans.index') }}"
-                        class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('customers-loans.index') ? 'active' : '' }}">
-                        <span class="material-icons me-1" style="font-size:1.1em;">payments</span>
-                        <span class="text-white">ආදායම් / වියදම්</span>
-                    </a>
-                </li>
-                {{-- GRN Button --}}
-                <li class="nav-item">
-                    <a href="{{ route('grn.create') }}"
-                        class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('grn.create') ? 'active' : '' }}">
-                        <span class="material-icons me-1" style="font-size:1.1em;">receipt_long</span>
-                        <span class="text-white">GRN</span>
-                    </a>
-                </li>
-                 <li class="nav-item">
-                    <a href="{{ route('grn.updateform') }}"
-                        class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('grn.create') ? 'active' : '' }}">
-                        <span class="material-icons me-1" style="font-size:1.1em;">receipt_long</span>
-                        <span class="text-white">GRN</span>
-                    </a>
-                </li>
-            </ul>
-
-            {{-- Day Start Process and Logout on the right --}}
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a href="#" class="nav-link d-flex align-items-center small" data-bs-toggle="modal"
-                        data-bs-target="#dayStartModal">
-                        <span class="material-icons me-1 text-blue-600" style="font-size:1.1em;">play_circle_filled</span>
-                        <span class="text-white">Day Start Process</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <form action="{{ route('logout') }}" method="POST" style="display: inline;">
-                        @csrf
-                        <button type="submit" class="nav-link d-flex align-items-center small"
-                            style="background:none; border:none; padding:0; cursor:pointer;">
-                            <span class="material-icons me-1 text-red-600" style="font-size:1.1em;">logout</span>
-                            <span style="color: white;">Logout</span>
-                        </button>
-                    </form>
-                </li>
-            </ul>
-        </div>
-
-        {{-- Next Day Info --}}
-        <div class="ms-3 fw-bold text-danger" style="white-space: nowrap;">
-            @php
-                $lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
-                $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
-            @endphp
-            {{ $nextDay }}
-        </div>
-    </div>
-</nav>
-
-{{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav small">
-    <div class="container-fluid">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
-            aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
-            <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row gap-2">
-
-                <li class="nav-item">
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
-                        class="nav-link text-white px-2 py-1">
-                        එළවළු
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
-                        class="nav-link text-white px-2 py-1">
-                        බර මත
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
-                        class="nav-link text-white px-2 py-1">
-                        මිල එක්කතුව
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9"
-                        class="nav-link text-white px-2 py-1">
-                        වෙනස් කිරීම
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('report.grn.sales.overview') }}" target="_blank"
-                        class="nav-link text-white px-2 py-1">
-                        ඉතිරි වාර්තාව 1
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('report.grn.sales.overview2') }}" target="_blank"
-                        class="nav-link text-white px-2 py-1">
-                        ඉතිරි වාර්තාව 2
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#filterModal"
-                        class="nav-link text-white px-2 py-1">
-                        විකුණුම් වාර්තාව
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
-{{-- Removed the Password Modal from here --}}
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // The script now simply adds the modal attributes back, 
-        // effectively disabling the password protection.
-        const protectedLinks = document.querySelectorAll(".protected-link");
-        
-        protectedLinks.forEach(link => {
-            const target = link.getAttribute("data-bs-target") || link.getAttribute("href");
-            if (target && target.startsWith("#")) {
-                link.setAttribute("data-bs-toggle", "modal");
-            }
-            // Remove the custom class and any opacity changes
-            link.classList.remove("protected-link");
-            link.style.opacity = ""; 
-        });
-    });
-</script>
     <style>
-        /* Custom CSS to push content up if fixed-bottom nav bar covers it */
         body {
             padding-bottom: 70px;
-            /* Adjust this value based on the actual height of your fixed-bottom navbar */
+
         }
 
         .custom-bottom-nav {
             background-color: #004d00 !important;
-            /* A slightly darker green for the bottom nav */
+
         }
 
-        /* Adjustments for the bottom nav links */
+
         .custom-bottom-nav .nav-link {
             padding-top: 0.5rem !important;
             padding-bottom: 0.5rem !important;
             font-size: 0.95rem !important;
-            /* Slightly larger than the top compact nav */
+
         }
 
         .custom-bottom-nav .nav-link .material-icons {
             font-size: 20px !important;
-            /* Slightly larger icons */
+
         }
 
-        /* Center the nav items when collapsed (mobile) and on larger screens */
+
         .custom-bottom-nav .navbar-collapse {
             justify-content: center;
-            /* Centers the ul inside the collapsed div */
+
         }
 
         .custom-bottom-nav .navbar-nav {
             width: 100%;
-            /* Make ul take full width inside collapse for justify-content to work */
+
             justify-content: space-around;
-            /* Distribute items evenly */
+
         }
 
-        /* Add horizontal margin between nav items for better spacing on larger screens */
+
         .custom-bottom-nav .navbar-nav .nav-item {
             margin: 0 5px;
-            /* Adjust as needed */
+
         }
     </style>
     <style>
-        /* Adjustments for a more compact navbar */
         .navbar.navbar-compact {
-            /* Reduce overall vertical padding of the navbar container */
+
             padding-top: 0.3rem !important;
-            /* Adjust this value */
+
             padding-bottom: 0.3rem !important;
-            /* Adjust this value */
+
         }
 
         .navbar.navbar-compact .navbar-nav .nav-link {
@@ -278,481 +105,421 @@
             /* Adjust margin next to icon if needed */
         }
     </style>
+    
+ {{-- Top Nav Bar --}}
+    <nav
+        class="navbar navbar-expand-lg navbar-light shadow-sm rounded-bottom px-3 py-1 custom-dark-green-bg navbar-compact">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            {{-- Navbar links --}}
+            <div class="collapse navbar-collapse" id="navbarNavHorizontal">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {{-- Dashboard --}}
+                    <li class="nav-item">
+                        <a href="{{ route('dashboard') }}" class="nav-link d-flex align-items-center small">
+                            <span class="material-icons me-1 text-primary" style="font-size:1.1em;">dashboard</span>
+                            <span class="text-white">Dashboard</span>
+                        </a>
+                    </li>
+
+                    {{-- Master Dropdown --}}
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex align-items-center small text-white">
+                            <span class="material-icons me-1">storage</span>
+                            Master
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ route('items.index') }}">භාණ්ඩ</a></li>
+                            <li><a class="dropdown-item" href="{{ route('customers.index') }}">ගනුදෙනුකරුවන්</a></li>
+                            <li><a class="dropdown-item" href="{{ route('suppliers.index') }}">සැපයුම්කරුවන්</a></li>
+
+                            <li><a class="dropdown-item" href="{{ route('customers-loans.report') }}"> ණය වාර්තාව දැකීම</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#codeSelectModal">
+                                    GRN වාර්තාව
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    {{-- Income / Expense --}}
+                    <li class="nav-item">
+                        <a href="{{ route('customers-loans.index') }}"
+                            class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('customers-loans.index') ? 'active' : '' }}">
+                            <span class="material-icons me-1" style="font-size:1.1em;">payments</span>
+                            <span class="text-white">ආදායම් / වියදම්</span>
+                        </a>
+                    </li>
+                    {{-- GRN Button --}}
+                    <li class="nav-item">
+                        <a href="{{ route('grn.create') }}"
+                            class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('grn.create') ? 'active' : '' }}">
+                            <span class="material-icons me-1" style="font-size:1.1em;">receipt_long</span>
+                            <span class="text-white">GRN</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('grn.updateform') }}"
+                            class="btn btn-success nav-link d-flex align-items-center small {{ Request::routeIs('grn.create') ? 'active' : '' }}">
+                            <span class="material-icons me-1" style="font-size:1.1em;">receipt_long</span>
+                            <span class="text-white">GRN අලුත් කිරීම</span>
+                        </a>
+                    </li>
+                </ul>
+
+                {{-- Day Start Process and Logout on the right --}}
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link d-flex align-items-center small" data-bs-toggle="modal"
+                            data-bs-target="#dayStartModal">
+                            <span class="material-icons me-1 text-blue-600"
+                                style="font-size:1.1em;">play_circle_filled</span>
+                            <span class="text-white">Day Start Process</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+                            @csrf
+                            <button type="submit" class="nav-link d-flex align-items-center small"
+                                style="background:none; border:none; padding:0; cursor:pointer;">
+                                <span class="material-icons me-1 text-red-600" style="font-size:1.1em;">logout</span>
+                                <span style="color: white;">Logout</span>
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+
+            {{-- Next Day Info(Day start Button Process) --}}
+            <div class="ms-3 fw-bold text-danger" style="white-space: nowrap;">
+                @php
+                    $lastDay = \App\Models\Setting::where('key', 'last_day_started_date')->first();
+                    $nextDay = $lastDay ? \Carbon\Carbon::parse($lastDay->value)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d');
+                @endphp
+                {{ $nextDay }}
+            </div>
+        </div>
+    </nav>
+
+
+    {{-- NEW: Separate Horizontal Navigation for Reports - FIXED AT BOTTOM --}}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg fixed-bottom custom-bottom-nav small">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavReports"
+                aria-controls="navbarNavReports" aria-expanded="false" aria-label="Toggle report navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNavReports">
+                <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row gap-2">
+
+                    <li class="nav-item">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#itemReportModal"
+                            class="nav-link text-white px-2 py-1">
+                            එළවළු
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#weight_modal"
+                            class="nav-link text-white px-2 py-1">
+                            බර මත
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#grnSaleReportModal"
+                            class="nav-link text-white px-2 py-1">
+                            මිල එක්කතුව
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#reportFilterModal9"
+                            class="nav-link text-white px-2 py-1">
+                            වෙනස් කිරීම
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('report.grn.sales.overview') }}" target="_blank"
+                            class="nav-link text-white px-2 py-1">
+                            ඉතිරි වාර්තාව 1
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('report.grn.sales.overview2') }}" target="_blank"
+                            class="nav-link text-white px-2 py-1">
+                            ඉතිරි වාර්තාව 2
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#filterModal"
+                            class="nav-link text-white px-2 py-1">
+                            විකුණුම් වාර්තාව
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const protectedLinks = document.querySelectorAll(".protected-link");
+
+            protectedLinks.forEach(link => {
+                const target = link.getAttribute("data-bs-target") || link.getAttribute("href");
+                if (target && target.startsWith("#")) {
+                    link.setAttribute("data-bs-toggle", "modal");
+                }
+                // Remove the custom class and any opacity changes
+                link.classList.remove("protected-link");
+                link.style.opacity = "";
+            });
+        });
+    </script>
+
 @endsection
 
 @section('content')
-            {{-- CSS Includes --}}
-            <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-            {{-- REQUIRED: Minimal inline styling for the new section's appearance and collapse functionality --}}
-
-            <style>
-                .printed-sales-list ul,
-                .unprinted-sales-list ul {
-                    list-style: none;
-                    padding-left: 0;
-                }
-
-                .custom-dark-green-bg {
-                    background-color: #006400 !important;
-                    /* A common dark green hex code */
-                }
-
-
-
-                .customer-header {
-                    background-color: #f8f9fa;
-                    padding: 10px 15px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-
-                .customer-header:hover {
-                    background-color: #e9ecef;
-                }
-
-                .customer-details {
-                    padding: 10px 15px;
-                    background-color: #fff;
-                    border-top: 1px solid #e0e0e0;
-                    display: none;
-                    /* Bootstrap's .collapse class handles visibility */
-                }
-
-                .customer-details.show {
-                    /* Bootstrap adds .show when expanded */
-                    display: block;
-                }
-
-                .customer-details table {
-                    width: 100%;
-                    margin-top: 10px;
-                    font-size: 0.85em;
-                }
-
-                .customer-details table th,
-                .customer-details table td {
-                    padding: 4px 8px;
-                    text-align: left;
-                    border-bottom: 1px dashed #eee;
-                }
-
-                .customer-details table th {
-                    font-weight: bold;
-                    background-color: #f2f2f2;
-                }
-
-                .customer-details .sale-item-row:last-child td {
-                    border-bottom: none;
-                }
-
-                .total-for-customer {
-                    font-weight: bold;
-                    text-align: right;
-                    padding: 5px 0;
-                    border-top: 1px solid #ddd;
-                    margin-top: 5px;
-                }
-
-                .arrow-icon {
-                    transition: transform 0.3s ease;
-                }
-
-                .arrow-icon.rotated {
-                    transform: rotate(90deg);
-                }
-
-                @media print {
-                    body {
-                        font-family: 'Courier New', Courier, monospace;
-                        font-size: 1400px;
-                        transform: scale(1.8);
-                        transform-origin: top center;
-                    }
-
-                    .receipt-container {
-                        width: 75mm;
-                        /* Fixed width: 7.5 cm */
-                        min-height: 140mm;
-                        /* Default length: 14 cm */
-                        max-height: 170mm;
-                        /* Allow only slight auto-extend (~3 cm more) */
-                        margin: 0 auto;
-                        padding: 5px;
-                        /* small padding for readability */
-                        overflow: hidden;
-                        /* Prevents excessive growth */
-                    }
-
-                    h3 {
-                        font-size: 18px;
-                        /* larger heading */
-                        font-weight: bold;
-                        text-align: center;
-                    }
-
-                    p {
-                        font-size: 14px;
-                        margin: 0;
-                        padding: 2px 0;
-                        line-height: 1.4;
-                    }
-
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        font-size: 14px;
-                    }
-
-                    td,
-                    th {
-                        padding: 4px 0;
-                    }
-
-                    hr {
-                        border: none;
-                        height: 2px;
-                        background-color: black;
-                        margin: 6px 0;
-                        width: 100%;
-                    }
-
-                    .item-summary-section {
-                        display: flex;
-                        flex-wrap: wrap;
-                        gap: 5px;
-                        font-size: 13px;
-                    }
-
-                    .item-summary-section span {
-                        padding: 0.15rem 0.35rem;
-                        border-radius: 0.5rem;
-                        background-color: #f3f4f6;
-                        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-                        font-size: 12px;
-                        white-space: nowrap;
-                        display: inline-block;
-                    }
-
-                    @page {
-                        size: 80mm auto;
-                        margin: 0;
-                    }
-
-                }
-            </style>
-
-
-            <style>
-                /* Page background green */
-                body,
-                html {
-                    background-color: #99ff99;
-                    /* Light green background */
-                }
-
-                /* Bold black labels */
-                label.form-label {
-                    font-weight: 700;
-                    color: #000000;
-                }
-
-                /* Smaller input fields and selects, with borders */
-                input.form-control-sm,
-                select.form-select-sm {
-                    border: 1.5px solid #000000 !important;
-                    /* stronger black border */
-                    font-weight: 600;
-                    font-size: 0.875rem;
-                    /* smaller font */
-                }
-
-                /* Align certain form groups horizontally with smaller width */
-                .form-row {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 1rem;
-                    align-items: flex-end;
-
-                }
-
-                .form-row>div {
-                    flex: 1 1 150px;
-                    /* allow shrink/grow, min width 150px */
-                }
-
-                /* Adjust card background to white for contrast */
-                .card {
-                    background-color: #111439ff !important;
-                }
-
-                /* Select2 specific styling adjustments for smaller size */
-                .select2-container--bootstrap-5 .select2-selection--single {
-                    min-height: calc(1.5em + 1rem + 2px);
-                    /* Increased from 0.5rem to 1rem */
-                    /* Matches form-control-sm height */
-                    padding: 0.25rem 0.5rem;
-                    font-size: 0.875rem;
-                    /* Matches form-control-sm font-size */
-                    border: 1.5px solid #000000 !important;
-                    /* Apply border to select2 */
-                }
-
-                .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-                    line-height: calc(1.5em + 0.5rem + 2px);
-                    padding-left: 0;
-                    /* Remove default padding as it's set on the selection */
-                }
-
-                .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-                    height: calc(1.5em + 0.5rem + 2px);
-                    top: 50%;
-                    transform: translateY(-50%);
-                }
-
-                /* Custom CSS for the tabular Select2 dropdown */
-
-                /* Remove default padding from Select2 options to control inner spacing */
-                .select2-container--default .select2-results__option {
-                    padding: 0 !important;
-                }
-
-/* Header and Data Rows */
-.grn-header-row {
-    display: grid;
-    /* This line is adjusted to give more space to the first column */
-    grid-template-columns: 1fr 1fr 60px 60px 60px 60px 70px;
-    gap: 1px;
-    background: #333;
-    color: #fff;
-    font-weight: bold;
-    font-size: 13px;
-    padding: 2px 4px;
-    border-bottom: 1px solid #ccc;
-    white-space: nowrap; /* Keeps the header row on a single line for neatness */
-}
-
-/* Data rows */
-.grn-option-row {
-    display: grid;
-    /* This line is adjusted to make the first column flexible */
-    grid-template-columns: 1fr 1fr 60px 60px 60px 60px 70px;
-    gap: 1px;
-    background: #fff7cc;
-    color: #000;
-    font-size: 13px;
-    padding: 2px 4px;
-    border-bottom: 1px solid #ddd;
-    align-items: center;
-    white-space: normal; /* Allows text to wrap within the row */
-}
-
-/* Column Styling */
-.grn-code {
-    font-weight: bold;
-    text-align: left;
-}
-
-.grn-item {
-    /* **UPDATED:** Aligning the text to the center */
-    text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis; /* Still want ellipsis for the Item name if it's too long */
-    /* **NEW:** Adding a margin to push content to the right */
-    margin-left: 10px; 
-}
-
-.grn-ow,
-.grn-op,
-.grn-bw,
-.grn-bp {
-    text-align: right;
-}
-
-.grn-txn-date {
-    text-align: center;
-    color: #000;
-    font-style: normal;
-}
-
-/* Header-specific alignment */
-.grn-header-row .grn-code {
-    text-align: center;
-}
-
-.grn-header-row .grn-item {
-    /* **UPDATED:** Aligning the header to the center */
-    text-align: center;
-    padding-right: 0;
-    /* **NEW:** Adding a margin to push the header to the right */
-    margin-left: 10px;
-}
-
-/* Option-specific alignment */
-.grn-option-row .grn-item {
-    /* This is now handled by the .grn-item class above, so this can be removed or kept for specificity */
-}
-
-.grn-header-row .grn-ow,
-.grn-header-row .grn-op,
-.grn-header-row .grn-bw,
-.grn-header-row .grn-bp {
-    text-align: right;
-}
-
-.grn-header-row .grn-txn-date {
-    text-align: center;
-    color: #fff;
-}
-                /* Make sure Code column text does not wrap and stays in one line */
-                .grn-code {
-                    white-space: nowrap;
-                    font-weight: 700;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    /* optional: show ellipsis if too long */
-                }
-
-                /* Other columns */
-                .grn-column {
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-
-                /* Highlighted (hovered) option in Select2 dropdown */
-                .select2-container--default .select2-results__option--highlighted {
-                    background-color: #007bff !important;
-                    /* Blue highlight */
-                    color: white !important;
-                }
-
-                /* Text color for selected option displayed in the Select2 input */
-                .select2-selection__rendered {
-                    color: #333;
-                    /* Default text color, overridden by .select2-black-text if present */
-                }
-
-                .select2-black-text {
-                    color: #FF0000 !important;
-                    text-align: center !important;
-                    font-weight: bold !important;
-                    font-size: 14px !important;
-                    /* REMOVED: position: relative; and transform: translateY(-8px); for vertical centering */
-                }
-
-                /* Style for the main Select2 input field to match grn_display */
-                .select2-container--default .select2-selection--single {
-                    height: 34px !important;
-                    /* Keep the height from previous request */
-                    /* Removed duplicate text-align, padding, font-size, border, border-radius as they are defined elsewhere or not needed here */
-                }
-
-                .select2-container--default .select2-selection--single .select2-selection__arrow {
-                    height: 32px;
-                    /* Adjusted to be slightly less than container height for better alignment */
-                    top: 50%;
-                    transform: translateY(-50%);
-                    /* Center vertically */
-                    right: 4px;
-                    /* Adjust if needed */
-                }
-
-                /* Ensure search input inside dropdown (if visible) matches size */
-                .select2-search__field {
-                    height: 24px !important;
-                    font-size: 11px !important;
-                    padding: 2px 6px !important;
-                    border: 1px solid #ced4da !important;
-                    border-radius: 0.25rem !important;
-                }
-
-                /* Style the placeholder option in the dropdown */
-                .select2-results__option[role=option][aria-disabled=true] {
-                    color: #999;
-                    text-align: center;
-                    /* Grey out the placeholder option */
-                }
-
-                /* This targets the actual text display area inside the Select2 box. */
-                .select2-container--default .select2-selection--single .select2-selection__rendered {
-                    line-height: 34px !important;
-                    /* Match line-height to the height for vertical centering */
-                    font-size: 16px !important;
-                    /* Made text "some what big" (increased from 14px to 16px) */
-                    padding: 0 12px !important;
-                    /* CRITICAL CHANGE: Set top/bottom padding to 0 for vertical centering */
-                    text-align: center !important;
-                    /* Center the text horizontally */
-                    font-weight: bold !important;
-                    /* Make the text bold */
-                }
-
-                /* Optional: If you also want the options in the dropdown list to have the same font styling */
-                .select2-results__option {
-                    font-size: 16px !important;
-                    font-weight: bold !important;
-                    /* text-align: center !important; -- This is now handled by .grn-column where appropriate for individual cells */
-                }
-
-                .custom-middle-block {
-                    width: 41%;
-                    /* Adjust the percentage as needed */
-                    max-width: none;
-                    /* Override the default max-width */
-                }
-            </style>
-            <style>
-                @media print {
-                    @page {
-                        size: 70mm auto;
-                        /* Width 70mm, height auto */
-                        margin: 0;
-                        /* Remove default margins */
-                    }
-
-                    body {
-                        margin: 0;
-                        padding: 0;
-                    }
-
-                    .receipt-container {
-                        width: 70mm;
-                        margin: 0 auto;
-                        padding: 0;
-                        font-family: monospace, Arial, sans-serif;
-                        /* Use monospace for receipts */
-                        font-size: 12px;
-                        /* Adjust font size as needed */
-                    }
-
-
-                }
-            </style>
-
-
-
-      <style>
+    {{-- CSS Includes --}}
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    {{-- Printed and Unprinted sales sections styles --}}
+
+    <style>
+        .printed-sales-list ul,
+        .unprinted-sales-list ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .custom-dark-green-bg {
+            background-color: #006400 !important;
+            /* A common dark green hex code */
+        }
+
+
+
+        .customer-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .customer-header:hover {
+            background-color: #e9ecef;
+        }
+
+        .customer-details {
+            padding: 10px 15px;
+            background-color: #fff;
+            border-top: 1px solid #e0e0e0;
+            display: none;
+            /* Bootstrap's .collapse class handles visibility */
+        }
+
+        .customer-details.show {
+            /* Bootstrap adds .show when expanded */
+            display: block;
+        }
+
+        .customer-details table {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 0.85em;
+        }
+
+        .customer-details table th,
+        .customer-details table td {
+            padding: 4px 8px;
+            text-align: left;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .customer-details table th {
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
+
+        .customer-details .sale-item-row:last-child td {
+            border-bottom: none;
+        }
+
+        .total-for-customer {
+            font-weight: bold;
+            text-align: right;
+            padding: 5px 0;
+            border-top: 1px solid #ddd;
+            margin-top: 5px;
+        }
+
+        .arrow-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .arrow-icon.rotated {
+            transform: rotate(90deg);
+        }
+    </style>
+
+  {{-- GRN OPTIONS DROPDOWN STYLES --}}
+    <style>
+        /* Page background green */
+        body,
+        html {
+            background-color: #99ff99;
+            /* Light green background */
+        }
+
+        /* Bold black labels */
+        label.form-label {
+            font-weight: 700;
+            color: #000000;
+        }
+
+        /* Smaller input fields and selects, with borders */
+        input.form-control-sm,
+        select.form-select-sm {
+            border: 1.5px solid #000000 !important;
+            /* stronger black border */
+            font-weight: 600;
+            font-size: 0.875rem;
+            /* smaller font */
+        }
+
+        /* Align certain form groups horizontally with smaller width */
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+
+        }
+
+        .form-row>div {
+            flex: 1 1 150px;
+            /* allow shrink/grow, min width 150px */
+        }
+
+        /* Adjust card background to white for contrast */
+        .card {
+            background-color: #111439ff !important;
+        }
+
+        /* ---------------------- */
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #007bff !important;
+            font-weight: bold !important;
+            text-align: center !important;
+            font-size: 16px !important;
+            line-height: 34px !important;
+            padding: 0 12px !important;
+        }
+
+        /* Optional: red text for special class */
+        .select2-black-text {
+            color: #FF0000 !important;
+        }
+
+        /* ---------------------- */
+        /* Tabular option rows */
+        .grn-option-row {
+            display: grid;
+            /* Use 'fr' units to fill the available width */
+            grid-template-columns: 120px 60px 1fr 60px 60px 60px 70px;
+            gap: 1px;
+            padding: 2px 4px;
+            align-items: center;
+            white-space: nowrap;
+            font-size: 13px;
+            color: #000000 !important;
+            background: #fff7cc;
+        }
+
+        /* Columns */
+        .grn-column {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 0 2px;
+        }
+
+        .grn-code {
+            font-weight: bold;
+            text-align: left;
+        }
+
+        .grn-sp {
+            text-align: center;
+        }
+
+        .grn-item {
+            /* Change this line */
+            text-align: center;
+        }
+
+        .grn-ow,
+        .grn-op,
+        .grn-bw,
+        .grn-bp {
+            text-align: right;
+        }
+
+        .grn-txn-date {
+            text-align: center;
+        }
+
+        /* ---------------------- */
+        /* Header row styling */
+        .grn-header-row {
+            display: grid;
+            /* Use 'fr' units to match the option rows */
+            grid-template-columns: 120px 60px 1fr 60px 60px 60px 70px;
+            gap: 1px;
+            background: #333;
+            color: #fff;
+            font-weight: bold;
+            font-size: 13px;
+            padding: 2px 4px;
+            border-bottom: 1px solid #ccc;
+            white-space: nowrap;
+        }
+
+        /* Highlighted option */
+        .select2-container--default .select2-results__option--highlighted .grn-option-row {
+            background-color: #007bff !important;
+            color: #fff !important;
+        }
+
+        /* Remove default padding */
+        .select2-container--default .select2-results__option {
+            padding: 0 !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+        }
+    </style>
+    <style>
         .col-custom-2-5 {
             flex: 0 0 20.83333333%;
             max-width: 20.83333333%;
         }
+
         .col-custom-7 {
             flex: 0 0 58.33333333%;
             max-width: 58.33333333%;
         }
+
         .col-custom-2-5-offset {
             margin-left: 20.83333333%;
         }
     </style>
+        {{-- Custom Printes sales Column (2.5) --}}
 
     <div class="container-fluid" style="margin-top: 10px;">
         <div class="row justify-content-between">
-            {{-- Custom Left Column (2.5) --}}
+        
             <div class="col-custom-2-5">
                 {{-- ORIGINAL SECTION: Printed Sales Records (bill_printed = 'Y') - Top Left Column --}}
                 <div class="card shadow-sm border-0 rounded-3" style="height: 450px;">
@@ -775,7 +542,7 @@
                                     {{-- Outer loop: CUSTOMER GROUP --}}
                                     @foreach ($salesPrinted->sortByDesc(fn($sales) => $sales->first()->created_at) as $customerCode => $salesForCustomer)
                                         @php
-            $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
+                                            $customerName = $salesForCustomer->first()->customer_name ?? 'N/A';
                                         @endphp
                                         <li data-customer-code="{{ $customerCode }}">
                                             <div class="customer-group-header">
@@ -785,7 +552,7 @@
                                                 {{-- Inner loop: BILL GROUP --}}
                                                 @foreach ($salesForCustomer->groupBy('bill_no')->sortByDesc(fn($sales) => $sales->first()->created_at) as $billNo => $salesForBill)
                                                     @php
-                $totalBillAmount = $salesForBill->sum('total');
+                                                        $totalBillAmount = $salesForBill->sum('total');
                                                     @endphp
                                                     <li>
                                                         <div class="customer-header bill-clickable"
@@ -843,13 +610,14 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     @endif
+                      {{-- Sales Entry Form --}}
 
                     <form method="POST" action="{{ route('grn.store') }}" id="salesEntryForm">
                         @csrf
                         {{-- NEW TOP ROW: Select Customer Dropdown --}}
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <div id="billNoDisplay"
-                                style="color: black; font-weight: bold; font-size: 0.9rem; white-space: nowrap;">
+                                style="color: white; font-weight: bold; font-size: 0.9rem; white-space: nowrap;">
                                 {{-- Bill No will be displayed here --}}
                             </div>
                             <h5 style="font-size: 1.5rem; color: red; margin: 0; white-space: nowrap;">
@@ -914,7 +682,7 @@
                                             data-item-name="{{ $entry->item_name }}" data-weight="{{ $entry->weight }}"
                                             data-price="{{ $entry->price_per_kg }}" data-total="{{ $entry->total }}"
                                             data-packs="{{ $entry->packs }}" data-grn-no="{{ $entry->grn_no }}"
-                                            data-txn-date="{{ $entry->txn_date }}"
+                                            data-txn-date="{{ $entry->txn_date }}" data-sprice="{{ $entry->SalesKGPrice }}"
                                             data-original-weight="{{ $entry->original_weight }}"
                                             data-original-packs="{{ $entry->original_packs }}">
                                             {{ $entry->code }} | {{ $entry->supplier_code }} | {{ $entry->item_code }} |
@@ -925,6 +693,7 @@
                                 </select>
                             </div>
                         </div>
+
                         {{-- Hidden fields for customer and GRN --}}
                         <input type="hidden" name="customer_name" id="customer_name_hidden"
                             value="{{ old('customer_name') }}">
@@ -967,103 +736,100 @@
                                 @enderror
                             </div>
                         </div>
-                      <div class="d-flex flex-wrap gap-2 align-items-start mt-2">
-    <!-- Slightly smaller Item Name field -->
-    <div style="flex: 1.5 1 180px;">
-        <input type="text" id="item_name_display_from_grn" class="form-control" readonly
-            placeholder="අයිතමයේ නම (Item Name)"
-            style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
-    </div>
-
-    <!-- Weight -->
-    <div style="flex: 1 1 80px;">
-        <input type="number" name="weight" id="weight" step="0.01"
-            class="form-control @error('weight') is-invalid @enderror"
-            value="{{ old('weight') }}" placeholder="බර (kg)" required
-            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-        <small id="remaining_weight_display" class="form-text text-danger fw-bold"
-            style="font-size: 1.3rem;">BW: 0.00 kg</small>
-    </div>
-
-  <!-- Price per kg -->
-<div style="flex: 1 1 80px;">
-    <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
-        class="form-control @error('price_per_kg') is-invalid @enderror"
-        value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
-        style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-</div>
-
-<!-- New field for GRN fetched price -->
-<div style="flex: 1 1 80px; margin-left: 10px; display: none;" id="grn_price_container">
-    <input type="text" name="grn_price" id="grn_price" readonly
-        class="form-control"
-        placeholder="GRN Price"
-        style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: red; background-color: #f0f0f0;">
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const grnSelect = $('#grn_select'); 
-    const grnPriceInput = $('#grn_price');
-    const grnPriceContainer = $('#grn_price_container');
-
-    // Initialize Select2 if not already done
-    grnSelect.select2({
-        placeholder: '-- Select GRN Entry --',
-        allowClear: true,
-        width: '100%'
-    });
-
-    // Listen to the Select2 change event
-    grnSelect.on('change', function() {
-        const selectedCode = $(this).val();
-
-        if (selectedCode) {
-            fetch(`/grn-entry/${selectedCode}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.per_kg_price !== null) {
-                        grnPriceInput.val(data.per_kg_price);
-                        grnPriceContainer.show(); // Show field only when data is valid
-                    } else {
-                        grnPriceInput.val('');
-                        grnPriceContainer.hide();
-                        
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching GRN data:', error);
-                    grnPriceContainer.hide();
-                });
-        } else {
-            grnPriceInput.val('');
-            grnPriceContainer.hide();
-        }
-    });
-});
-
-</script>
+                        {{-- Item Details Section --}}
+                        <div class="d-flex flex-wrap gap-2 align-items-start mt-2">
+                            <!-- Slightly smaller Item Name field -->
+                            <div style="flex: 1.5 1 150px;">
+                                <input type="text" id="item_name_display_from_grn" class="form-control" readonly
+                                    placeholder="අයිතමයේ නම (Item Name)"
+                                    style="background-color: #e9ecef; color: black; height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
+                            </div>
 
 
-    <!-- Packs -->
-    <div style="flex: 1 1 80px;">
-        <input type="number" name="packs" id="packs"
-            class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
-            placeholder="ඇසුරුම් (Packs)" required
-            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
-        <small id="remaining_packs_display" class="form-text text-danger fw-bold"
-            style="font-size: 1.3rem;">BP: 0</small>
-    </div>
+                            <!-- Weight -->
+                            <div style="width: 100px;">
+                                <input type="number" name="weight" id="weight" step="0.01"
+                                    class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight') }}"
+                                    placeholder="බර (kg)" required
+                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
 
-    <!-- Larger Total field -->
-    <div style="flex: 1.5 1 120px;">
-        <input type="number" name="total" id="total" readonly
-            class="form-control bg-light @error('total') is-invalid @enderror"
-            value="{{ old('total') }}" placeholder="සමස්ත (Total)"
-            style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
-    </div>
-</div>
+                                <small id="remaining_weight_display" class="form-text text-danger fw-bold"
+                                    style="font-size: 1.1rem; display: block; margin-top: 4px; margin-left: -180px; text-align: left;">
+                                    BW: 0.00
+                                </small>
 
+                            </div>
+
+
+
+                            <!-- price_per_kg -->
+                            <div style="flex: 1 1 80px; position: relative;">
+                                <input type="number" name="price_per_kg" id="price_per_kg" step="0.01"
+                                    class="form-control @error('price_per_kg') is-invalid @enderror"
+                                    value="{{ old('price_per_kg') }}" placeholder="මිල (Price/kg)" required
+                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+
+                                <!-- GRN Price display -->
+                                <small id="grn_price_display"
+                                    style="color: red; display: none; font-size: 14px; margin-top: 4px; display: block;"></small>
+                            </div>
+     <!-- This is the script to fetch te real selling price of te grn fetch from grn table -->
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    const grnSelect = $('#grn_select');
+                                    const grnPriceDisplay = $('#grn_price_display');
+
+                                    // Initialize Select2
+                                    grnSelect.select2({
+                                        placeholder: '-- Select GRN Entry --',
+                                        allowClear: true,
+                                        width: '100%'
+                                    });
+
+                                    // Listen to Select2 change
+                                    grnSelect.on('change', function () {
+                                        const selectedCode = $(this).val();
+
+                                        if (selectedCode) {
+                                            fetch(`http://127.0.0.1:8000/grn-entry/${selectedCode}
+    `)
+                                                .then(response => response.json())
+                                                .then(data => {
+                                                    if (data.per_kg_price !== null) {
+                                                        grnPriceDisplay.text(`${data.per_kg_price}`).show();
+                                                    } else {
+                                                        grnPriceDisplay.text('').hide();
+                                                    }
+                                                })
+                                                .catch(error => {
+                                                    console.error('Error fetching GRN data:', error);
+                                                    grnPriceDisplay.text('').hide();
+                                                });
+                                        } else {
+                                            grnPriceDisplay.text('').hide();
+                                        }
+                                    });
+                                });
+                            </script>
+
+                            <!-- Packs -->
+                            <div style="flex: 1 1 80px;">
+                                <input type="number" name="packs" id="packs"
+                                    class="form-control @error('packs') is-invalid @enderror" value="{{ old('packs') }}"
+                                    placeholder="ඇසුරුම් (Packs)" required
+                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black; color: black;">
+                                <small id="remaining_packs_display" class="form-text text-danger fw-bold"
+                                    style="font-size: 1.3rem;">BP: 0</small>
+                            </div>
+
+                            <!-- Larger Total field -->
+                            <div style="flex: 1.5 1 120px;">
+                                <input type="number" name="total" id="total" readonly
+                                    class="form-control bg-light @error('total') is-invalid @enderror"
+                                    value="{{ old('total') }}" placeholder="සමස්ත (Total)"
+                                    style="height: 45px; font-size: 18px; padding: 6px 10px; border: 1px solid black;">
+                            </div>
+                        </div>
                         <input type="hidden" name="code" id="code" value="{{ old('code') }}">
                         <input type="hidden" name="item_name" id="item_name" value="{{ old('item_name') }}">
                         <input type="hidden" name="original_weight" id="original_weight_input">
@@ -1078,6 +844,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 style="display:none;">
                                 <i class="material-icons me-2">edit</i>Update Sales Entry
                             </button>
+
+
                             <button type="button" class="btn btn-danger btn-sm shadow-sm" id="deleteSalesEntryBtn"
                                 style="display:none;">
                                 <i class="material-icons me-2">delete</i>Delete Sales Entry
@@ -1087,241 +855,257 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="material-icons me-2">cancel</i>Cancel / New Entry
                             </button>
                         </div>
-            
-          
-      
 
-                    {{-- Main Sales Table - ALWAYS RENDERED --}}
-                    <div class="mt-0">
-                        <div class="table-responsive">
-                            <style>
-                                #mainSalesTableBody tr,
-                                #mainSalesTableBody td {
-                                    background-color: black !important;
-                                    color: white !important;
-                                }
-                            </style>
-                            <table class="table table-bordered table-hover shadow-sm rounded-3 overflow-hidden"
-                                style="font-size: 0.85rem; margin-top: -10px;">
-                                <thead style="background-color: white; color: black;">
-                                    <tr>
-                                        <th scope="col">කේතය</th>
-                                        <th scope="col">අයිතමය</th>
-                                        <th scope="col">බර (kg)</th>
-                                        <th scope="col">මිල</th>
-                                        <th scope="col">සමස්ත</th>
-                                        <th scope="col">මලු</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="mainSalesTableBody">
-                                    {{-- This tbody will be dynamically populated by JavaScript. --}}
-                                    {{-- IMPORTANT: Ensure your JavaScript populating this table adds 'data-sale-id',
-                                    'data-customer-code', and 'data-customer-name' attributes to each <tr> --}}
-                                    {{-- Example:
-                                    <tr data-sale-id="123" data-customer-code="CUST001" data-customer-name="John Doe">...
-                                    </tr> --}}
-                                </tbody>
-                            </table>
-                            <h5 style="font-size: 1.5rem; color: red; margin: 0; white-space: nowrap; text-align: right;">
-                                <strong>Total Sales Value:</strong> Rs.
-                                <span id="mainTotalSalesValueBottom">{{ number_format($totalSum, 2) }}</span>
-                            </h5>
-                            <div id="itemSummary"></div>
-                            <button id="printButton">Print Receipt</button>
-                            <button id="f5Button">Hold Receipt</button>
-                            <script>
-                                document.getElementById('f5Button').addEventListener('click', function (e) {
-                                    e.preventDefault(); // prevent any default behavior
-
-                                    if (confirm("Do you want to hold?")) {
-                                        // Create a KeyboardEvent simulating F5
-                                        const f5Event = new KeyboardEvent('keydown', {
-                                            key: 'F5',
-                                            code: 'F5',
-                                            keyCode: 116, // F5 key code
-                                            which: 116, // needed for some browsers
-                                            bubbles: true,
-                                            cancelable: true
-                                        });
-                                        // Dispatch the event on the document
-                                        document.dispatchEvent(f5Event);
-                                        console.log('F5 key simulated!');
-                                    } else {
-                                        console.log('Hold cancelled by user.');
+                        {{-- Main Sales Table - ALWAYS RENDERED --}}
+                        <div class="mt-0">
+                            <div class="table-responsive">
+                                <style>
+                                    #mainSalesTableBody tr,
+                                    #mainSalesTableBody td {
+                                        background-color: black !important;
+                                        color: white !important;
                                     }
-                                });
-                            </script>
+                                </style>
+                                <table class="table table-bordered table-hover shadow-sm mt-3" style="font-size:0.85rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>කේතය</th>
+                                            <th>අයිතමය</th>
+                                            <th>බර (kg)</th>
+                                            <th>මිල</th>
+                                            <th>සමස්ත</th>
+                                            <th>මලු</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mainSalesTableBody">
+                                        @foreach($sales as $sale)
+                                            <tr data-sale='@json($sale)'>
+                                                <td>{{ $sale->code }}</td>
+                                                <td>{{ $sale->item_name }}</td>
+                                                <td>{{ number_format($sale->weight, 2) }}</td>
+                                                <td>{{ number_format($sale->price_per_kg, 2) }}</td>
+                                                <td>{{ number_format($sale->weight * $sale->price_per_kg, 2) }}</td>
+
+                                                <td>{{ $sale->packs }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                {{-- Textbox for given amount --}}
+                                <div class="mt-3 d-flex justify-content-end">
+                                    <div class="w-25">
+
+                                        <input type="number" step="0.01" name="given_amount" id="given_amount"
+                                            class="form-control form-control-sm text-end" placeholder="දුන් මුදල">
+
+                                    </div>
+                                </div>
+
+                                <h5
+                                    style="font-size: 1.5rem; color: red; margin: 0; white-space: nowrap; text-align: right;">
+                                    <strong>Total Sales Value:</strong> Rs.
+                                    <span id="mainTotalSalesValueBottom">{{ number_format($totalSum, 2) }}</span>
+                                </h5>
+                                <div id="itemSummary"></div>
+                                <button id="printButton">Print Receipt</button>
+                                <button id="f5Button">Hold Receipt</button>
+                                 <!-- This is te script to call f5 function To HOLD BUTTON -->
+                                <script>
+                                    document.getElementById('f5Button').addEventListener('click', function (e) {
+                                        e.preventDefault(); // prevent any default behavior
+
+                                        if (confirm("Do you want to hold?")) {
+                                            // Create a KeyboardEvent simulating F5
+                                            const f5Event = new KeyboardEvent('keydown', {
+                                                key: 'F5',
+                                                code: 'F5',
+                                                keyCode: 116, // F5 key code
+                                                which: 116, // needed for some browsers
+                                                bubbles: true,
+                                                cancelable: true
+                                            });
+                                            // Dispatch the event on the document
+                                            document.dispatchEvent(f5Event);
+                                            console.log('F5 key simulated!');
+                                        } else {
+                                            console.log('Hold cancelled by user.');
+                                        }
+                                    });
+                                </script>
+                                <button id="f10Button">Refresh</button>
+                <!-- This is te script to call f10 function To REFRESH BUTTON -->
+                                <script>
+                                    document.getElementById('f10Button').addEventListener('click', function (e) {
+                                        e.preventDefault(); // prevent any default behavior
+
+                                        if (confirm("Do you want to Refresh ?")) {
+                                            // Create a KeyboardEvent simulating F10
+                                            const f10Event = new KeyboardEvent('keydown', {
+                                                key: 'F10',
+                                                code: 'F10',
+                                                keyCode: 121, // F10 key code
+                                                which: 121,   // needed for some browsers
+                                                bubbles: true,
+                                                cancelable: true
+                                            });
+
+                                            // Dispatch the event on the document
+                                            document.dispatchEvent(f10Event);
+                                            console.log('F10 key simulated!');
+                                        } else {
+                                            console.log('F10 trigger cancelled by user.');
+                                        }
+                                    });
+                                </script>
+
+                            </div>
                         </div>
-                    </div>
                 </div>
             </div>
-                    </form>
-                  <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const salesEntryForm = document.getElementById('salesEntryForm');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            </form>
+             <!-- This is the script code to submit this form via ajax witout screen reloading and also this uses global arrays to communicate with bottom section -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const salesEntryForm = document.getElementById('salesEntryForm');
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    let submitted = false;
 
-    // Initialize global arrays
-    window.allSalesData = @json($sales->toArray()) || [];
-    window.printedSalesData = @json($salesPrinted->toArray()) || [];
-    window.unprintedSalesData = @json($salesNotPrinted->toArray()) || [];
-    window.currentDisplayedSalesData = [];
+                    // --- Select2 Initialization and Event Listener ---
+                    $('#grn_select').select2({
+                        placeholder: '-- Select GRN Entry --',
+                        allowClear: true,
+                        width: '100%'
+                    });
 
-    // Function to populate main sales table
-    window.populateMainSalesTable = function(salesArray) {
-        const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
-        if (!mainSalesTableBodyElement) return;
-
-        mainSalesTableBodyElement.innerHTML = '';
-
-        let totalSalesValue = 0;
-        let totalPackCostValue = 0;
-
-        if (!salesArray || salesArray.length === 0) {
-            mainSalesTableBodyElement.innerHTML = '<tr><td colspan="8" class="text-center">No sales records found.</td></tr>';
-            window.currentDisplayedSalesData = [];
-            return;
-        }
-
-        // Keep global snapshot of currently displayed data
-        window.currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
-
-        salesArray.forEach(sale => {
-            const code = sale.code || 'N/A';
-            const itemName = sale.item_name || 'N/A';
-            const weight = sale.weight ? parseFloat(sale.weight).toFixed(2) : '0.00';
-            const pricePerKg = sale.price_per_kg ? parseFloat(sale.price_per_kg).toFixed(2) : '0.00';
-            const packs = sale.packs ? parseInt(sale.packs) : 0;
-            const total = sale.total ? parseFloat(sale.total).toFixed(2) : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
-            const packCost = sale.pack_due ? parseFloat(sale.pack_due) : 0;
-            const packCostValue = packs * packCost;
-
-            const newRow = document.createElement('tr');
-            newRow.dataset.saleId = sale.id;
-
-            newRow.innerHTML = `
-                <td>${code}</td>
-                <td>${itemName}</td>
-                <td>${weight}</td>
-                <td>${pricePerKg}</td>
-                <td>${total}</td>
-                <td>${packs}</td>
-                <td style="display:none;">${packCostValue.toFixed(2)}</td>
-            `;
-
-            mainSalesTableBodyElement.appendChild(newRow);
-
-            totalSalesValue += parseFloat(total);
-            totalPackCostValue += packCostValue;
-        });
-
-        const combinedTotal = totalSalesValue + totalPackCostValue;
-        window.globalTotalPackCostValue = totalPackCostValue;
-
-        document.getElementById('mainTotalSalesValue').textContent = combinedTotal.toFixed(2);
-        document.getElementById('mainTotalSalesValueBottom').textContent = combinedTotal.toFixed(2);
-
-        console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2), "Total pack cost:", totalPackCostValue.toFixed(2), "Combined:", combinedTotal.toFixed(2));
-    };
-
-    // Populate table on page load
-    if (window.allSalesData.length > 0) {
-        window.populateMainSalesTable(window.allSalesData);
-    }
-
-    // Auto-open GRN Select2 after render
-    setTimeout(() => {
-        $('#grn_select').select2('open');
-    }, 100);
-
-    // Handle sales entry form submission
-    salesEntryForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const submitButton = salesEntryForm.querySelector('button[type="submit"]');
-        const originalText = submitButton.innerHTML;
-        submitButton.innerHTML = 'Processing...';
-        submitButton.disabled = true;
-
-        const formData = new FormData(salesEntryForm);
-
-        fetch(salesEntryForm.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': csrfToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const newSale = data.data;
-                console.log("✅ New sale received:", newSale);
-
-                // Push to allSalesData
-                window.allSalesData.push(newSale);
-
-                // Push into printed/unprinted arrays
-                if (newSale.bill_printed) {
-                    if (Array.isArray(window.printedSalesData)) {
-                        window.printedSalesData.push(newSale);
-                    } else {
-                        if (!window.printedSalesData[newSale.customer_code]) {
-                            window.printedSalesData[newSale.customer_code] = [];
+                    $('#grn_select').on('select2:open', function () {
+                        const searchBox = document.querySelector('.select2-container--open .select2-search__field');
+                        if (searchBox) {
+                            searchBox.focus();
+                            const len = searchBox.value.length;
+                            searchBox.setSelectionRange(len, len);
                         }
-                        window.printedSalesData[newSale.customer_code].push(newSale);
-                    }
-                } else {
-                    if (Array.isArray(window.unprintedSalesData)) {
-                        window.unprintedSalesData.push(newSale);
-                    } else {
-                        if (!window.unprintedSalesData[newSale.customer_code]) {
-                            window.unprintedSalesData[newSale.customer_code] = [];
+                    });
+                    // --- End Select2 Block ---
+
+                    // Handle form submission via AJAX
+                    salesEntryForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+
+                        if (submitted) return false;
+                        submitted = true;
+
+                        const submitButton = salesEntryForm.querySelector('button[type="submit"]');
+                        const originalText = submitButton.innerHTML;
+                        submitButton.innerHTML = 'Processing...';
+                        submitButton.disabled = true;
+
+                        const formData = new FormData(salesEntryForm);
+
+                        fetch(salesEntryForm.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': csrfToken
+                            }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    const newSale = data.data;
+                                    console.log("✅ New sale received:", newSale);
+
+                                    // Push new sale to global data arrays
+                                    window.allSalesData.push(newSale);
+
+                                    if (newSale.bill_printed) {
+                                        if (Array.isArray(window.printedSalesData)) {
+                                            window.printedSalesData.push(newSale);
+                                        } else {
+                                            // Handle the case where it's an object keyed by customer code
+                                            if (!window.printedSalesData[newSale.customer_code]) {
+                                                window.printedSalesData[newSale.customer_code] = [];
+                                            }
+                                            window.printedSalesData[newSale.customer_code].push(newSale);
+                                        }
+                                    } else {
+                                        if (Array.isArray(window.unprintedSalesData)) {
+                                            window.unprintedSalesData.push(newSale);
+                                        } else {
+                                            // Handle the case where it's an object keyed by customer code
+                                            if (!window.unprintedSalesData[newSale.customer_code]) {
+                                                window.unprintedSalesData[newSale.customer_code] = [];
+                                            }
+                                            window.unprintedSalesData[newSale.customer_code].push(newSale);
+                                        }
+                                    }
+
+                                    // Update the currently displayed table data
+                                    window.currentDisplayedSalesData.push(newSale);
+                                    window.populateMainSalesTable(window.currentDisplayedSalesData);
+
+                                    // Preserve customer info
+                                    const customerCode = document.getElementById('new_customer_code').value;
+                                    const customerName = document.getElementById('customer_name_hidden').value;
+
+                                    salesEntryForm.reset();
+
+                                    document.getElementById('new_customer_code').value = customerCode;
+                                    document.getElementById('customer_name_hidden').value = customerName;
+
+                                    // Reset GRN select and related fields
+                                    $('#grn_select').val(null).trigger('change');
+                                    document.getElementById('grn_entry_code').value = '';
+                                    document.getElementById('remaining_weight_display').textContent = 'BW: 0.00 kg';
+                                    document.getElementById('remaining_packs_display').textContent = 'BP: 0';
+
+                                    // Re-open GRN Select2 for next entry
+                                    setTimeout(() => {
+                                        $('#grn_select').select2('open');
+                                    }, 50);
+
+                                } else {
+                                    console.error('Submission error:', data.message);
+                                    alert('Error: ' + (data.message || 'Unknown error occurred'));
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Network error occurred. Please try again.');
+                            })
+                            .finally(() => {
+                                submitButton.innerHTML = originalText;
+                                submitButton.disabled = false;
+                                submitted = false;
+                            });
+                    });
+
+                    // Handle GRN select change to show price
+                    const grnSelect = $('#grn_select');
+                    const grnPriceDisplay = $('#grn_price_display');
+                    grnSelect.on('change', function () {
+                        const selectedCode = $(this).val();
+                        if (selectedCode) {
+                            fetch(`http://127.0.0.1:8000/grn-entry/${selectedCode}
+    `)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.per_kg_price !== null) {
+                                        grnPriceDisplay.text(`${data.per_kg_price}`).show();
+                                    } else {
+                                        grnPriceDisplay.text('').hide();
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching GRN data:', error);
+                                    grnPriceDisplay.text('').hide();
+                                });
+                        } else {
+                            grnPriceDisplay.text('').hide();
                         }
-                        window.unprintedSalesData[newSale.customer_code].push(newSale);
-                    }
-                }
-
-                // Update table immediately
-                window.currentDisplayedSalesData.push(newSale);
-                window.populateMainSalesTable(window.currentDisplayedSalesData);
-
-                // Preserve customer info
-                const customerCode = document.getElementById('new_customer_code').value;
-                const customerName = document.getElementById('customer_name_hidden').value;
-
-                salesEntryForm.reset();
-                document.getElementById('new_customer_code').value = customerCode;
-                document.getElementById('customer_name_hidden').value = customerName;
-
-                // Reset GRN select & UI elements
-                $('#grn_select').val(null).trigger('change');
-                document.getElementById('grn_entry_code').value = '';
-                document.getElementById('grn_price_container').style.display = 'none';
-                document.getElementById('grn_price').value = '';
-                document.getElementById('remaining_weight_display').textContent = 'BW: 0.00 kg';
-                document.getElementById('remaining_packs_display').textContent = 'BP: 0';
-
-                // Re-open GRN Select2 for next entry
-                setTimeout(() => {
-                    $('#grn_select').select2('open');
-                }, 50);
-
-            } else {
-                console.error('Submission failed:', data.message);
-            }
-        })
-        .catch(error => console.error('Error:', error))
-        .finally(() => {
-            submitButton.innerHTML = originalText;
-            submitButton.disabled = false;
-        });
-    });
-});
-</script>
-
-
-
+                    });
+                });
+            </script>
 
             {{-- NEW SECTION: Unprinted Sales Records (bill_printed = 'N') - Right Column --}}
             <div class="col-custom-2-5">
@@ -1330,7 +1114,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="p-3"
                         style="background-color: #004d00; border-top-left-radius: .3rem; border-top-right-radius: .3rem;">
                         <h6 class="mb-2 text-center text-white">
-                            මුද්‍රණය නොකළ  වාර්තා
+                            මුද්‍රණය නොකළ වාර්තා
                         </h6>
                         {{-- 🔍 Search Bar --}}
                         <input type="text" id="searchUnprintedCustomerCode" class="form-control form-control-sm mb-2"
@@ -1342,15 +1126,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         @if ($salesNotPrinted->count())
                             <ul id="unprintedSalesList" style="list-style: none; padding-left: 0; margin: 0;">
                                 @php
-        $sortedSalesNotPrinted = $salesNotPrinted->sortByDesc(function ($salesForCustomer) {
-            return $salesForCustomer->max('created_at');
-        });
+                                    $sortedSalesNotPrinted = $salesNotPrinted->sortByDesc(function ($salesForCustomer) {
+                                        return $salesForCustomer->max('created_at');
+                                    });
                                 @endphp
                                 @foreach ($sortedSalesNotPrinted as $customerCode => $salesForCustomer)
                                     @php
-            $firstSaleForCustomer = $salesForCustomer->first();
-            $customerName = $firstSaleForCustomer->customer_name;
-            $totalCustomerSalesAmount = $salesForCustomer->sum('total');
+                                        $firstSaleForCustomer = $salesForCustomer->first();
+                                        $customerName = $firstSaleForCustomer->customer_name;
+                                        $totalCustomerSalesAmount = $salesForCustomer->sum('total');
                                     @endphp
                                     <li data-customer-code="{{ $customerCode }}">
                                         <div class="customer-header bill-clickable" data-customer-code="{{ $customerCode }}"
@@ -1394,2232 +1178,1968 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         </div>
-        <form action="{{ route('clear.data') }}" method="POST"
-            onsubmit="return confirm('Are you sure you want to delete all data?');">
-            @csrf
-            {{-- This is the new input field for the password --}}
-            <input type="text" id="verificationField" class="form-control form-control-sm mt-3"
-                placeholder="Enter 'nethma123' to enable" style="width: 150px;">
-            {{-- The button is initially disabled --}}
-            <button type="submit" id="deleteAllButton" class="btn btn-danger btn-sm mt-3" disabled>
-                🗑️ Delete All Sales & GRN Entries
-            </button>
-        </form>
+
     </div>
 
-
-                {{-- JavaScript Includes (jQuery and Select2 should always be loaded before your custom script that uses
-                them)
-                --}}
-                <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-                {{-- Fetch customer code of unprocessed sales--}}
-                <script>
-                    document.addEventListener("DOMContentLoaded", function () {
-                        fetch("{{ url('/get-customer-code') }}")
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.customer_code) {
-                                    document.getElementById("new_customer_code").value = data.customer_code;
-                                }
-                            })
-                            .catch(error => console.error("Error fetching customer code:", error));
-                    });
-                </script>
-                <script>
-                    function printReceipt() {
-                        window.print();
-
-                        // If your setup allows raw ESC/POS command sending
-                        // send "cut" command to printer after printing:
-                        // \x1D\x56\x00  = ESC/POS Full Cut
-                        if (typeof printer !== "undefined") {
-                            printer.write("\x1D\x56\x00");
-                        }
+    {{-- JavaScript Includes (jQuery and Select2 should always be loaded before your custom script that uses
+    them)
+    --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Fetch customer code of unprocessed sales--}}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("{{ url('/get-customer-code') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.customer_code) {
+                        document.getElementById("new_customer_code").value = data.customer_code;
                     }
-
-                </script>
-                <script>
-                    // These event listeners will only run when the buttons are clicked with a mouse
-                    document.addEventListener('DOMContentLoaded', function () {
-                        // These event listeners will only run when the buttons are clicked with a mouse
-                        document.getElementById('f1Button').addEventListener('click', function () {
-                            // Ask for confirmation
-                            if (confirm("Do you want to print?")) {
-                                // Simulate the F1 key press
-                                const f1Event = new KeyboardEvent('keydown', {
-                                    key: 'F1',
-                                    code: 'F1',
-                                    keyCode: 112, // F1 keyCode
-                                    bubbles: true
-                                });
-                                document.dispatchEvent(f1Event);
-                                console.log('F1 key simulated!');
-                            } else {
-                                console.log('Print cancelled by user.');
-                            }
-                        });
-
-                        document.getElementById('f5Button').addEventListener('click', function (e) {
-                            e.preventDefault(); // stop form submission if inside a form
-                            if (confirm("Do you want to hold?")) {
-                                // Simulate the F5 key press
-                                const f5Event = new KeyboardEvent('keydown', {
-                                    key: 'F5',
-                                    code: 'F5',
-                                    keyCode: 116, // F5 keyCode
-                                    bubbles: true
-                                });
-                                document.dispatchEvent(f5Event);
-                                console.log('F5 key simulated!');
-                            } else {
-                                console.log('Hold cancelled by user.');
-                            }
-                        });
-                    });
-
-                </script>
-
-                {{-- Fetch list of sales codes--}}
-                <script>
-                    document.getElementById('searchByCode').addEventListener('keyup', function () {
-                        const val = this.value.toLowerCase();
-                        document.querySelectorAll('#codeList li').forEach(li => {
-                            li.style.display = li.getAttribute('data-code').toLowerCase().includes(val) ? '' : 'none';
-                        });
-                    });
-                </script>
-                {{-- Fetch loan amount--}}
-                <script>
-                    $(document).ready(function () {
-                        // Global vars to hold last fetched loan amount and customer short name
-                        let latestLoanAmount = 0;
-                        let latestCustomerShortName = '';
-
-                        function debounce(func, delay) {
-                            let timeout;
-                            return function (...args) {
-                                clearTimeout(timeout);
-                                timeout = setTimeout(() => func.apply(this, args), delay);
-                            };
-                        }
-
-                        function fetchLoanAmount(customerShortName) {
-                            if (!customerShortName) {
-                                $('#loan_amount_display').text('0.00');
-                                latestLoanAmount = 0;
-                                latestCustomerShortName = '';
-                                return;
-                            }
-
-                            let csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-                            $.ajax({
-                                url: '{{ route('get.loan.amount') }}',
-                                method: 'POST',
-                                data: {
-                                    _token: csrfToken,
-                                    customer_short_name: customerShortName
-                                },
-                                success: function (response) {
-                                    let amount = parseFloat(response.total_loan_amount) || 0;
-                                    $('#loan_amount_display').text(amount.toFixed(2));
-                                    // Save globally for print handler
-                                    latestLoanAmount = amount;
-                                    latestCustomerShortName = customerShortName;
-                                },
-                                error: function (xhr) {
-                                    console.error("AJAX error:", xhr.responseText);
-                                    $('#loan_amount_display').text('0.00');
-                                    latestLoanAmount = 0;
-                                    latestCustomerShortName = '';
-                                }
-                            });
-                        }
-
-                        const debouncedFetch = debounce(function () {
-                            let val = $('#new_customer_code').val();
-                            fetchLoanAmount(val);
-                        }, 300);
-
-                        $('#new_customer_code').on('keyup', debouncedFetch);
-
-                        $('#customer_code_select').on('change', function () {
-                            let selectedShortName = $(this).val();
-                            fetchLoanAmount(selectedShortName);
-                        });
-
-                        // F1 print handler using latestLoanAmount & latestCustomerShortName
-                        document.addEventListener('keydown', function (e) {
-                            if (e.key === "F1") {
-                                e.preventDefault();
-
-                                const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-                                if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
-                                    alert('No sales records in the table to print!');
-                                    return;
-                                }
-
-                                const salesData = [];
-                                tableRows.forEach(row => {
-                                    if (row.hasAttribute('data-sale-id')) {
-                                        const cells = row.querySelectorAll('td');
-                                        salesData.push({
-                                            id: row.getAttribute('data-sale-id'),
-                                            customer_code: row.getAttribute('data-customer-code'),
-                                            customer_name: row.getAttribute('data-customer-name'),
-                                            mobile: row.getAttribute('data-customer-mobile') || '',
-                                            code: cells[0]?.textContent.trim() || '',
-                                            item_code: cells[1]?.textContent.trim() || '',
-                                            item_name: cells[2]?.textContent.trim() || '',
-                                            weight: parseFloat(cells[3]?.textContent) || 0,
-                                            price_per_kg: parseFloat(cells[4]?.textContent) || 0,
-                                            total: parseFloat(cells[5]?.textContent) || 0,
-                                            packs: parseInt(cells[6]?.textContent) || 0
-                                        });
-                                    }
-                                });
-
-                                if (!salesData.length) {
-                                    alert('No printable sales records found!');
-                                    return;
-                                }
-
-                                const salesByCustomer = salesData.reduce((acc, sale) => {
-                                    (acc[sale.customer_code] ||= []).push(sale);
-                                    return acc;
-                                }, {});
-
-                                const customerCode = Object.keys(salesByCustomer)[0];
-
-                                // Use loan amount only if customer matches
-                                let loanAmountForPrint = 0;
-                                if (customerCode === latestCustomerShortName) {
-                                    loanAmountForPrint = latestLoanAmount;
-                                }
-
-                                // You can now pass loanAmountForPrint into your print template
-                                console.log('Loan amount for print:', loanAmountForPrint);
-
-                                // Continue with your existing print logic...
-
-                            }
-                        });
-                    });
-                </script>
-
-                {{-- PASSCODE FOR DELETE BUTTON --}}
-                <script>
-                    // Get references to the elements
-                    const verificationField = document.getElementById('verificationField');
-                    const deleteAllButton = document.getElementById('deleteAllButton');
-                    const requiredText = 'nethma123'; // The specific text to enable the button
-
-                    // Add an event listener that fires every time the user types
-                    verificationField.addEventListener('input', function () {
-                        // Check if the input field's current value matches the required text
-                        if (this.value === requiredText) {
-                            // If it matches, enable the button
-                            deleteAllButton.disabled = false;
-                        } else {
-                            // If it doesn't match, keep the button disabled
-                            deleteAllButton.disabled = true;
-                        }
-                    });
-                </script>
-                {{-- SCRIPT TO SEARCH THE UNPRINTED SALES RECORDS --}}
-                <script>
-                    document.addEventListener("DOMContentLoaded", function () {
-                        // ... (your existing JavaScript for other functionalities)
-
-                        const searchInput = document.getElementById('searchUnprintedCustomerCode');
-                        const unprintedSalesList = document.getElementById('unprintedSalesList');
-
-                        searchInput.addEventListener('keyup', function () {
-                            const searchTerm = searchInput.value.toLowerCase();
-                            const customerListItems = unprintedSalesList.getElementsByTagName('li');
-
-                            for (let i = 0; i < customerListItems.length; i++) {
-                                const listItem = customerListItems[i];
-                                const customerCode = listItem.getAttribute('data-customer-code').toLowerCase();
-
-                                if (customerCode.includes(searchTerm)) {
-                                    listItem.style.display = ''; // Show the list item
-                                } else {
-                                    listItem.style.display = 'none'; // Hide the list item
-                                }
-                            }
-                        });
-                    });
-                </SCRIPT>
-                {{-- SCRIPTON SEARCHING BY BILL NO AND CUSTOMER CODE --}}
-                <script>
-                    const searchInput = document.getElementById('searchPrintedSales');
-                    // Get a reference to the list of bills
-                    const printedSalesList = document.getElementById('printedSalesList');
-
-                    // Add an event listener for the 'input' event (fires on every keystroke)
-                    searchInput.addEventListener('input', function () {
-                        // Get the search query and convert it to lowercase for case-insensitive matching
-                        const searchQuery = this.value.toLowerCase();
-
-                        // Loop through each customer group (the <li> elements with data-customer-code)
-                        const customerGroups = printedSalesList.querySelectorAll('li[data-customer-code]');
-
-                        customerGroups.forEach(customerGroup => {
-                            // Assume the entire customer group should be hidden initially
-                            let groupHasVisibleBills = false;
-
-                            // Loop through the bills within each customer group
-                            const billItems = customerGroup.querySelectorAll('.bill-clickable');
-
-                            billItems.forEach(billItem => {
-                                // Get the bill number and customer code from the data attributes
-                                const billNo = billItem.dataset.billNo.toLowerCase();
-                                const customerCode = billItem.dataset.customerCode.toLowerCase();
-                                const customerName = billItem.dataset.customerName.toLowerCase();
-
-                                // Check if the search query is in the bill number or customer code
-                                if (billNo.includes(searchQuery) || customerCode.includes(searchQuery) || customerName.includes(searchQuery)) {
-                                    // If there's a match, show the bill and mark the group as having visible items
-                                    billItem.style.display = 'flex';
-                                    groupHasVisibleBills = true;
-                                } else {
-                                    // If no match, hide the bill
-                                    billItem.style.display = 'none';
-                                }
-                            });
-
-                            // After checking all bills in the group, show or hide the entire group
-                            // based on whether any bills within it are visible.
-                            if (groupHasVisibleBills) {
-                                customerGroup.style.display = 'block';
-                            } else {
-                                customerGroup.style.display = 'none';
-                            }
-                        });
-                    });
-                </script>
-
-                <script>
-                    $(document).ready(function () {
-                        $('#new_customer_code').on('input', function () {
-                            const customerCode = $(this).val().toUpperCase();
-
-                            // Only fetch if the input has a value
-                            if (customerCode) {
-                                // Construct the URL using the base path and the JavaScript variable
-                                const url = `{{ url('/get-unprinted-sales') }}/${customerCode}`;
-
-                                $.ajax({
-                                    url: url,
-                                    method: 'GET',
-                                    success: function (response) {
-                                        console.log("Fetched sales data:", response);
-
-                                        // ... (rest of your success function remains the same)
-                                    },
-
-                                });
-                            } else {
-                                // The input field is empty, clear the table and total
-                                $('#mainSalesTableBody').empty();
-                                $('#mainTotalSalesValue').text(totalSalesValue.toFixed(2));
-
-
-                            }
-                        });
-                    });
-                </script>
-
-                <script>
-
-                    document.addEventListener('DOMContentLoaded', function () {
-
-                        function resetFormAndTable() {
-                            // Get the list of sales IDs from the table to be marked as unprinted.
-                            // This assumes your table rows have a data-sale-id attribute.
-                            const saleIds = [];
-                            document.querySelectorAll('#mainSalesTableBody tr[data-sale-id]').forEach(row => {
-                                saleIds.push(row.dataset.saleId);
-                            });
-
-                            // If there are records, send them to the server to be marked as unprinted
-                            if (saleIds.length > 0) {
-                                console.log('Resetting form - sending unprinted sales to server.');
-
-                                const csrfToken = '{{ csrf_token() }}';
-                                const url = '{{ route('sales.save-as-unprinted') }}';
-
-                                const data = new Blob([JSON.stringify({
-                                    _token: csrfToken,
-                                    sale_ids: saleIds
-                                })], {
-                                    type: 'application/json'
-                                });
-
-                                // Use navigator.sendBeacon for a reliable background request
-                                navigator.sendBeacon(url, data);
-                            }
-
-                            // After sending the request, proceed with clearing the form and reloading
-                            document.getElementById('salesEntryForm').reset();
-                            salesEntryForm.action = "{{ route('grn.store') }}";
-                            document.getElementById('mainSalesTableBody').innerHTML = '';
-                            document.getElementById('new_customer_code').value = '';
-                            document.getElementById('customer_name_hidden').value = '';
-                            $('#customer_code_select').val(null).trigger('change.select2');
-                            document.getElementById('grn_display').style.display = 'none';
-                            $('#grn_select').next('.select2-container').show();
-                            $('#grn_select').val(null).trigger('change.select2');
-
-                            // Reset the button displays
-                            addSalesEntryBtn.style.display = 'inline-block';
-                            updateSalesEntryBtn.style.display = 'none';
-                            deleteSalesEntryBtn.style.display = 'none';
-                            cancelEntryBtn.style.display = 'none';
-
-                            console.log("Form, table, and buttons reset. Reloading page.");
-                            location.reload();
-                        }
-
-                        // Add an event listener for the F10 key press
-                        document.addEventListener('keydown', function (event) {
-                            if (event.key === 'F10') {
-                                event.preventDefault();
-                                resetFormAndTable();
-                            }
-                        });
-
-                        // Update the click handler for the cancel button to use the new function
-                        document.getElementById('cancelEntryBtn').addEventListener('click', function () {
-                            resetFormAndTable();
-                        });
-                    });
-                </script>
-
-                {{-- Ensure Bootstrap JS is loaded for collapse --}}
-                <script>
-                    // ... (existing JavaScript code, including Select2 initializations and other event listeners) ...
-
-                    // NEW: Search functionality for Printed Sales Records
-                    document.getElementById('searchCustomerCode').addEventListener('keyup', function () {
-                        const searchTerm = this.value.toLowerCase();
-                        const printedSalesList = document.getElementById('printedSalesList');
-                        const customerGroups = printedSalesList.querySelectorAll('li[data-customer-code]');
-
-                        customerGroups.forEach(customerGroup => {
-                            let customerGroupHasVisibleBills = false;
-                            const billItems = customerGroup.querySelectorAll('li > .customer-header.bill-clickable');
-
-                            billItems.forEach(billItem => {
-                                const billNoElement = billItem.querySelector('span'); // The span containing "Bill No: ..."
-                                const billNoText = billNoElement ? billNoElement.textContent.toLowerCase() : '';
-
-                                if (billNoText.includes(searchTerm)) {
-                                    billItem.style.display = 'flex'; // Show the bill
-                                    customerGroupHasVisibleBills = true;
-                                } else {
-                                    billItem.style.display = 'none'; // Hide the bill
-                                }
-                            });
-
-                            // Show/hide the customer group header based on whether any bills within it are visible
-                            // You need a way to target the customer group header explicitly.
-                            // For now, if no bills are visible, hide the whole customer group li
-                            if (customerGroupHasVisibleBills) {
-                                customerGroup.style.display = 'block'; // Or 'list-item'
-                            } else {
-                                customerGroup.style.display = 'none';
-                            }
-                        });
-                    });
-
-
-                    // ... (rest of your existing JavaScript code) ...
-                </script>
-
-                <script>
-                    // For Printed Sales (already added earlier)
-                    document.getElementById('searchCustomerCode').addEventListener('input', function () {
-                        const searchValue = this.value.toLowerCase();
-                        document.querySelectorAll('#printedSalesList > li').forEach(li => {
-                            const code = li.getAttribute('data-customer-code').toLowerCase();
-                            li.style.display = code.includes(searchValue) ? '' : 'none';
-                        });
-                    });
-
-                    // For Unprinted Sales (this is new)
-                    document.getElementById('searchUnprintedCustomerCode').addEventListener('input', function () {
-                        const searchValue = this.value.toLowerCase();
-                        document.querySelectorAll('#unprintedSalesList > li').forEach(li => {
-                            const code = li.getAttribute('data-customer-code').toLowerCase();
-                            li.style.display = code.includes(searchValue) ? '' : 'none';
-                        });
-                    });
-                </script>
-                <script>
-                    // NEW: Search functionality for DUPLICATE Printed Sales Records
-                    document.getElementById('searchCustomerCodeDuplicate').addEventListener('keyup', function () {
-                        const searchTerm = this.value.toLowerCase();
-                        const printedSalesListDuplicate = document.getElementById('printedSalesListDuplicate');
-                        const customerGroups = printedSalesListDuplicate.querySelectorAll('li[data-customer-code]');
-
-                        customerGroups.forEach(customerGroup => {
-                            let customerGroupHasVisibleBills = false;
-                            const billItems = customerGroup.querySelectorAll('li > .customer-header.bill-clickable');
-
-                            billItems.forEach(billItem => {
-                                const billNoElement = billItem.querySelector('span');
-                                // This includes both customer code and bill number in its text,
-                                // allowing search across both.
-                                const billNoText = billNoElement ? billNoElement.textContent.toLowerCase() : '';
-
-                                if (billNoText.includes(searchTerm)) {
-                                    billItem.style.display = 'flex';
-                                    customerGroupHasVisibleBills = true;
-                                } else {
-                                    billItem.style.display = 'none';
-                                }
-                            });
-
-                            if (customerGroupHasVisibleBills) {
-                                customerGroup.style.display = 'block';
-                            } else {
-                                customerGroup.style.display = 'none';
-                            }
-                        });
-                    });
-
-                    // For DUPLICATE Printed Sales (this is new, specifically for input event to filter customer groups)
-                    // This second listener allows filtering the top-level customer groups directly
-                    // if the search term matches the customer code itself.
-                    document.getElementById('searchCustomerCodeDuplicate').addEventListener('input', function () {
-                        const searchValue = this.value.toLowerCase();
-                        document.querySelectorAll('#printedSalesListDuplicate > li').forEach(li => {
-                            const customerCode = li.getAttribute('data-customer-code').toLowerCase();
-                            // Check if the customer code matches
-                            if (customerCode.includes(searchValue)) {
-                                li.style.display = ''; // Show the customer group
-                                // Also ensure all bills within this group are shown if the customer code matches the search
-                                li.querySelectorAll('li > .customer-header.bill-clickable').forEach(billItem => {
-                                    billItem.style.display = 'flex';
-                                });
-                            } else {
-                                // If customer code doesn't match, check if any of its bills match
-                                let anyBillMatches = false;
-                                li.querySelectorAll('li > .customer-header.bill-clickable').forEach(billItem => {
-                                    const billNoElement = billItem.querySelector('span');
-                                    const billNoText = billNoElement ? billNoElement.textContent.toLowerCase() : '';
-                                    if (billNoText.includes(searchValue)) {
-                                        anyBillMatches = true;
-                                    }
-                                });
-
-                                if (anyBillMatches) {
-                                    li.style.display = ''; // Show the customer group if any bill matches
-                                } else {
-                                    li.style.display = 'none'; // Hide if neither customer code nor any bill matches
-                                }
-                            }
-                        });
-                    });
-                </script>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        const searchInput = document.getElementById('searchUnprintedCustomerCodeDuplicate');
-                        const listItems = document.querySelectorAll('#unprintedSalesListDuplicate li');
-
-                        searchInput.addEventListener('input', function () {
-                            const query = this.value.toLowerCase().trim();
-
-                            listItems.forEach(function (li) {
-                                const customerCode = li.getAttribute('data-customer-code')?.toLowerCase() || '';
-                                li.style.display = customerCode.includes(query) ? 'block' : 'none';
-                            });
-                        });
-                    });
-                </script>
-                <script>
-                    $(document).ready(function () {
-                        // Event listener for clicking on a bill in the printed sales list
-                        $(document).on('click', '.printed-sales-list .bill-clickable', function () {
-                            var billNo = $(this).data('bill-no');
-                            var customerCode = $(this).data('customer-code');
-                            var customerName = $(this).data('customer-name');
-
-                            // Display the bill number above the customer code input
-                            $('#billNoDisplay').text('Bill No: ' + billNo); // THIS LINE IS NEW/MODIFIED
-
-                            // Optionally, set the customer code input and select
-                            $('#new_customer_code').val(customerCode);
-                            $('#customer_name_hidden').val(customerName);
-
-                            // If you want to update the Select2 dropdown for customer
-                            $('#customer_code_select').val(customerCode).trigger('change');
-                        });
-
-                        // ... (rest of your existing JavaScript) ...
-
-                    });
-                </script>
-                {{-- FETCHING THE WEIGHT DETAILS --}}
-                <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        console.log('DOM Content Loaded. Initializing script for Add Mode.');
-
-                        // Element references
-                        const grnSelect = document.getElementById('grn_select');
-                        const weightField = document.getElementById('weight');
-                        const packsField = document.getElementById('packs');
-                        const remainingWeightDisplay = document.getElementById('remaining_weight_display');
-                        const remainingPacksDisplay = document.getElementById('remaining_packs_display');
-
-                        // Other fields (for GRN metadata)
-                        const supplierCodeDisplay = document.getElementById('supplier_code_display');
-                        const supplierCodeHidden = document.getElementById('supplier_code');
-                        const itemSelect = document.getElementById('item_select');
-                        const itemCodeHidden = document.querySelector('input[name="item_code"]');
-                        const itemNameDisplay = document.getElementById('item_name_display_from_grn');
-                        const pricePerKgInput = document.getElementById('price_per_kg');
-                        const totalInput = document.getElementById('total');
-                        const grnEntryCodeHidden = document.getElementById('grn_entry_code');
-
-                        // Shared global variables
-                        let originalGrnPacks = 0;
-                        let originalGrnWeight = 0;
-
-                        // --- Function to update the remaining stock in add mode ---
-                        function updateRemainingStock() {
-                            const currentPacks = parseInt(packsField.value) || 0;
-                            const currentWeight = parseFloat(weightField.value) || 0;
-
-                            let remainingPacks = originalGrnPacks - currentPacks;
-                            let remainingWeight = originalGrnWeight - currentWeight;
-
-                            // Ensure remaining values don't go below zero
-                            if (remainingPacks < 0) remainingPacks = 0;
-                            if (remainingWeight < 0) remainingWeight = 0;
-
-                            remainingPacksDisplay.textContent = `BP: ${remainingPacks}`;
-                            remainingWeightDisplay.textContent = `BW: ${remainingWeight.toFixed(2)} `;
-                        }
-
-                        // --- GRN Change Handler (Modified to use jQuery) ---
-                        // Make sure jQuery is available before this part
-                        if (window.jQuery && typeof jQuery === 'function') {
-                            $(grnSelect).select2();
-                            console.log('Select2 initialized.');
-
-                            // Use jQuery's 'change' event listener, which is compatible with Select2
-                            $(grnSelect).on('change', function () {
-                                const selected = $(this).find('option:selected');
-                                if (!selected.length || !selected.val()) {
-                                    // ... (rest of the code for resetting fields) ...
-                                    return;
-                                }
-
-                                // Get original GRN stock values from data attributes
-                                originalGrnWeight = parseFloat(selected.data('weight')) || 0;
-                                originalGrnPacks = parseInt(selected.data('packs')) || 0;
-                                const pricePerKg = parseFloat(selected.data('price')) || 0;
-
-                                // Calculate the total here before assigning it
-                                const total = originalGrnWeight * pricePerKg;
-
-                                // Populate other fields
-                                supplierCodeDisplay.value = selected.data('supplier-code') || '';
-                                supplierCodeHidden.value = selected.data('supplier-code') || '';
-                                itemSelect.value = selected.data('item-code') || '';
-                                itemCodeHidden.value = selected.data('item-code') || '';
-                                itemNameDisplay.value = selected.data('item-name') || '';
-
-                                // This line is now working because `total` is defined.
-                                totalInput.value = total.toFixed(2);
-                                grnEntryCodeHidden.value = selected.data('code') || '';
-
-                                // Reset inputs to trigger an immediate update of remaining stock
-                                weightField.value = '';
-                                packsField.value = '';
-
-                                // Call the stock update function immediately
-                                updateRemainingStock();
-                            });
-                        } else {
-                            // Fallback for when Select2 is not present, using native JS
-                            grnSelect?.addEventListener('change', function () {
-                                // ... (your previous non-jQuery change handler code here)
-                            });
-                            console.log('jQuery or Select2 not found. Using native JS event listener.');
-                        }
-
-                        // --- Attach listeners for input fields ---
-                        packsField.addEventListener('input', updateRemainingStock);
-                        weightField.addEventListener('input', updateRemainingStock);
-
-                        // --- Initial page load logic ---
-                        // This part should work correctly because it doesn't rely on an event
-                        if (grnSelect.value) {
-                            const selected = grnSelect.options[grnSelect.selectedIndex];
-                            if (selected) {
-                                originalGrnWeight = parseFloat(selected.getAttribute('data-original-weight')) || 0;
-                                originalGrnPacks = parseInt(selected.getAttribute('data-original-packs')) || 0;
-                                grnEntryCodeHidden.value = selected.getAttribute('data-code') || '';
-                            }
-                        }
-                        // Perform the initial calculation and display on page load
-                        updateRemainingStock();
-                    });
-                </script>
-
-
-                {{-- TYPING THE CUSTOMER_CODE AND FETCHING UNPRINTED SALES --}}
-
-
-                <!-- Second script block: Main logic -->
-             
-
-
-                {{-- ALL Custom JavaScript Consolidated Here --}}
-                <script>
-                    // --- Form Calculations & Select2 Interactions ---
-                    const itemSelect = document.getElementById('item_select');
-                    const codeField = document.getElementById('code');
-                    // const itemCodeField = document.getElementById('item_code'); // This is no longer strictly needed if the hidden input inside item_select div is used.
-                    const itemNameField = document.getElementById('item_name'); // This is the hidden field
-                    const supplierSelect = document.getElementById('supplier_code');
-                    const supplierDisplaySelect = document.getElementById('supplier_code_display'); // Add this line
-                    const weightField = document.getElementById('weight');
-                    const pricePerKgField = document.getElementById('price_per_kg');
-                    const totalField = document.getElementById('total');
-                    const packsField = document.getElementById('packs');
-                    const grnDisplay = document.getElementById('grn_display');
-
-
-                    const customerSelect = document.getElementById('customer_code_select');
-                    const newCustomerCodeField = document.getElementById('new_customer_code');
-                    const customerNameField = document.getElementById('customer_name_hidden');
-                    newCustomerCodeField.focus();
-
-                    const salesEntryForm = document.getElementById('salesEntryForm');
-                    const saleIdField = document.getElementById('sale_id');
-                    const addSalesEntryBtn = document.getElementById('addSalesEntryBtn');
-                    const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
-                    const deleteSalesEntryBtn = document.getElementById('deleteSalesEntryBtn');
-                    const cancelEntryBtn = document.getElementById('cancelEntryBtn');
-
-                    // NEW: Get reference to the new item name display field
-                    const itemNameDisplayFromGrn = document.getElementById('item_name_display_from_grn');
-
-
-                    function calculateTotal() {
-                        const weight = parseFloat(weightField.value) || 0;
-                        const price = parseFloat(pricePerKgField.value) || 0;
-                        totalField.value = (weight * price).toFixed(2);
-                    }
-
-                    // This listener is mostly for internal consistency if itemSelect.value is set programmatically.
-                    // The main item_name population will now come from grn_select.
-                    itemSelect.addEventListener('change', function () {
-                        const selected = this.options[this.selectedIndex];
-                        if (selected && selected.dataset) {
-                            codeField.value = selected.dataset.code || '';
-                            // itemNameField.value = selected.dataset.itemName || ''; // We will now get item_name from GRN select
-                            // Ensure the hidden item_code is updated when item_select value changes programmatically
-                            document.querySelector('input[name="item_code"]').value = selected.dataset.itemCode || '';
-                        } else {
-                            codeField.value = '';
-                            // itemNameField.value = ''; // We will now get item_name from GRN select
-                            document.querySelector('input[name="item_code"]').value = '';
-                        }
-                    });
-
-
-                    weightField.addEventListener('input', calculateTotal);
-                    pricePerKgField.addEventListener('input', calculateTotal);
-                    calculateTotal(); // Initial calculation on page load
-
-                    $(document).ready(function () {
-                     // Initialize Select2 for GRN with custom templateResult and templateSelection
-    $('#grn_select').select2({
-        dropdownParent: $('#grn_select').parent(),
-        placeholder: "-- Select GRN Entry --",
-        width: '100%',
-        allowClear: true,
-        minimumResultsForSearch: 0, // Set to 0 to enable search but still use templateResult
-        templateResult: function (data, container) {
-            // If it's the placeholder, loading message, or has no ID, just return the text
-            if (data.loading || !data.id) {
-                return data.text;
+                })
+                .catch(error => console.error("Error fetching customer code:", error));
+        });
+    </script>
+    {{-- Triggering F1  BUTTONS --}}
+    <script>
+        // These event listeners will only run when the buttons are clicked with a mouse
+        document.getElementById('f1Button').addEventListener('click', function () {
+            // Ask for confirmation
+            if (confirm("Do you want to print?")) {
+                // Simulate the F1 key press
+                const f1Event = new KeyboardEvent('keydown', {
+                    key: 'F1',
+                    code: 'F1',
+                    keyCode: 112, // F1 keyCode
+                    bubbles: true
+                });
+                document.dispatchEvent(f1Event);
+                console.log('F1 key simulated!');
+            } else {
+                console.log('Print cancelled by user.');
+            }
+        });
+    </script>
+    {{-- Fetch list of sales codes--}}
+    <script>
+        document.getElementById('searchByCode').addEventListener('keyup', function () {
+            const val = this.value.toLowerCase();
+            document.querySelectorAll('#codeList li').forEach(li => {
+                li.style.display = li.getAttribute('data-code').toLowerCase().includes(val) ? '' : 'none';
+            });
+        });
+    </script>
+    {{-- Fetch loan amount--}}
+    <script>
+        $(document).ready(function () {
+            // Global vars to hold last fetched loan amount and customer short name
+            let latestLoanAmount = 0;
+            let latestCustomerShortName = '';
+
+            function debounce(func, delay) {
+                let timeout;
+                return function (...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), delay);
+                };
             }
 
-            // Get the raw option element to access data-attributes
-            const option = $(data.element);
+            function fetchLoanAmount(customerShortName) {
+                if (!customerShortName) {
+                    $('#loan_amount_display').text('0.00');
+                    latestLoanAmount = 0;
+                    latestCustomerShortName = '';
+                    return;
+                }
 
-            // Extract data from data-attributes
-            const code = option.data('code');
-            const itemName = option.data('itemName');
-            const packs = option.data('packs');
-            const weight = option.data('weight');
-            const originalWeight = option.data('originalWeight');
-            const originalPacks = option.data('originalPacks');
-            const txnDate = option.data('txnDate');
+                let csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-            let formattedDate = '';
-            if (txnDate) {
-                const d = new Date(txnDate);
-                if (!isNaN(d)) {
-                    // Get month (0-based so +1) and day
-                    const month = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
-                    formattedDate = `${month}-${day}`;
+                $.ajax({
+                    url: '{{ route('get.loan.amount') }}',
+                    method: 'POST',
+                    data: {
+                        _token: csrfToken,
+                        customer_short_name: customerShortName
+                    },
+                    success: function (response) {
+                        let amount = parseFloat(response.total_loan_amount) || 0;
+                        $('#loan_amount_display').text(amount.toFixed(2));
+                        // Save globally for print handler
+                        latestLoanAmount = amount;
+                        latestCustomerShortName = customerShortName;
+                    },
+                    error: function (xhr) {
+                        console.error("AJAX error:", xhr.responseText);
+                        $('#loan_amount_display').text('0.00');
+                        latestLoanAmount = 0;
+                        latestCustomerShortName = '';
+                    }
+                });
+            }
+
+            const debouncedFetch = debounce(function () {
+                let val = $('#new_customer_code').val();
+                fetchLoanAmount(val);
+            }, 300);
+
+            $('#new_customer_code').on('keyup', debouncedFetch);
+
+            $('#customer_code_select').on('change', function () {
+                let selectedShortName = $(this).val();
+                fetchLoanAmount(selectedShortName);
+            });
+
+            // F1 print handler using latestLoanAmount & latestCustomerShortName
+            document.addEventListener('keydown', function (e) {
+                if (e.key === "F1") {
+                    e.preventDefault();
+
+                    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+                    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+                        alert('No sales records in the table to print!');
+                        return;
+                    }
+
+                    const salesData = [];
+                    tableRows.forEach(row => {
+                        if (row.hasAttribute('data-sale-id')) {
+                            const cells = row.querySelectorAll('td');
+                            salesData.push({
+                                id: row.getAttribute('data-sale-id'),
+                                customer_code: row.getAttribute('data-customer-code'),
+                                customer_name: row.getAttribute('data-customer-name'),
+                                mobile: row.getAttribute('data-customer-mobile') || '',
+                                code: cells[0]?.textContent.trim() || '',
+                                item_code: cells[1]?.textContent.trim() || '',
+                                item_name: cells[2]?.textContent.trim() || '',
+                                weight: parseFloat(cells[3]?.textContent) || 0,
+                                price_per_kg: parseFloat(cells[4]?.textContent) || 0,
+                                total: parseFloat(cells[5]?.textContent) || 0,
+                                packs: parseInt(cells[6]?.textContent) || 0
+                            });
+                        }
+                    });
+
+                    if (!salesData.length) {
+                        alert('No printable sales records found!');
+                        return;
+                    }
+
+                    const salesByCustomer = salesData.reduce((acc, sale) => {
+                        (acc[sale.customer_code] ||= []).push(sale);
+                        return acc;
+                    }, {});
+
+                    const customerCode = Object.keys(salesByCustomer)[0];
+
+                    // Use loan amount only if customer matches
+                    let loanAmountForPrint = 0;
+                    if (customerCode === latestCustomerShortName) {
+                        loanAmountForPrint = latestLoanAmount;
+                    }
+
+                    // You can now pass loanAmountForPrint into your print template
+                    console.log('Loan amount for print:', loanAmountForPrint);
+                }
+            });
+        });
+    </script>
+
+    {{-- SCRIPT TO SEARCH THE UNPRINTED SALES RECORDS --}}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById('searchUnprintedCustomerCode');
+            const unprintedSalesList = document.getElementById('unprintedSalesList');
+
+            searchInput.addEventListener('keyup', function () {
+                const searchTerm = searchInput.value.toLowerCase();
+                const customerListItems = unprintedSalesList.getElementsByTagName('li');
+
+                for (let i = 0; i < customerListItems.length; i++) {
+                    const listItem = customerListItems[i];
+                    const customerCode = listItem.getAttribute('data-customer-code').toLowerCase();
+
+                    if (customerCode.includes(searchTerm)) {
+                        listItem.style.display = ''; // Show the list item
+                    } else {
+                        listItem.style.display = 'none'; // Hide the list item
+                    }
+                }
+            });
+        });
+    </SCRIPT>
+    {{-- SCRIPTON SEARCHING BY BILL NO AND CUSTOMER CODE IN PRINTED SALES --}}
+    <script>
+        const searchInput = document.getElementById('searchPrintedSales');
+        // Get a reference to the list of bills
+        const printedSalesList = document.getElementById('printedSalesList');
+
+        // Add an event listener for the 'input' event (fires on every keystroke)
+        searchInput.addEventListener('input', function () {
+            // Get the search query and convert it to lowercase for case-insensitive matching
+            const searchQuery = this.value.toLowerCase();
+
+            // Loop through each customer group (the <li> elements with data-customer-code)
+            const customerGroups = printedSalesList.querySelectorAll('li[data-customer-code]');
+
+            customerGroups.forEach(customerGroup => {
+                // Assume the entire customer group should be hidden initially
+                let groupHasVisibleBills = false;
+
+                // Loop through the bills within each customer group
+                const billItems = customerGroup.querySelectorAll('.bill-clickable');
+
+                billItems.forEach(billItem => {
+                    // Get the bill number and customer code from the data attributes
+                    const billNo = billItem.dataset.billNo.toLowerCase();
+                    const customerCode = billItem.dataset.customerCode.toLowerCase();
+                    const customerName = billItem.dataset.customerName.toLowerCase();
+
+                    // Check if the search query is in the bill number or customer code
+                    if (billNo.includes(searchQuery) || customerCode.includes(searchQuery) || customerName.includes(searchQuery)) {
+                        // If there's a match, show the bill and mark the group as having visible items
+                        billItem.style.display = 'flex';
+                        groupHasVisibleBills = true;
+                    } else {
+                        // If no match, hide the bill
+                        billItem.style.display = 'none';
+                    }
+                });
+
+                // After checking all bills in the group, show or hide the entire group
+                // based on whether any bills within it are visible.
+                if (groupHasVisibleBills) {
+                    customerGroup.style.display = 'block';
+                } else {
+                    customerGroup.style.display = 'none';
+                }
+            });
+        });
+    </script>
+    
+    {{-- FETCHING THE WEIGHT DETAILS --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('DOM Content Loaded. Initializing script for Add Mode.');
+
+            // Element references
+            const grnSelect = document.getElementById('grn_select');
+            const weightField = document.getElementById('weight');
+            const packsField = document.getElementById('packs');
+            const remainingWeightDisplay = document.getElementById('remaining_weight_display');
+            const remainingPacksDisplay = document.getElementById('remaining_packs_display');
+
+            // Other fields (for GRN metadata)
+            const supplierCodeDisplay = document.getElementById('supplier_code_display');
+            const supplierCodeHidden = document.getElementById('supplier_code');
+            const itemSelect = document.getElementById('item_select');
+            const itemCodeHidden = document.querySelector('input[name="item_code"]');
+            const itemNameDisplay = document.getElementById('item_name_display_from_grn');
+            const pricePerKgInput = document.getElementById('price_per_kg');
+            const totalInput = document.getElementById('total');
+            const grnEntryCodeHidden = document.getElementById('grn_entry_code');
+
+            // Shared global variables
+            let originalGrnPacks = 0;
+            let originalGrnWeight = 0;
+
+            // --- Function to update the remaining stock in add mode ---
+            function updateRemainingStock() {
+                const currentPacks = parseInt(packsField.value) || 0;
+                const currentWeight = parseFloat(weightField.value) || 0;
+
+                let remainingPacks = originalGrnPacks - currentPacks;
+                let remainingWeight = originalGrnWeight - currentWeight;
+
+                // Ensure remaining values don't go below zero
+                if (remainingPacks < 0) remainingPacks = 0;
+                if (remainingWeight < 0) remainingWeight = 0;
+
+                remainingPacksDisplay.textContent = `BP: ${remainingPacks}`;
+                remainingWeightDisplay.textContent = `BW: ${remainingWeight.toFixed(2)} `;
+            }
+
+
+            // --- GRN Change Handler (Modified to use jQuery) ---
+            // Make sure jQuery is available before this part
+            if (window.jQuery && typeof jQuery === 'function') {
+                $(grnSelect).select2();
+                console.log('Select2 initialized.');
+
+                // Use jQuery's 'change' event listener, which is compatible with Select2
+                $(grnSelect).on('change', function () {
+                    const selected = $(this).find('option:selected');
+                    if (!selected.length || !selected.val()) {
+                        // ... (rest of the code for resetting fields) ...
+                        return;
+                    }
+
+                    // Get original GRN stock values from data attributes
+                    originalGrnWeight = parseFloat(selected.data('weight')) || 0;
+                    originalGrnPacks = parseInt(selected.data('packs')) || 0;
+                    const pricePerKg = parseFloat(selected.data('price')) || 0;
+
+                    // Calculate the total here before assigning it
+                    const total = originalGrnWeight * pricePerKg;
+
+                    // Populate other fields
+                    supplierCodeDisplay.value = selected.data('supplier-code') || '';
+                    supplierCodeHidden.value = selected.data('supplier-code') || '';
+                    itemSelect.value = selected.data('item-code') || '';
+                    itemCodeHidden.value = selected.data('item-code') || '';
+                    itemNameDisplay.value = selected.data('item-name') || '';
+
+                    // This line is now working because `total` is defined.
+                    totalInput.value = total.toFixed(2);
+                    grnEntryCodeHidden.value = selected.data('code') || '';
+
+                    updateRemainingStock();
+                });
+            } else {
+                // Fallback for when Select2 is not present, using native JS
+                grnSelect?.addEventListener('change', function () {
+                    // ... (your previous non-jQuery change handler code here)
+                });
+                console.log('jQuery or Select2 not found. Using native JS event listener.');
+            }
+
+            // --- Attach listeners for input fields ---
+            packsField.addEventListener('input', updateRemainingStock);
+            weightField.addEventListener('input', updateRemainingStock);
+
+            // --- Initial page load logic ---
+            // This part should work correctly because it doesn't rely on an event
+            if (grnSelect.value) {
+                const selected = grnSelect.options[grnSelect.selectedIndex];
+                if (selected) {
+                    originalGrnWeight = parseFloat(selected.getAttribute('data-original-weight')) || 0;
+                    originalGrnPacks = parseInt(selected.getAttribute('data-original-packs')) || 0;
+                    grnEntryCodeHidden.value = selected.getAttribute('data-code') || '';
                 }
             }
+            // Perform the initial calculation and display on page load
+            updateRemainingStock();
+        });
+    </script>
 
-            const $result = $(`
+    {{-- ALL Custom JavaScript Consolidated Here --}}
+    <script>
+        // --- Form Calculations & Select2 Interactions ---
+        const itemSelect = document.getElementById('item_select');
+        const codeField = document.getElementById('code');
+        // const itemCodeField = document.getElementById('item_code'); // This is no longer strictly needed if the hidden input inside item_select div is used.
+        const itemNameField = document.getElementById('item_name'); // This is the hidden field
+        const supplierSelect = document.getElementById('supplier_code');
+        const supplierDisplaySelect = document.getElementById('supplier_code_display'); // Add this line
+        const weightField = document.getElementById('weight');
+        const pricePerKgField = document.getElementById('price_per_kg');
+        const totalField = document.getElementById('total');
+        const packsField = document.getElementById('packs');
+        const grnDisplay = document.getElementById('grn_display');
+
+
+        const customerSelect = document.getElementById('customer_code_select');
+        const newCustomerCodeField = document.getElementById('new_customer_code');
+        const customerNameField = document.getElementById('customer_name_hidden');
+        newCustomerCodeField.focus();
+
+        const salesEntryForm = document.getElementById('salesEntryForm');
+        const saleIdField = document.getElementById('sale_id');
+        const addSalesEntryBtn = document.getElementById('addSalesEntryBtn');
+        const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
+        const deleteSalesEntryBtn = document.getElementById('deleteSalesEntryBtn');
+        const cancelEntryBtn = document.getElementById('cancelEntryBtn');
+
+        // NEW: Get reference to the new item name display field
+        const itemNameDisplayFromGrn = document.getElementById('item_name_display_from_grn');
+        const priceDisplayFromGrn = document.getElementById('price_per_kg');
+
+ // CALCULATE TE TOTAL
+        function calculateTotal() {
+            const weight = parseFloat(weightField.value) || 0;
+            const price = parseFloat(pricePerKgField.value) || 0;
+            totalField.value = (weight * price).toFixed(2);
+        }
+
+        // This listener is mostly for internal consistency if itemSelect.value is set programmatically.
+        // The main item_name population will now come from grn_select.
+        itemSelect.addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+            if (selected && selected.dataset) {
+                codeField.value = selected.dataset.code || '';
+                // itemNameField.value = selected.dataset.itemName || ''; // We will now get item_name from GRN select
+                // Ensure the hidden item_code is updated when item_select value changes programmatically
+                document.querySelector('input[name="item_code"]').value = selected.dataset.itemCode || '';
+            } else {
+                codeField.value = '';
+                // itemNameField.value = ''; // We will now get item_name from GRN select
+                document.querySelector('input[name="item_code"]').value = '';
+            }
+        });
+
+        weightField.addEventListener('input', calculateTotal);
+        pricePerKgField.addEventListener('input', calculateTotal);
+        calculateTotal(); // Initial calculation on page load
+
+//GRN TEPMLATE AND GRN DROPDOWN 
+        $(document).ready(function () {
+            // Initialize Select2 for GRN with custom templateResult and templateSelection
+            $('#grn_select').select2({
+                dropdownParent: $('#grn_select').parent(),
+                placeholder: "-- Select GRN Entry --",
+                width: '100%',
+                allowClear: true,
+                minimumResultsForSearch: 0, // Enable search
+
+                // Custom matcher: only show results when user types
+                matcher: function (params, data) {
+                    if (!params.term || params.term.trim() === '') return null;
+                    return data.text.toUpperCase().includes(params.term.toUpperCase()) ? data : null;
+                },
+
+                // Dropdown option template
+                templateResult: function (data) {
+                    if (data.loading || !data.id) return data.text;
+
+                    const option = $(data.element);
+                    const code = option.data('code');
+                    const sp = option.data('sprice');
+                    const itemName = option.data('itemName');
+                    const packs = option.data('packs');
+                    const weight = option.data('weight');
+                    const originalWeight = option.data('originalWeight');
+                    const originalPacks = option.data('originalPacks');
+                    const txnDate = option.data('txnDate');
+
+                    let formattedDate = '';
+                    if (txnDate) {
+                        const d = new Date(txnDate);
+                        if (!isNaN(d)) {
+                            formattedDate = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        }
+                    }
+
+                    return $(`
                 <div class="grn-option-row">
                     <div class="grn-column grn-code"><strong>${code || ''}</strong></div>
+                    <div class="grn-column grn-sp">${sp || ''}</div>
                     <div class="grn-column grn-item">${itemName || ''}</div>
                     <div class="grn-column grn-ow">${originalWeight || ''}</div>
                     <div class="grn-column grn-op">${originalPacks || ''}</div>
                     <div class="grn-column grn-bw">${weight || ''}</div>
                     <div class="grn-column grn-bp">${packs || 0}</div>
-                    <div class="grn-column grn-txn-date">${formattedDate}</div>
+
                 </div>
             `);
+                },
 
-            return $result;
-        },
-        templateSelection: function (data) {
-            if (!data.id) {
-                return data.text;
-            }
-            const option = $(data.element);
-            const code = option.data('code');
-            const originalWeight = option.data('originalWeight');
-            const originalPacks = option.data('originalPacks');
-            const txnDate = option.data('txnDate');
+                // Selected option template
+                templateSelection: function (data) {
+                    if (!data.id) return data.text;
+                    const option = $(data.element);
+                    const code = option.data('code');
+                    const sp = option.data('sprice');
+                    const originalWeight = option.data('originalWeight');
+                    const originalPacks = option.data('originalPacks');
 
-            var $selection = $('<span></span>');
-            $selection.addClass('select2-black-text');
-            $selection.css('text-align', 'center');
 
-            $selection.html(`${code || ''}(කිලෝ,: ${originalWeight || ''} /මලු: ${originalPacks || ''} /දිනය: ${txnDate || ''})`);
+                    return $('<span>')
+                        .addClass('select2-black-text')
+                        .css('text-align', 'center')
+                        .html(`${code || ''} (SP: ${sp || ''} /කිලෝ: ${originalWeight || 0} / මලු: ${originalPacks || ''})`);
+                }
+            });
 
-            return $selection;
-        }
-    });
+            // Add header to dropdown and handle search
+            $('#grn_select').on('select2:open', function () {
+                const $dropdown = $('.select2-dropdown');
+                const searchInput = $dropdown.find('.select2-search__field');
 
-    // Listen for when the Select2 dropdown is opened to add the header and handle search input
-    $('#grn_select').on('select2:open', function () {
-        const $dropdown = $('.select2-dropdown');
+                // Focus and uppercase input
+                searchInput.focus().off('input.lazySearch').on('input.lazySearch', function () {
+                    this.value = this.value.toUpperCase();
+                    $('#grn_select').trigger('select2:open'); // Refresh dropdown
+                });
 
-        // Add an event listener to the search input to convert to uppercase
-        const searchInput = $dropdown.find('.select2-search__field');
-        searchInput.on('input', function() {
-            this.value = this.value.toUpperCase();
-        });
-
-        // Check if the header already exists before adding it
-        if ($dropdown.find('.grn-header-row').length === 0) {
-            console.log("Header not found, creating and prepending.");
-
-            const $header = $(`
+                // Add header once
+                if ($dropdown.find('.grn-header-row').length === 0) {
+                    const $header = $(`
                 <div class="grn-header-row">
                     <div class="grn-column grn-code">Code</div>
+                    <div class="grn-column grn-sp">SP</div>
                     <div class="grn-column grn-item">Item</div>
                     <div class="grn-column grn-ow">OW</div>
                     <div class="grn-column grn-op">OP</div>
                     <div class="grn-column grn-bw">BW</div>
                     <div class="grn-column grn-bp">BP</div>
-                    <div class="grn-column grn-txn-date">Date</div>
+
                 </div>
             `);
-
-            // Prepend the header to the results container before the options list
-            const $resultsContainer = $dropdown.find('.select2-results');
-            $resultsContainer.prepend($header);
-        } else {
-            console.log("Header already exists, not re-adding.");
-        }
-    });
-
-                        $('#customer_code_select').select2({
-                            dropdownParent: $('#customer_code_select').parent(),
-                            placeholder: "-- Select Customer --",
-                            width: '100%',
-                            allowClear: true,
-                            templateResult: function (data) {
-                                if (data.loading) return data.text;
-                                if (!data.id) return data.text;
-                                return $(
-                                    `<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`
-                                );
-                            },
-                            templateSelection: function (data) {
-                                if (!data.id) return data.text; // Return placeholder text if nothing is selected
-                                return $(
-                                    `<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`
-                                );
-                            }
-                        });
+                    $dropdown.find('.select2-results').prepend($header);
+                }
+            });
 
 
-                        // Handle click on grn_display to open Select2 dropdown
-                        $('#grn_display').on('click', function () {
-                            $('#grn_select').select2('open');
-                        });
 
-                        // Event listener for when a Select2 option is selected for GRN
-                        $('#grn_select').on('select2:select', function (e) {
-                            const selectedOption = $(e.params.data.element); // Get the raw <option> element
-                            const data = selectedOption.data();
-                            // Access its data attributes
+            $('#customer_code_select').select2({
+                dropdownParent: $('#customer_code_select').parent(),
+                placeholder: "-- Select Customer --",
+                width: '100%',
+                allowClear: true,
+                templateResult: function (data) {
+                    if (data.loading) return data.text;
+                    if (!data.id) return data.text;
+                    return $(
+                        `<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`
+                    );
+                },
+                templateSelection: function (data) {
+                    if (!data.id) return data.text; // Return placeholder text if nothing is selected
+                    return $(
+                        `<span>${$(data.element).data('customer-name')} (${$(data.element).data('customer-code')})</span>`
+                    );
+                }
+            });
 
-                            // Update the read-only grn_display field with the formatted string
-                            const grnCodeForDisplay = data.code || '';
-                            const supplierCodeForDisplay = data.supplierCode || '';
-                            const itemCodeForDisplay = data.itemCode || '';
-                            const itemNameForDisplay = data.itemName || '';
-                            const packsForDisplay = data.packs || '';
-                            const grnNoForDisplay = data.grnNo || '';
-                            const txnDateForDisplay = data.txnDate || '';
-                            grnDisplay.value =
-                                `${grnCodeForDisplay}| ${supplierCodeForDisplay}  | ${packsForDisplay} | ${grnNoForDisplay}`;
 
-                            // Populate other form fields using the data attributes
-                            supplierSelect.value = data.supplierCode || ''; // Hidden input for supplier_code
-                            supplierDisplaySelect.value = data.supplierCode || ''; // Display select for supplier_code
+            // Handle click on grn_display to open Select2 dropdown
+            $('#grn_display').on('click', function () {
+                $('#grn_select').select2('open');
+            });
 
-                            itemSelect.value = data.itemCode || ''; // Set item code in disabled select
-                            itemSelect.dispatchEvent(new Event('change')); // Trigger change to update hidden item_code
+            // Event listener for when a Select2 option is selected for GRN
+            $('#grn_select').on('select2:select', function (e) {
+                const selectedOption = $(e.params.data.element); // Get the raw <option> element
+                const data = selectedOption.data();
+                // Access its data attributes
 
-                            itemNameDisplayFromGrn.value = data.itemName || ''; // Populate the dedicated item name display field
-                            itemNameField.value = data.itemName || '';
-                            // Also set the hidden item_name field
+                // Update the read-only grn_display field with the formatted string
+                const grnCodeForDisplay = data.code || '';
+                const supplierCodeForDisplay = data.supplierCode || '';
+                const itemCodeForDisplay = data.itemCode || '';
+                const itemNameForDisplay = data.itemName || '';
+                const itempriceForDisplay = data.sprice || '';
+                const packsForDisplay = data.packs || '';
+                const grnNoForDisplay = data.grnNo || '';
+                const txnDateForDisplay = data.txnDate || '';
 
-                            weightField.value = '';
-                            pricePerKgField.value = '';
-                            packsField.value = '';
+                grnDisplay.value =
+                    `${grnCodeForDisplay}| ${supplierCodeForDisplay}  | ${packsForDisplay} | ${grnNoForDisplay}`;
 
-                            // ADDED: Populate hidden fields for original_weight and original_packs
-                            $('#original_weight_input').val(data.originalWeight); // Access using camelCase
-                            $('#original_packs_input').val(data.originalPacks);   // Access using camelCase
+                // Populate other form fields using the data attributes
+                supplierSelect.value = data.supplierCode || ''; // Hidden input for supplier_code
+                supplierDisplaySelect.value = data.supplierCode || ''; // Display select for supplier_code
 
-                            calculateTotal();
-                            weightField.focus();
-                        });
-                        $('#customer_code_select').on('select2:select', function (e) {
-                            const selectedOption = $(e.currentTarget).find('option:selected');
-                            const selectedCustomerCode = selectedOption.val();
-                            const selectedCustomerName = selectedOption.data('customer-name');
+                itemSelect.value = data.itemCode || ''; // Set item code in disabled select
 
-                            newCustomerCodeField.value = selectedCustomerCode || '';
+                itemSelect.dispatchEvent(new Event('change')); // Trigger change to update hidden item_code
+
+                itemNameDisplayFromGrn.value = data.itemName || ''; // Populate the dedicated item name display field
+                priceDisplayFromGrn.value = data.sprice || '';
+                itemNameField.value = data.itemName || '';
+               
+                // ADDED: Populate hidden fields for original_weight and original_packs
+                $('#original_weight_input').val(data.originalWeight); // Access using camelCase
+                $('#original_packs_input').val(data.originalPacks);   // Access using camelCase
+
+                calculateTotal();
+                weightField.focus();
+            });
+            $('#customer_code_select').on('select2:select', function (e) {
+                const selectedOption = $(e.currentTarget).find('option:selected');
+                const selectedCustomerCode = selectedOption.val();
+                const selectedCustomerName = selectedOption.data('customer-name');
+
+                newCustomerCodeField.value = selectedCustomerCode || '';
+                newCustomerCodeField.readOnly = true;
+                customerNameField.value = selectedCustomerName || '';
+
+                $('#grn_select').select2('open');
+            });
+
+            newCustomerCodeField.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    $('#grn_select').select2('open');
+                }
+            });
+            $('#grn_select').on('select2:open', function () {
+                // Find the search input element created by Select2
+                const searchInput = $('.select2-search__field');
+
+                // Add an event listener to this search input
+                searchInput.on('input', function () {
+                    // Convert the typed value to uppercase and update the input field
+                    this.value = this.value.toUpperCase();
+                });
+            });
+            // Clear GRN selection and related fields
+            $('#grn_select').on('select2:clear', function () {
+                grnDisplay.value = 'Select GRN Entry...'; // Reset display field placeholder
+                supplierSelect.value = '';
+                supplierDisplaySelect.value = ''; // Clear display select
+                itemSelect.value = '';
+                itemSelect.dispatchEvent(new Event('change')); // Clear item related hidden fields
+                itemNameDisplayFromGrn.value = ''; // NEW: Clear the item name display field
+                itemNameField.value = ''; // NEW: Clear hidden item_name field
+
+
+
+                calculateTotal();
+            });
+
+            $('#customer_code_select').on('select2:clear', function () {
+                newCustomerCodeField.value = '';
+                newCustomerCodeField.readOnly = false;
+                customerNameField.value = '';
+            });
+
+            $('#new_customer_code').on('input', function () {
+                if ($(this).val() !== '') {
+                    $('#customer_code_select').val(null).trigger('change');
+                    customerNameField.value = '';
+                }
+            });
+
+            // Handle old input values on page load
+            $(document).ready(function () {
+                $(document).on('select2:open', function () {
+                    const searchField = document.querySelector('.select2-search__field');
+                    if (searchField) {
+                        searchField.focus();
+                    }
+                });
+
+                @if (old('customer_code_select') || old('customer_code'))
+                    const oldGrnCode = "{{ old('code') }}";
+                    const oldSupplierCode = "{{ old('supplier_code') }}";
+                    const oldItemCode = "{{ old('item_code') }}";
+                    const oldItemName = "{{ old('item_name') }}";
+                    const oldWeight = "{{ old('weight') }}";
+                    const oldPricePerKg = "{{ old('price_per_kg') }}";
+                    const oldPacks = "{{ old('packs') }}";
+                    const oldGrnOption = $('#grn_select option').filter(function () {
+                        return $(this).val() === oldGrnCode &&
+                            $(this).data('supplierCode') === oldSupplierCode &&
+                            $(this).data('itemCode') === oldItemCode;
+                    });
+
+                    if (oldGrnOption.length) {
+                        $('#grn_select').val(oldGrnOption.val()).trigger('change.select2');
+                        grnDisplay.value = oldGrnOption.data('code') || '';
+                        itemNameDisplayFromGrn.value = oldGrnOption.data('itemName') || '';
+                        itemNameField.value = oldGrnOption.data('itemName') || '';
+                        $('#weight').val(oldWeight);
+                        $('#price_per_kg').val(oldPricePerKg);
+                        $('#packs').val(oldPacks);
+                        calculateTotal();
+                    }
+
+                    const newCustomerCodeField = document.getElementById('new_customer_code');
+                    const customerNameField = document.getElementById('customer_name_hidden');
+
+                    const oldSelectedCustomerCode = "{{ old('customer_code_select') }}";
+                    const oldEnteredCustomerCode = "{{ old('customer_code') }}";
+                    const oldCustomerNameValue = "{{ old('customer_name') }}";
+
+                    if (oldSelectedCustomerCode) {
+                        $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change');
+                        if (newCustomerCodeField) {
+                            newCustomerCodeField.value = oldSelectedCustomerCode;
                             newCustomerCodeField.readOnly = true;
-                            customerNameField.value = selectedCustomerName || '';
-
-                            $('#grn_select').select2('open');
-                        });
-
-                        newCustomerCodeField.addEventListener('keydown', function (event) {
-                            if (event.key === 'Enter') {
-                                event.preventDefault();
-                                $('#grn_select').select2('open');
-                            }
-                        });
-
-                        // Clear GRN selection and related fields
-                        $('#grn_select').on('select2:clear', function () {
-                            grnDisplay.value = 'Select GRN Entry...'; // Reset display field placeholder
-                            supplierSelect.value = '';
-                            supplierDisplaySelect.value = ''; // Clear display select
-                            itemSelect.value = '';
-                            itemSelect.dispatchEvent(new Event('change')); // Clear item related hidden fields
-                            itemNameDisplayFromGrn.value = ''; // NEW: Clear the item name display field
-                            itemNameField.value = ''; // NEW: Clear hidden item_name field
-                            weightField.value = '';
-                            pricePerKgField.value = '';
-                            packsField.value = '';
-                            calculateTotal();
-                        });
-
-                        $('#customer_code_select').on('select2:clear', function () {
-                            newCustomerCodeField.value = '';
+                        }
+                        if (customerNameField) {
+                            customerNameField.value = oldCustomerNameValue;
+                        }
+                    } else if (oldEnteredCustomerCode) {
+                        if (newCustomerCodeField) {
+                            newCustomerCodeField.value = oldEnteredCustomerCode;
                             newCustomerCodeField.readOnly = false;
-                            customerNameField.value = '';
-                        });
+                        }
+                        if (customerNameField) {
+                            customerNameField.value = oldCustomerNameValue;
+                        }
+                    }
 
-                        $('#new_customer_code').on('input', function () {
-                            if ($(this).val() !== '') {
-                                $('#customer_code_select').val(null).trigger('change');
-                                customerNameField.value = '';
-                            }
-                        });
+                    $('#grn_select').select2('open');
+                @endif
+              });    
+              //POPULATE MAIN SALES TABLE AT INSERTION                                                                                                                                                                                                                                                                                                                      
+            function populateSalesTable(salesArray) {
+                const tableBody = document.getElementById('mainSalesTableBody');
+                tableBody.innerHTML = ''; // Clear existing rows
 
-                        // Handle old input values on page load
-                        $(document).ready(function () {
-                            $(document).on('select2:open', function () {
-                                const searchField = document.querySelector('.select2-search__field');
-                                if (searchField) {
-                                    searchField.focus();
-                                }
-                            });
+                if (!salesArray || salesArray.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No sales records found.</td></tr>';
+                    return;
+                }
 
-                            @if (old('customer_code_select') || old('customer_code'))
-                                const oldGrnCode = "{{ old('code') }}";
-                                const oldSupplierCode = "{{ old('supplier_code') }}";
-                                const oldItemCode = "{{ old('item_code') }}";
-                                const oldItemName = "{{ old('item_name') }}";
-                                const oldWeight = "{{ old('weight') }}";
-                                const oldPricePerKg = "{{ old('price_per_kg') }}";
-                                const oldPacks = "{{ old('packs') }}";
-                                const oldGrnOption = $('#grn_select option').filter(function () {
-                                    return $(this).val() === oldGrnCode &&
-                                        $(this).data('supplierCode') === oldSupplierCode &&
-                                        $(this).data('itemCode') === oldItemCode;
-                                });
+                salesArray.forEach(sale => {
+                    const row = document.createElement('tr');
+                    // --- CRITICAL: Add data- attributes to the row for easy retrieval by F1 function ---
+                    row.setAttribute('data-sale-id', sale.id);
+                    row.setAttribute('data-customer-code', sale.customer_code);
+                    row.setAttribute('data-customer-name', sale.customer_name || 'N/A'); // Ensure customer_name exists
 
-                                if (oldGrnOption.length) {
-                                    $('#grn_select').val(oldGrnOption.val()).trigger('change.select2');
-                                    grnDisplay.value = oldGrnOption.data('code') || '';
-                                    itemNameDisplayFromGrn.value = oldGrnOption.data('itemName') || '';
-                                    itemNameField.value = oldGrnOption.data('itemName') || '';
-                                    $('#weight').val(oldWeight);
-                                    $('#price_per_kg').val(oldPricePerKg);
-                                    $('#packs').val(oldPacks);
-                                    calculateTotal();
-                                }
+                    row.innerHTML = `
+                     <td>${sale.code}</td>
+                     <td>${sale.item_code}</td>
+                     <td>${sale.item_name}</td>
+                     <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
+                    <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+                    <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+                     <td>${sale.packs}</td>
+                    `;   
+                    
+                    tableBody.appendChild(row);
+                });
+            }
 
-                                const newCustomerCodeField = document.getElementById('new_customer_code');
-                                const customerNameField = document.getElementById('customer_name_hidden');
+//PRINT FUNCTION AND F5 FUNCTION STARTS ERE
+            let globalLoanAmount = 0;
 
-                                const oldSelectedCustomerCode = "{{ old('customer_code_select') }}";
-                                const oldEnteredCustomerCode = "{{ old('customer_code') }}";
-                                const oldCustomerNameValue = "{{ old('customer_name') }}";
+            // Reusable print function
+            function printReceipt(html, customerName) {
+                return new Promise((resolve) => {
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${customerName} - Receipt</title>
+                </head>
+                <body>
+                    ${html}
+                </body>
+                </html>
+            `);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    printWindow.print();
+                    setTimeout(() => {
+                        printWindow.close();
+                        resolve();
+                    }, 500);
+                });
+            }
 
-                                if (oldSelectedCustomerCode) {
-                                    $('#customer_code_select').val(oldSelectedCustomerCode).trigger('change');
-                                    if (newCustomerCodeField) {
-                                        newCustomerCodeField.value = oldSelectedCustomerCode;
-                                        newCustomerCodeField.readOnly = true;
-                                    }
-                                    if (customerNameField) {
-                                        customerNameField.value = oldCustomerNameValue;
-                                    }
-                                } else if (oldEnteredCustomerCode) {
-                                    if (newCustomerCodeField) {
-                                        newCustomerCodeField.value = oldEnteredCustomerCode;
-                                        newCustomerCodeField.readOnly = false;
-                                    }
-                                    if (customerNameField) {
-                                        customerNameField.value = oldCustomerNameValue;
-                                    }
-                                }
+            async function handlePrint() {
+                // Use the currentDisplayedSalesData instead of scraping table rows
+                const salesData = window.currentDisplayedSalesData || [];
 
-                                $('#grn_select').select2('open');
-                            @endif
-                                  });
-                        function populateSalesTable(salesArray) {
-                            const tableBody = document.getElementById('mainSalesTableBody');
-                            tableBody.innerHTML = ''; // Clear existing rows
+                if (!salesData.length) {
+                    alert('No sales records to print!');
+                    return;
+                }
 
-                            if (!salesArray || salesArray.length === 0) {
-                                tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No sales records found.</td></tr>';
-                                return;
-                            }
+                const salesIds = salesData.map(s => s.id);
 
-                            salesArray.forEach(sale => {
-                                const row = document.createElement('tr');
-                                // --- CRITICAL: Add data- attributes to the row for easy retrieval by F1 function ---
-                                row.setAttribute('data-sale-id', sale.id);
-                                row.setAttribute('data-customer-code', sale.customer_code);
-                                row.setAttribute('data-customer-name', sale.customer_name || 'N/A'); // Ensure customer_name exists
+                // Send sales data to backend to get bill number and mark as printed
+                const response = await fetch("{{ route('sales.markAsPrinted') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ sales_ids: salesIds })
+                });
 
-                                row.innerHTML = `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>${sale.code}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>${sale.item_code}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>${sale.item_name}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>${(parseFloat(sale.weight) || 0).toFixed(2)}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>${(parseFloat(sale.total) || 0).toFixed(2)}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>${sale.packs}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                `;
-                                tableBody.appendChild(row);
-                            });
+                const backendResponse = await response.json();
+                if (backendResponse.status !== 'success') {
+                    alert('Failed to process print request.');
+                    console.error('Backend error:', backendResponse.message);
+                    return;
+                }
+
+                const billNo = backendResponse.bill_no;
+
+                // Group sales by customer
+                const salesByCustomer = salesData.reduce((acc, sale) => {
+                    (acc[sale.customer_code] ||= []).push(sale);
+                    return acc;
+                }, {});
+
+                const customerCode = Object.keys(salesByCustomer)[0];
+                const customerSales = salesByCustomer[customerCode];
+                const customerName = customerSales[0].customer_code || 'N/A';
+                const mobile = customerSales[0].mobile || '0773358518';
+                const recipientEmails = ["thrcorner@gmail.com", "nethmavilhan2005@gmail.com"];
+
+                try {
+                    // Fetch loan amount
+                    const loanResponse = await fetch('{{ route('get.loan.amount') }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: JSON.stringify({ customer_short_name: customerCode })
+                    });
+
+                    const loanData = await loanResponse.json();
+                    globalLoanAmount = parseFloat(loanData.total_loan_amount) || 0;
+
+                    const date = "{{ $billDate }}";
+                    const time = new Date().toLocaleTimeString();
+                    let totalAmountSum = 0;
+                    const itemGroups = {};
+
+                    // **SUM ALL given_amounts for this customer**
+                    const givenAmount = customerSales.reduce((sum, sale) => sum + (parseFloat(sale.given_amount) || 0), 0);
+
+                    const itemsHtml = customerSales.map(sale => {
+                        totalAmountSum += parseFloat(sale.total) || 0;
+                        const itemName = sale.item_name || '';
+                        const weight = parseFloat(sale.weight) || 0;
+                        const packs = parseInt(sale.packs) || 0;
+                        if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+                        itemGroups[itemName].totalWeight += weight;
+                        itemGroups[itemName].totalPacks += packs;
+                        return `<tr style="font-size: 1.2em;">
+      <td style="text-align:left;">${itemName} <br>${packs}</td>
+      <td style="text-align:right; padding-right:18px;">${weight.toFixed(2)}</td>
+      <td style="text-align:right;">${(parseFloat(sale.price_per_kg) || 0).toFixed(2)}</td>
+      <td style="text-align:right;">${(parseFloat(sale.total) || 0).toFixed(2)}</td>
+    </tr>`;
+                    }).join('');
+
+                    let itemSummaryHtml = '';
+                    const entries = Object.entries(itemGroups);
+
+                    for (let i = 0; i < entries.length; i += 2) {
+                        const first = entries[i];
+                        const second = entries[i + 1];
+
+                        itemSummaryHtml += '<div style="display:flex; gap:0.5rem; margin-bottom:0.2rem;">';
+
+                        itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;">
+                                   <strong>${first[0]}</strong>:${first[1].totalWeight.toFixed(2)}/${first[1].totalPacks}
+                               </span>`;
+
+                        if (second) {
+                            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;">
+                                       <strong>${second[0]}</strong>:${second[1].totalWeight.toFixed(2)}/${second[1].totalPacks}
+                                   </span>`;
                         }
 
-                  let globalLoanAmount = 0;
-window.globalTotalPackCostValue = window.globalTotalPackCostValue || 0; // ✅ keep pack cost global
+                        itemSummaryHtml += '</div>';
+                    }
 
-// Reusable print function
-function printReceipt(html, customerName) {
-    return new Promise((resolve) => {
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>${customerName} - Receipt</title>
-            </head>
-            <body>
-                ${html}
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
+                    const packCostTotal = window.globalTotalPackCostValue || 0;
+                    const totalPrice = totalAmountSum; // total of all items only
 
-        // Trigger print
-        printWindow.print();
-
-        // Wait a bit before closing
-        setTimeout(() => {
-            printWindow.close();
-            resolve(); // Resolve promise after window closes
-        }, 500);
-    });
-}
-
-// Function to send receipt email
-function sendReceiptEmail(html, customerName, customerEmail) {
-    return fetch('{{ route('send.receipt.email') }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({ receipt_html: html, customer_name: customerName, email: customerEmail })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) console.log('Email sent:', data.message);
-        else console.error('Email failed:', data.message);
-    })
-    .catch(err => console.error('Email error:', err));
-}
-
-// Function to save receipt to D:\Receipts
-function saveReceiptToDDrive(html, customerName, billNo) {
-    return fetch('{{ route("save.receipt.file") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({ receipt_html: html, customer_name: customerName, bill_no: billNo })
-    })
-    .then(res => res.json())
-    .then(data => console.log('Receipt saved:', data))
-    .catch(err => console.error('Save error:', err));
-}
-
-// Core F1 print function
-async function handlePrint() {
-    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
-        alert('No sales records to print!');
-        return;
-    }
-
-    const salesData = [];
-    tableRows.forEach(row => {
-        if (row.hasAttribute('data-sale-id')) {
-            const cells = row.querySelectorAll('td');
-            salesData.push({
-                id: row.getAttribute('data-sale-id'),
-                customer_code: row.getAttribute('data-customer-code'),
-                customer_name: row.getAttribute('data-customer-name'),
-                mobile: row.getAttribute('data-customer-mobile') || '',
-                email: "nethmavilhan2005@gmail.com",
-                code: cells[0]?.textContent.trim() || '',
-                item_code: cells[1]?.textContent.trim() || '',
-                item_name: cells[1]?.textContent.trim() || '',
-                weight: parseFloat(cells[2]?.textContent) || 0,
-                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                total: parseFloat(cells[4]?.textContent) || 0,
-                packs: parseInt(cells[5]?.textContent) || 0
-            });
-        }
-    });
-
-    if (!salesData.length) {
-        alert('No printable sales records found!');
-        return;
-    }
-
-    const salesIds = salesData.map(s => s.id);
-
-    // Send sales data to backend to get bill number and mark as printed
-    const response = await fetch("{{ route('sales.markAsPrinted') }}", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-        body: JSON.stringify({ sales_ids: salesIds })
-    });
-
-    const backendResponse = await response.json();
-
-    if (backendResponse.status !== 'success') {
-        alert('Failed to process print request.');
-        console.error('Backend error:', backendResponse.message);
-        return;
-    }
-
-    const billNo = backendResponse.bill_no;
-    console.log("Bill number to use:", billNo);
-
-    // Group sales by customer
-    const salesByCustomer = salesData.reduce((acc, sale) => {
-        (acc[sale.customer_code] ||= []).push(sale);
-        return acc;
-    }, {});
-
-    const customerCode = Object.keys(salesByCustomer)[0];
-    const customerSales = salesByCustomer[customerCode];
-    const customerName = customerSales[0].customer_code || 'N/A';
-    const mobile = customerSales[0]?.mobile || '-';
-    const customerEmail = customerSales[0]?.email || "nethmavilhan2005@gmail.com";
-
-    // Fetch loan amount
-    fetch('{{ route('get.loan.amount') }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-        body: JSON.stringify({ customer_short_name: customerCode })
-    })
-    .then(res => res.json())
-    .then(async data => {
-        globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
-        const date = "{{ $billDate }}";
-        const time = new Date().toLocaleTimeString();
-        let totalAmountSum = 0;
-        const itemGroups = {};
-
-        const itemsHtml = customerSales.map(sale => {
-            totalAmountSum += sale.total;
-            const itemName = sale.item_name || '';
-            const weight = parseFloat(sale.weight) || 0;
-            const packs = parseInt(sale.packs) || 0;
-            if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-            itemGroups[itemName].totalWeight += weight;
-            itemGroups[itemName].totalPacks += packs;
-            return `<tr style="font-size: 1.2em;">
-<td style="text-align:left;">${itemName} <br>${packs}</td>
-<td style="text-align:right; padding-right:18px;">${weight.toFixed(2)}</td>
-<td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
-<td style="text-align:right;">${sale.total.toFixed(2)}</td>
-</tr>`;
-        }).join('');
-
-        let itemSummaryHtml = '';
-        Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
-            itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
-        });
-
-        // ✅ Add pack cost
-        const packCostTotal = window.globalTotalPackCostValue || 0;
-
-        let totalAmountRowHtmlF1 = '';
-        if (globalLoanAmount > 0 || packCostTotal > 0) {
-            totalAmountRowHtmlF1 = `<tr><td colspan="3">මුලු එකතුව :</td>
-<td style="text-align:right;font-weight:bold;">
-${(globalLoanAmount + totalAmountSum + packCostTotal).toFixed(2)}</td></tr>`;
-        }
-
-        const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
-    <div style="text-align:center;margin-bottom:5px;">
-        <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
-        <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
-        <p style="margin:0;font-size:0.8em;">වි.ආ.ම. වේයන්ගොඩ</p>
-    </div>
-    <div style="text-align:left;margin-bottom:5px;">
-        <table style="width:100%;font-size:10px;border-collapse:collapse;">
-            <tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr>
-            <tr><td colspan="4">දුර : ${mobile}</td></tr>
-            <tr><td colspan="2">බිල් අංකය : <strong>${billNo}</strong></td>
-            <td colspan="2" style="text-align:right;"><strong style="font-size: 1.8em;">${customerName.toUpperCase()}</strong></td></tr>
-        </table>
-    </div>
-    <hr>
-    <table style="width:100%;font-size:10px;border-collapse:collapse;">
-        <thead style="font-size: 1.3em;"><tr><th>වර්ගය<br>මලු</th><th>කිලෝ</th><th>මිල</th><th>අගය</th></tr></thead>
-        <tbody><tr><td colspan="4"><hr style="height:1px;background-color:#000;"></td></tr>${itemsHtml}</tbody>
-    </table>
-    <hr>
-    <table style="width:100%;font-size:10px;border-collapse:collapse;">
-        <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | පැක් වියදම :</td>
-            <td style="text-align:right;font-weight:bold;">${packCostTotal.toFixed(2)}</td></tr>
-        <tr><td colspan="3">අගය :</td>
-            <td style="text-align:right;font-weight:bold;font-size:1.8em;">${totalAmountSum.toFixed(2)}</td></tr>
-        ${totalAmountRowHtmlF1}
-    </table>
-    <hr>
-    <div>${itemSummaryHtml}</div>
-    <div style="text-align:center;margin-top:10px;"><p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p><p>නැවත භාර ගනු නොලැබේ</p></div>
-</div>`;
-
-        // Create the duplicate HTML with "COPY" at the top
-        const duplicateHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>` + receiptHtml;
-
-        // Print the original receipt first
-        await printReceipt(receiptHtml, customerName);
-        
-        // Then print the duplicate
-        await printReceipt(duplicateHtml, customerName + ' - Copy');
-
-        // Send a single email for the duplicate
-        sendReceiptEmail(duplicateHtml, customerName, customerEmail);
-
-        window.location.reload();
-    }).catch(err => console.error('Loan fetch failed:', err));
-}
-
-// F5 function (no print, just email/save, same format as F1 but no bill no)
-async function handleF5() {
-    const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
-    if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) return;
-
-    const salesData = [];
-    tableRows.forEach(row => {
-        if (row.hasAttribute('data-sale-id')) {
-            const cells = row.querySelectorAll('td');
-            salesData.push({
-                id: row.getAttribute('data-sale-id'),
-                customer_code: row.getAttribute('data-customer-code'),
-                customer_name: row.getAttribute('data-customer-name'),
-                mobile: row.getAttribute('data-customer-mobile') || '',
-                email: "nethmavilhan2005@gmail.com",
-                code: cells[0]?.textContent.trim() || '',
-                item_code: cells[1]?.textContent.trim() || '',
-                item_name: cells[1]?.textContent.trim() || '',
-                weight: parseFloat(cells[2]?.textContent) || 0,
-                price_per_kg: parseFloat(cells[3]?.textContent) || 0,
-                total: parseFloat(cells[4]?.textContent) || 0,
-                packs: parseInt(cells[5]?.textContent) || 0
-            });
-        }
-    });
-
-    if (!salesData.length) return;
-
-    const salesByCustomer = salesData.reduce((acc, sale) => {
-        (acc[sale.customer_code] ||= []).push(sale);
-        return acc;
-    }, {});
-
-    const customerCode = Object.keys(salesByCustomer)[0];
-    const customerSales = salesByCustomer[customerCode];
-    const customerName = customerSales[0].customer_code || 'N/A';
-    const mobile = customerSales[0]?.mobile || '-';
-    const customerEmail = customerSales[0]?.email || "nethmavilhan2005@gmail.com";
-
-    let totalAmountSum = 0;
-    const itemGroups = {};
-
-    const itemsHtml = customerSales.map(sale => {
-        totalAmountSum += sale.total;
-        const itemName = sale.item_name || '';
-        const weight = parseFloat(sale.weight) || 0;
-        const packs = parseInt(sale.packs) || 0;
-        if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
-        itemGroups[itemName].totalWeight += weight;
-        itemGroups[itemName].totalPacks += packs;
-        return`<tr style="font-size:14px;">
-    <td style="text-align:left;">${itemName} <br>${packs}</td>
-    <td style="text-align:right;">${weight.toFixed(2)}</td>
-    <td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
-    <td style="text-align:right;">${sale.total.toFixed(2)}</td>
-</tr>`;
-    }).join('');
-
-    let itemSummaryHtml = '';
-    Object.entries(itemGroups).forEach(([itemName, totals], idx, arr) => {
-        itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:1.5rem;display:inline-block;"><strong>${itemName}</strong>:${totals.totalWeight.toFixed(2)}/${totals.totalPacks}</span>${idx < arr.length - 1 ? ', ' : ''}`;
-    });
-
-    // Fetch loan amount
-    fetch('{{ route('get.loan.amount') }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-        body: JSON.stringify({ customer_short_name: customerCode })
-    })
-    .then(res => res.json())
-    .then(data => {
-        globalLoanAmount = parseFloat(data.total_loan_amount) || 0;
-        const date = "{{ $billDate }}";
-        const time = new Date().toLocaleTimeString();
-        const billNo = 'N/A';
-
-        // ✅ Add pack cost
-        const packCostTotal = window.globalTotalPackCostValue || 0;
-
-        let totalAmountRowHtmlF5 = '';
-        if (globalLoanAmount > 0 || packCostTotal > 0) {
-            totalAmountRowHtmlF5 = `<tr><td colspan="3">මුලු එකතුව :</td>
-<td style="text-align:right;font-weight:bold;">${(globalLoanAmount + totalAmountSum + packCostTotal).toFixed(2)}</td></tr>`;
-        }
-
-        const receiptHtml = `<div class="receipt-container" style="margin-left:-8px;margin-right:5px;">
-                <div style="text-align:center;margin-bottom:5px;">
-                    <h3 style="font-size:1.9em;font-weight:bold;">C11 TGK ට්‍රේඩර්ස්</h3>
-                    <p style="margin:0;font-size:0.8em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
-                    <p style="margin:0;font-size:0.8em;">වි.ආ.ම. වේයන්ගොඩ</p>
+                    const receiptHtml = `<div class="receipt-container" style="width: 100%; max-width: 300px; margin: 0 auto; padding: 5px;">
+                <!-- HEADER -->
+                <div style="text-align: center; margin-bottom: 5px;">
+                    <h3 style="font-size: 1.8em; font-weight: bold; margin: 0;">
+                        <span style="border: 2px solid #000; padding: 0.1em 0.3em; display: inline-block; margin-right: 5px;">B32</span>
+                        TAG ට්‍රේඩර්ස්
+                    </h3>
+                    <p style="margin: 0; font-size: 0.7em;">අල, ෆී ළූනු, කුළුබඩු තොග ගෙන්වන්නෝ බෙදාහරින්නෝ</p>
+                    <p style="margin: 0; font-size: 0.7em;">වි.ආ.ම. වේයන්ගොඩ</p>
                 </div>
-                <div style="text-align:left;margin-bottom:5px;">
-                    <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                        <tr><td colspan="2">දිනය : ${date}</td><td colspan="2" style="text-align:right;">${time}</td></tr>
-                        <tr><td colspan="4">දුර : ${mobile}</td></tr>
-                        <tr><td colspan="2">බිල් අංකය : ${billNo}</td><td colspan="2" style="text-align:right;"><strong>${customerName.toUpperCase()}</strong></td></tr>
+
+                <!-- CUSTOMER INFO -->
+                <div style="text-align: left; margin-bottom: 5px;">
+                    <table style="width: 100%; font-size: 9px; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 50%;">දිනය : ${date}</td>
+                            <td style="width: 50%; text-align: right;">${time}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">දුර : ${mobile}</td>
+                        </tr>
+                        <tr>
+                            <td>බිල් අංකය : <strong>${billNo}</strong></td>
+                            <td style="text-align: right;">
+                                <strong style="font-size: 1.8em;">${customerName.toUpperCase()}</strong>
+                            </td>
+                        </tr>
                     </table>
                 </div>
-                <hr>
-                <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                    <thead><tr><th>වර්ගය<br>මලු</th><th>කිලෝ</th><th>මිල</th><th>අගය</th></tr></thead>
-                    <tbody><tr><td colspan="4"><hr style="height:1px;background-color:#000;"></td></tr>${itemsHtml}</tbody>
+
+                <hr style="border: 0.5px solid #000; margin: 5px 0;">
+
+                <!-- ITEMS -->
+                <table style="width: 100%; font-size: 9px; border-collapse: collapse;">
+                    <thead style="font-size: 1.5em;">
+                        <tr>
+                            <th style="text-align: left; padding: 2px;">වර්ගය<br>මලු</th>
+                            <th style="padding: 2px;">කිලෝ</th>
+                            <th style="padding: 2px;">මිල</th>
+                            <th style="text-align: right; padding: 2px;">අගය</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="4">
+                                <hr style="height: 1px; background-color: #000; margin: 2px 0;">
+                            </td>
+                        </tr>
+                        ${itemsHtml}
+                    </tbody>
                 </table>
-                <hr>
-                <table style="width:100%;font-size:10px;border-collapse:collapse;">
-                    <tr><td colspan="3">ණය එකතුව: ${globalLoanAmount.toFixed(2)} | පැක් වියදම :</td>
-                        <td style="text-align:right;font-weight:bold;">${packCostTotal.toFixed(2)}</td></tr>
-                    <tr><td colspan="3">අගය :</td>
-                        <td style="text-align:right;font-weight:bold;">${totalAmountSum.toFixed(2)}</td></tr>
-                    ${totalAmountRowHtmlF5}
+
+                <hr style="border: 0.5px solid #000; margin: 5px 0;">
+
+                <!-- SUMMARY -->
+                <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                    <tr>
+                        <td>ප්‍රවාහන ගාස්තු:</td>
+                        <td style="text-align: right; font-weight: bold;">00</td>
+                    </tr>
+                    <tr>
+                        <td>කුලිය:</td>
+                        <td style="text-align: right; font-weight: bold;">${packCostTotal.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>මුළු මිල:</td>
+                        <td style="text-align: right; font-weight: bold;">${(totalPrice + packCostTotal).toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50%; font-weight: bold;">
+                            දුන් මුදල: ${givenAmount.toFixed(2)}
+                        </td>
+                        <td style="width: 50%; font-weight: bold; font-size: 1.5rem; text-align: right;">
+                            ${(givenAmount - totalPrice + packCostTotal).toFixed(2)}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>ණය එකතුව:</td>
+                        <td style="text-align: right; font-weight: bold;">${globalLoanAmount.toFixed(2)}</td>
+                    </tr>
                 </table>
-                <div>${itemSummaryHtml}</div>
-                <hr>
-                <div style="text-align:center;margin-top:10px;">
-                    <p>භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
-                    <p>නැවත භාර ගනු නොලැබේ</p>
+
+                <div style="text-align: right; font-weight: bold; font-size: 1.2em; margin-top: 5px;">
+                    නව ණය එකතුව: ${(globalLoanAmount + (totalPrice + packCostTotal - givenAmount)).toFixed(2)}
                 </div>
-`;
 
-        // Only email (no print)
-        sendReceiptEmail(receiptHtml, customerName, customerEmail);
+                <hr style="border: 0.5px solid #000; margin: 5px 0;">
 
-        // Mark all as processed
-        fetch('{{ route('sales.markAllAsProcessed') }}', {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-        }).then(res => res.json()).then(data => {
-            console.log('F5 processed:', data);
-            window.location.reload();
-        });
-    }).catch(err => console.error('F5 error:', err));
-}
+                <div style="font-size: 10px;">${itemSummaryHtml}</div>
 
-// Keyboard events for F1 & F5
-document.addEventListener('keydown', e => {
-    if (e.key === "F1") { e.preventDefault(); handlePrint(); }
-    else if (e.key === "F5") { e.preventDefault(); handleF5(); }
-});
+                <div style="text-align: center; margin-top: 10px; font-size: 10px;">
+                    <p style="margin: 0;">භාණ්ඩ පරීක්ෂාකර බලා රැගෙන යන්න</p>
+                    <p style="margin: 0;">නැවත භාර ගනු නොලැබේ</p>
+                </div>
+            </div>`;
 
-// Optional print button
-document.getElementById('printButton').addEventListener('click', function () {
-    if (confirm("Do you want to print?")) handlePrint();
-});
+                    // Create duplicate with COPY
+                    const duplicateHtml = `<div style="text-align:center;font-size:2em;font-weight:bold;color:red;margin-bottom:10px;">COPY</div>` + receiptHtml;
+
+                    await Promise.all([
+                        printReceipt(receiptHtml, customerName),
+                        printReceipt(duplicateHtml, customerName + ' - Copy'),
+                    ]);
+
+                } catch (err) {
+                    console.error('An error occurred during loan fetch or printing:', err);
+                } finally {
+                    window.location.reload();
+                }
+            }
+            // F5 function (Email only, no bill number)
+            async function handleF5() {
+                const tableRows = document.querySelectorAll('#mainSalesTableBody tr');
+                if (!tableRows.length || (tableRows.length === 1 && tableRows[0].querySelector('td[colspan="7"]'))) {
+                    alert('No sales records to process!');
+                    return;
+                }
+
+                const salesData = [];
+                tableRows.forEach(row => {
+                    if (row.hasAttribute('data-sale-id')) {
+                        const cells = row.querySelectorAll('td');
+                        salesData.push({
+                            id: row.getAttribute('data-sale-id'),
+                            customer_code: row.getAttribute('data-customer-code'),
+                            customer_name: row.getAttribute('data-customer-name'),
+                            mobile: row.getAttribute('data-customer-mobile') || '',
+                            email: "thrcorner@gmail.com",
+                            code: cells[0]?.textContent.trim() || '',
+                            item_code: cells[1]?.textContent.trim() || '',
+                            item_name: cells[1]?.textContent.trim() || '',
+                            weight: parseFloat(cells[2]?.textContent) || 0,
+                            price_per_kg: parseFloat(cells[3]?.textContent) || 0,
+                            total: parseFloat(cells[4]?.textContent) || 0,
+                            packs: parseInt(cells[5]?.textContent) || 0
+                        });
+                    }
+                });
+
+                if (!salesData.length) {
+                    alert('No sales records to process!');
+                    return;
+                }
+
+                const salesByCustomer = salesData.reduce((acc, sale) => {
+                    (acc[sale.customer_code] ||= []).push(sale);
+                    return acc;
+                }, {});
+
+                const customerCode = Object.keys(salesByCustomer)[0];
+                const customerSales = salesByCustomer[customerCode];
+                const customerName = customerSales[0].customer_code || 'N/A';
+                const mobile = customerSales[0]?.mobile || '-';
+                const recipientEmails = ["thrcorner@gmail.com", "nethmavilhan2005@gmail.com"];
+
+                let totalAmountSum = 0;
+                const itemGroups = {};
+
+                const itemsHtml = customerSales.map(sale => {
+                    totalAmountSum += sale.total;
+                    const itemName = sale.item_name || '';
+                    const weight = parseFloat(sale.weight) || 0;
+                    const packs = parseInt(sale.packs) || 0;
+                    if (!itemGroups[itemName]) itemGroups[itemName] = { totalWeight: 0, totalPacks: 0 };
+                    itemGroups[itemName].totalWeight += weight;
+                    itemGroups[itemName].totalPacks += packs;
+                    return `<tr>
+                        <td style="text-align:left;">${itemName} <br>${packs}</td>
+                        <td style="text-align:right;">${weight.toFixed(2)}</td>
+                        <td style="text-align:right;">${sale.price_per_kg.toFixed(2)}</td>
+                        <td style="text-align:right;">${sale.total.toFixed(2)}</td>
+                    </tr>`;
+                }).join('');
+
+                let itemSummaryHtml = '';
+                const entries = Object.entries(itemGroups);
+                for (let i = 0; i < entries.length; i += 2) {
+                    const first = entries[i];
+                    const second = entries[i + 1];
+                    itemSummaryHtml += '<div style="display:flex; gap:0.5rem; margin-bottom:0.2rem;">';
+                    itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${first[0]}</strong>:${first[1].totalWeight.toFixed(2)}/${first[1].totalPacks}</span>`;
+                    if (second) {
+                        itemSummaryHtml += `<span style="padding:0.1rem 0.3rem;border-radius:0.5rem;background-color:#f3f4f6;font-size:0.6rem;display:inline-block;"><strong>${second[0]}</strong>:${second[1].totalWeight.toFixed(2)}/${second[1].totalPacks}</span>`;
+                    }
+                    itemSummaryHtml += '</div>';
+                }
+
+                try {
+                    const loanRes = await fetch('{{ route('get.loan.amount') }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: JSON.stringify({ customer_short_name: customerCode })
+                    });
 
 
 
-                        function printReceipt(salesContent, customerName, onCompleteCallback) {
-                            const printWindow = window.open('', '', 'width=300,height=600');
+                    // Mark all as processed AFTER email
+                    const processedRes = await fetch('{{ route('sales.markAllAsProcessed') }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    });
+                    const processedData = await processedRes.json();
+                    console.log('F5 processed:', processedData);
 
-                            printWindow.document.write(`
-                                                                                                                                                                                                                                                                                        <html>
-                                                                                                                                                                                                                                                                                            <head>
-                                                                                                                                                                                                                                                                                                <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
-                                                                                                                                                                                                                                                                                                <style>
-                                                                                                                                                                                                                                                                                                    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
-                                                                                                                                                                                                                                                                                                    body {
-                                                                                                                                                                                                                                                                                                        font-family: 'Noto Sans Sinhala', sans-serif;
-                                                                                                                                                                                                                                                                                                        margin: 0;
-                                                                                                                                                                                                                                                                                                        padding: 5mm;
-                                                                                                                                                                                                                                                                                                        font-size: 10px;
-                                                                                                                                                                                                                                                                                                        line-height: 1.2;
-                                                                                                                                                                                                                                                                                                        overflow: hidden;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .receipt-container {
-                                                                                                                                                                                                                                                                                                        width: 100%;
-                                                                                                                                                                                                                                                                                                        max-width: 80mm;
-                                                                                                                                                                                                                                                                                                        margin-left: 0;
-                                                                                                                                                                                                                                                                                                        margin-right: auto;
-                                                                                                                                                                                                                                                                                                        border: none;
-                                                                                                                                                                                                                                                                                                        padding: 0;
-                                                                                                                                                                                                                                                                                                        text-align: left;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .company-info {
-                                                                                                                                                                                                                                                                                                        text-align: left;
-                                                                                                                                                                                                                                                                                                        margin-bottom: 5px;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .company-info h3 {
-                                                                                                                                                                                                                                                                                                        font-size: 1.2em;
-                                                                                                                                                                                                                                                                                                        margin-bottom: 2px;
-                                                                                                                                                                                                                                                                                                        font-weight: bold;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .company-info p {
-                                                                                                                                                                                                                                                                                                        margin: 0;
-                                                                                                                                                                                                                                                                                                        line-height: 1.2;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .bill-details, .summary-section, .footer-section {
-                                                                                                                                                                                                                                                                                                        text-align: left;
-                                                                                                                                                                                                                                                                                                        margin-bottom: 5px;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .bill-details p, .summary-section p {
-                                                                                                                                                                                                                                                                                                        margin: 0;
-                                                                                                                                                                                                                                                                                                        line-height: 1.2;
-                                                                                                                                                                                                                                                                                                        display: flex;
-                                                                                                                                                                                                                                                                                                        justify-content: space-between;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .bill-details p span:first-child, .summary-section p span:first-child {
-                                                                                                                                                                                                                                                                                                        text-align: left;
-                                                                                                                                                                                                                                                                                                        font-weight: normal;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .bill-details p span:last-child, .summary-section p span:last-child {
-                                                                                                                                                                                                                                                                                                        text-align:left;
-                                                                                                                                                                                                                                                                                                        font-weight: bold;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .customer-name-on-bill {
-                                                                                                                                                                                                                                                                                                        text-align: left;
-                                                                                                                                                                                                                                                                                                        font-weight: bold;
-                                                                                                                                                                                                                                                                                                        margin-top: 5px;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .divider {
-                                                                                                                                                                                                                                                                                                        border-top: 1px dashed #000;
-                                                                                                                                                                                                                                                                                                        margin: 8px 0;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .items-section table {
-                                                                                                                                                                                                                                                                                                        width: 100%;
-                                                                                                                                                                                                                                                                                                        border-bottom: none;
-                                                                                                                                                                                                                                                                                                        font-size: 10px;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .items-section th, .items-section td {
-                                                                                                                                                                                                                                                                                                        padding: 2px 0;
-                                                                                                                                                                                                                                                                                                        text-align: right;
-                                                                                                                                                                                                                                                                                                        border-bottom: none;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .items-section th {
-                                                                                                                                                                                                                                                                                                        font-weight: bold;
-                                                                                                                                                                                                                                                                                                        text-align: center;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .col-item {
-                                                                                                                                                                                                                                                                                                        text-align: left;
-                                                                                                                                                                                                                                                                                                        width: 40%;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .col-qty {
-                                                                                                                                                                                                                                                                                                        width: 20%;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .col-rate {
-                                                                                                                                                                                                                                                                                                        width: 20%;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .col-value {
-                                                                                                                                                                                                                                                                                                        width: 20%;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .grand-total {
-                                                                                                                                                                                                                                                                                                        font-size: 9.1em;
-                                                                                                                                                                                                                                                                                                        font-weight: bold;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .footer-section {
-                                                                                                                                                                                                                                                                                                        text-align: left;
-                                                                                                                                                                                                                                                                                                        margin-top: 10px;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    .footer-section p {
-                                                                                                                                                                                                                                                                                                        margin: 0;
-                                                                                                                                                                                                                                                                                                        line-height: 1.2;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                    hr {
-                                                                                                                                                                                                                                                                                                        display: block;
-                                                                                                                                                                                                                                                                                                        height: 1px;
-                                                                                                                                                                                                                                                                                                        background: transparent;
-                                                                                                                                                                                                                                                                                                        width: 100%;
-                                                                                                                                                                                                                                                                                                        border: none;
-                                                                                                                                                                                                                                                                                                        border-top: solid 2px #000 !important;
-                                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                                </style>
-                                                                                                                                                                                                                                                                                            </head>
-                                                                                                                                                                                                                                                                                            <body>
-                                                                                                                                                                                                                                                                                                <div class="receipt-container">
-                                                                                                                                                                                                                                                                                                    ${salesContent}
-                                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                                            </body>
-                                                                                                                                                                                                                                                                                        </html>
-                                                                                                                                                                                                                                                                                    `);
+                    window.location.reload();
 
-                            printWindow.document.close();
-                            printWindow.focus();
+                } catch (err) {
+                    console.error('F5 error:', err);
+                    alert('Error processing F5 request');
+                }
+            }
 
-                            // Give it time to render styles, then print
-                            setTimeout(() => {
-                                printWindow.print();
+            // Keyboard events for F1 & F5
+            document.addEventListener('keydown', e => {
+                if (e.key === "F1") { e.preventDefault(); handlePrint(); }
+                else if (e.key === "F5") { e.preventDefault(); handleF5(); }
+            });
 
-                                // Auto-close after 10 seconds
-                                setTimeout(() => {
-                                    if (!printWindow.closed) {
-                                        printWindow.close();
-                                    }
-                                    if (typeof onCompleteCallback === 'function') {
-                                        onCompleteCallback();
-                                    }
-                                }, 00000);
-                            }, 500);
+            // Optional buttons
+            document.getElementById('printButton')?.addEventListener('click', function () {
+                if (confirm("Do you want to print?")) handlePrint();
+            });
+            document.getElementById('f5Button')?.addEventListener('click', function () {
+                if (confirm("Do you want to hold this receipt?")) handleF5();
+            });
+
+
+
+
+            function printReceipt(salesContent, customerName, onCompleteCallback) {
+                const printWindow = window.open('', '', 'width=300,height=600');
+//PRINT BILL STYLE SECTION
+                printWindow.document.write(`
+                                                                                                                                                                <html>
+                                                                                                                                                                    <head>
+                                                                                                                                                                        <title>විකුණුම් කුපිත්තුව - ${customerName}</title>
+                                                                                                                                                                        <style>
+                                                                                                                                                                            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&display=swap');
+                                                                                                                                                                            body {
+                                                                                                                                                                                font-family: 'Noto Sans Sinhala', sans-serif;
+                                                                                                                                                                                margin: 0;
+                                                                                                                                                                                padding: 5mm;
+                                                                                                                                                                                font-size: 10px;
+                                                                                                                                                                                line-height: 1.2;
+                                                                                                                                                                                overflow: hidden;
+                                                                                                                                                                            }
+                                                                                                                                                                            .receipt-container {
+                                                                                                                                                                                width: 100%;
+                                                                                                                                                                                max-width: 70mm;
+                                                                                                                                                                                margin-left: 0;
+                                                                                                                                                                                margin-right: auto;
+                                                                                                                                                                                border: none;
+                                                                                                                                                                                padding: 0;
+                                                                                                                                                                                text-align: left;
+                                                                                                                                                                            }
+                                                                                                                                                                            .company-info {
+                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                margin-bottom: 5px;
+                                                                                                                                                                            }
+                                                                                                                                                                            .company-info h3 {
+                                                                                                                                                                                font-size: 1.2em;
+                                                                                                                                                                                margin-bottom: 2px;
+                                                                                                                                                                                font-weight: bold;
+                                                                                                                                                                            }
+                                                                                                                                                                            .company-info p {
+                                                                                                                                                                                margin: 0;
+                                                                                                                                                                                line-height: 1.2;
+                                                                                                                                                                            }
+                                                                                                                                                                            .bill-details, .summary-section, .footer-section {
+                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                margin-bottom: 5px;
+                                                                                                                                                                            }
+                                                                                                                                                                            .bill-details p, .summary-section p {
+                                                                                                                                                                                margin: 0;
+                                                                                                                                                                                line-height: 1.2;
+                                                                                                                                                                                display: flex;
+                                                                                                                                                                                justify-content: space-between;
+                                                                                                                                                                            }
+                                                                                                                                                                            .bill-details p span:first-child, .summary-section p span:first-child {
+                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                font-weight: normal;
+                                                                                                                                                                            }
+                                                                                                                                                                            .bill-details p span:last-child, .summary-section p span:last-child {
+                                                                                                                                                                                text-align: right;
+                                                                                                                                                                                font-weight: bold;
+                                                                                                                                                                            }
+                                                                                                                                                                            .customer-name-on-bill {
+                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                font-weight: bold;
+                                                                                                                                                                                margin-top: 5px;
+                                                                                                                                                                            }
+                                                                                                                                                                            .divider {
+                                                                                                                                                                                border-top: 1px dashed #000;
+                                                                                                                                                                                margin: 8px 0;
+                                                                                                                                                                            }
+                                                                                                                                                                            .items-section table {
+                                                                                                                                                                                width: 100%;
+                                                                                                                                                                                border-bottom: none;
+                                                                                                                                                                                font-size: 10px;
+                                                                                                                                                                            }
+                                                                                                                                                                            .items-section th, .items-section td {
+                                                                                                                                                                                padding: 2px 0;
+                                                                                                                                                                                text-align: right;
+                                                                                                                                                                                border-bottom: none;
+                                                                                                                                                                            }
+                                                                                                                                                                            .items-section th {
+                                                                                                                                                                                font-weight: bold;
+                                                                                                                                                                                text-align: center;
+                                                                                                                                                                            }
+                                                                                                                                                                            .col-item {
+                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                width: 40%;
+                                                                                                                                                                            }
+                                                                                                                                                                            .col-qty {
+                                                                                                                                                                                width: 20%;
+                                                                                                                                                                            }
+                                                                                                                                                                            .col-rate {
+                                                                                                                                                                                width: 20%;
+                                                                                                                                                                            }
+                                                                                                                                                                            .col-value {
+                                                                                                                                                                                width: 20%;
+                                                                                                                                                                            }
+                                                                                                                                                                            .grand-total {
+                                                                                                                                                                                font-size: 1.1em;
+                                                                                                                                                                                font-weight: bold;
+                                                                                                                                                                            }
+                                                                                                                                                                            .footer-section {
+                                                                                                                                                                                text-align: left;
+                                                                                                                                                                                margin-top: 10px;
+                                                                                                                                                                            }
+                                                                                                                                                                            .footer-section p {
+                                                                                                                                                                                margin: 0;
+                                                                                                                                                                                line-height: 1.2;
+                                                                                                                                                                            }
+                                                                                                                                                                            hr {
+                                                                                                                                                                                display: block;
+                                                                                                                                                                                height: 1px;
+                                                                                                                                                                                background: transparent;
+                                                                                                                                                                                width: 100%;
+                                                                                                                                                                                border: none;
+                                                                                                                                                                                border-top: solid 2px #000 !important;
+                                                                                                                                                                            }
+                                                                                                                                                                        </style>
+                                                                                                                                                                    </head>
+                                                                                                                                                                    <body>
+                                                                                                                                                                        <div class="receipt-container">
+                                                                                                                                                                            ${salesContent}
+                                                                                                                                                                        </div>
+                                                                                                                                                                    </body>
+                                                                                                                                                                </html>
+                                                                                                                                                            `);
+
+                printWindow.document.close();
+                printWindow.focus();
+
+                // Give it time to render styles, then print
+                setTimeout(() => {
+                    printWindow.print();
+
+                    // Auto-close after 10 seconds
+                    setTimeout(() => {
+                        if (!printWindow.closed) {
+                            printWindow.close();
                         }
+                        if (typeof onCompleteCallback === 'function') {
+                            onCompleteCallback();
+                        }
+                    }, 00000);
+                }, 500);
+            }
+
+            // New event listener for page refresh or window close
+            document.addEventListener('DOMContentLoaded', function () {
+                let isRefresh = false;
+
+                // We'll set a flag if the user presses F5 or Ctrl+R (common refresh shortcuts)
+                window.addEventListener('keydown', function (e) {
+                    if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                        isRefresh = true;
+                    }
+                });
+            });
+
+            // PRINT FUNCTION ENDS ERE 
+            // This SCRIPT INCLUDES TE POPULATIN TE DATA TO UPDATE AND DELETE FUNCTIONS AND USES TE DATA GIVEN BY GLOBAL ARRAYS
+            window.allSalesData = @json($sales->toArray()) || [];
+            window.printedSalesData = @json($salesPrinted->toArray()) || [];
+            window.unprintedSalesData = @json($salesNotPrinted->toArray()) || [];
+
+            // Global variable for currently displayed sales
+            window.currentDisplayedSalesData = [];
+
+            // Function to populate table
+            window.populateMainSalesTable = function (salesArray) {
+                console.log("Entering populateMainSalesTable. Sales array received:", salesArray);
+
+                // Keep a global snapshot of what’s shown
+                window.currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
+
+                const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
+                if (!mainSalesTableBodyElement) {
+                    console.error("Error: tbody with ID 'mainSalesTableBody' not found!");
+                    return;
+                }
+
+                mainSalesTableBodyElement.innerHTML = '';
+
+                let totalSalesValue = 0;
+                let totalPackCostValue = 0;
+
+                if (!salesArray || salesArray.length === 0) {
+                    mainSalesTableBodyElement.innerHTML = '<tr><td colspan="8" class="text-center">No sales records found.</td></tr>';
+                    document.getElementById('mainTotalSalesValue').textContent = '0.00';
+                    document.getElementById('mainTotalSalesValueBottom').textContent = '0.00';
+                    document.getElementById('itemSummary').innerHTML = '';
+                    window.globalTotalPackCostValue = 0;
+                    return;
+                }
+
+                salesArray.forEach(sale => {
+                    const code = sale.code || 'N/A';
+                    const itemName = sale.item_name || 'N/A';
+                    const weight = sale.weight ? parseFloat(sale.weight).toFixed(2) : '0.00';
+                    const pricePerKg = sale.price_per_kg ? parseFloat(sale.price_per_kg).toFixed(2) : '0.00';
+                    const packs = sale.packs ? parseInt(sale.packs) : 0;
+                    const total = sale.total ? parseFloat(sale.total).toFixed(2) : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
+                    const packDue = sale.pack_due ? parseFloat(sale.pack_due) : 0;
+                    const packCostValue = packs * packDue;
+
+                    const newRow = document.createElement('tr');
+                    newRow.dataset.saleId = sale.id;
+                    newRow.dataset.id = sale.id;
+                    newRow.dataset.customerCode = sale.customer_code;
+                    newRow.dataset.customerName = sale.customer_name;
+                    newRow.dataset.packDue = packDue; // Store pack_due in dataset for this row
+
+                    newRow.innerHTML = `
+                <td data-field="code">${code}</td>
+                <td data-field="item_name">${itemName}</td>
+                <td data-field="weight">${weight}</td>
+                <td data-field="price_per_kg">${pricePerKg}</td>
+                <td data-field="total">${total}</td>
+                <td data-field="packs">${packs}</td>
+                <td data-field="pack_cost_value" style="display:none;">${packCostValue.toFixed(2)}</td>
+            `;
+
+                    mainSalesTableBodyElement.appendChild(newRow);
+
+                    totalSalesValue += parseFloat(total);
+                    totalPackCostValue += packCostValue;
+                });
+
+                window.globalTotalPackCostValue = totalPackCostValue;
+
+                const combinedTotal = totalSalesValue + totalPackCostValue;
+                document.getElementById('mainTotalSalesValue').textContent = combinedTotal.toFixed(2);
+                document.getElementById('mainTotalSalesValueBottom').textContent = combinedTotal.toFixed(2);
+
+                // Build item summary
+                const itemGroups = {};
+                document.querySelectorAll('#mainSalesTableBody tr').forEach(row => {
+                    const itemName = row.querySelector('td[data-field="item_name"]').textContent.trim() || '';
+                    const weight = parseFloat(row.querySelector('td[data-field="weight"]').textContent) || 0;
+                    const packs = parseInt(row.querySelector('td[data-field="packs"]').textContent) || 0;
+                    const packCostValue = parseFloat(row.querySelector('td[data-field="pack_cost_value"]').textContent) || 0;
+
+                    if (!itemGroups[itemName]) {
+                        itemGroups[itemName] = { totalWeight: 0, totalPacks: 0, totalPackCost: 0 };
+                    }
+
+                    itemGroups[itemName].totalWeight += weight;
+                    itemGroups[itemName].totalPacks += packs;
+                    itemGroups[itemName].totalPackCost += packCostValue;
+                });
+
+                let summaryHtml = '<div style="font-size: 0.9rem; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 1rem;">';
+                for (const [itemName, totals] of Object.entries(itemGroups)) {
+                    summaryHtml += `
+                <div style="padding: 0.25rem 0.5rem; border-radius: 0.5rem; background-color: #f3f4f6; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); font-size: 0.8rem;">
+                    <strong>${itemName}</strong>: බර (kg) = ${totals.totalWeight.toFixed(2)}, මලු = ${totals.totalPacks}
+                </div>
+            `;
+                }
+                summaryHtml += '</div>';
+
+                const itemSummaryElement = document.getElementById('itemSummary');
+                if (itemSummaryElement) {
+                    itemSummaryElement.innerHTML = summaryHtml;
+                }
+
+                console.log("populateMainSalesTable finished. Total sales:", totalSalesValue.toFixed(2), "Total pack cost:", totalPackCostValue.toFixed(2), "Combined total:", combinedTotal.toFixed(2));
+            };
+
+            // Call initially with all data
+            window.populateMainSalesTable(window.allSalesData);
 
 
+            // ================= REMAINING STOCK CALCULATIONS =================
+            let originalGrnPacks = 0;
+            let originalGrnWeight = 0;
+            let initialSalePacks = 0;
+            let initialSaleWeight = 0;
+
+            const remainingPacksDisplay = document.getElementById('remaining_packs_display');
+            const remainingWeightDisplay = document.getElementById('remaining_weight_display');
+            const packsField = document.getElementById('packs');
+            const weightField = document.getElementById('weight');
+
+            function updateRemainingStock() {
+                if (updateSalesEntryBtn.style.display === 'inline-block') {
+                    const currentPacks = parseInt(packsField.value) || 0;
+                    const currentWeight = parseFloat(weightField.value) || 0;
+
+                    const packsDifference = currentPacks - initialSalePacks;
+                    const weightDifference = currentWeight - initialSaleWeight;
+
+                    const finalRemainingPacks = originalGrnPacks - packsDifference;
+                    const finalRemainingWeight = originalGrnWeight - weightDifference;
+
+                    remainingPacksDisplay.textContent = `BP: ${finalRemainingPacks}`;
+                    remainingWeightDisplay.textContent = `BW: ${finalRemainingWeight.toFixed(2)}`;
+                }
+            }
+
+            packsField.addEventListener('input', updateRemainingStock);
+            weightField.addEventListener('input', updateRemainingStock);
+
+           // ================= POPULATE FORM FOR EDIT =================
+            function populateFormForEdit(sale) {
+                console.log("Populating form for sale:", sale);
+
+                saleIdField.value = sale.id;
+                newCustomerCodeField.value = sale.customer_code || '';
+                customerNameField.value = sale.customer_name || '';
+                newCustomerCodeField.readOnly = true;
+
+                const grnDisplay = document.getElementById('grn_display');
+                const grnSelect = document.getElementById('grn_select');
+
+                grnDisplay.style.display = 'block';
+                grnDisplay.value = sale.code || '';
+
+                $(grnSelect).next('.select2-container').hide();
+
+                const grnOption = $('#grn_select option').filter(function () {
+                    return $(this).val() === sale.code && $(this).data('supplierCode') === sale.supplier_code &&
+                        $(this).data('itemCode') === sale.item_code;
+                });
+
+                if (grnOption.length) {
+                    $('#grn_select').val(grnOption.val());
+                } else {
+                    $('#grn_select').val(null);
+                }
+
+                // This is the key part:
+                // We only fetch data initially and populate the fields once.
+                if (sale.code) {
+                    fetch(`http://127.0.0.1:8000/api/grn-entry/${sale.code}`)
+                        .then(response => response.json())
+                        .then(grnData => {
+                            originalGrnPacks = parseInt(grnData.packs || 0);
+                            originalGrnWeight = parseFloat(grnData.weight || 0);
+
+                            initialSalePacks = parseInt(sale.packs || 0);
+                            initialSaleWeight = parseFloat(sale.weight || 0);
+
+                            weightField.value = initialSaleWeight.toFixed(2);
+                            weightField.select();
+
+                            packsField.value = initialSalePacks;
+
+                            pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+                            calculateTotal();
+
+                            updateRemainingStock();
+                        })
+                        .catch(error => {
+                            console.error('Error fetching data:', error);
+                            remainingPacksDisplay.textContent = 'Remaining Packs: N/A';
+                            remainingWeightDisplay.textContent = 'Remaining: N/A kg';
+                        });
+                } else {
+                    pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
+                    calculateTotal();
+                }
+
+                supplierSelect.value = sale.supplier_code || '';
+                supplierDisplaySelect.value = sale.supplier_code || '';
+                itemSelect.value = sale.item_code || '';
+                itemSelect.dispatchEvent(new Event('change'));
+
+                itemNameDisplayFromGrn.value = sale.item_name || '';
+                itemNameField.value = sale.item_name || '';
+
+                salesEntryForm.action = `sales/update/${sale.id}`;
+
+                addSalesEntryBtn.style.display = 'none';
+                updateSalesEntryBtn.style.display = 'inline-block';
+                deleteSalesEntryBtn.style.display = 'inline-block';
+                cancelEntryBtn.style.display = 'inline-block';
+
+                weightField.focus();
+                weightField.select();
+            }
 
 
-                        // New event listener for page refresh or window close
-                        document.addEventListener('DOMContentLoaded', function () {
-                            let isRefresh = false;
+            // ================= RESET FORM =================
+            function resetForm() {
+                console.log("Resetting form...");
+                salesEntryForm.reset();
+                saleIdField.value = '';
+                newCustomerCodeField.readOnly = false;
+                $('#customer_code_select').val(null).trigger('change.select2');
+                $('#grn_select').val(null).trigger('change.select2');
+                grnDisplay.value = 'Select GRN Entry...';
+                supplierSelect.value = '';
+                supplierDisplaySelect.value = '';
+                itemSelect.value = '';
+                itemSelect.dispatchEvent(new Event('change'));
+                itemNameDisplayFromGrn.value = '';
+                itemNameField.value = '';
+                calculateTotal();
 
-                            // We'll set a flag if the user presses F5 or Ctrl+R (common refresh shortcuts)
-                            window.addEventListener('keydown', function (e) {
-                                if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
-                                    isRefresh = true;
+                salesEntryForm.action = "{{ route('grn.store') }}";
+
+                addSalesEntryBtn.style.display = 'inline-block';
+                updateSalesEntryBtn.style.display = 'none';
+                deleteSalesEntryBtn.style.display = 'none';
+                cancelEntryBtn.style.display = 'none';
+
+                newCustomerCodeField.focus();
+            }
+
+
+            // ================= TABLE CLICK HANDLER =================
+            document.getElementById('mainSalesTableBody').addEventListener('click', function (event) {
+                const clickedRow = event.target.closest('tr[data-sale-id]');
+                if (clickedRow) {
+                    const saleId = clickedRow.dataset.saleId;
+                    const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
+                    if (saleToEdit) {
+                        populateFormForEdit(saleToEdit);
+                    }
+                }
+            });
+
+
+            // ================= ENTER KEY NAVIGATION =================
+            document.getElementById('weight').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('price_per_kg').focus();
+                    document.getElementById('price_per_kg').select();
+                }
+            });
+
+            document.getElementById('price_per_kg').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('packs').focus();
+                    document.getElementById('packs').select();
+                }
+            });
+
+
+            // ================= FETCH UNPRINTED SALES =================
+            $(document).ready(function () {
+                function debounce(func, delay) {
+                    let timeout;
+                    return function (...args) {
+                        const context = this;
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => func.apply(context, args), delay);
+                    };
+                }
+
+                function fetchUnprintedSales(customerCode) {
+                    let tableBody = $('#mainSalesTableBody');
+                    tableBody.empty();
+                    $('#customer_name').val('');
+                    $('#mainTotalSalesValue').text("0.00");
+                    $('#mainTotalSalesValueBottom').text("0.00");
+
+                    if (customerCode) {
+                        $.ajax({
+                            url: 'http://127.0.0.1:8000/api/sales/unprinted/' + customerCode,
+
+                            method: 'GET',
+                            success: function (response) {
+                                if (response.length > 0) {
+                                    populateMainSalesTable(response);
+
+                                } else {
+                                    tableBody.html('<tr><td colspan="7" class="text-center"></td></tr>');
+                                }
+                            },
+                            error: function (xhr) {
+                                console.error("AJAX Error fetching sales records:", xhr.responseText);
+                                tableBody.html('<tr><td colspan="7" class="text-center text-danger">Error fetching sales data. Please try again.</td></tr>');
+                            }
+                        });
+                    } else {
+                        tableBody.html('<tr><td colspan="7" class="text-center">Please enter a customer code to view records.</td></tr>');
+                    }
+                }
+
+                const debouncedFetchUnprintedSales = debounce(fetchUnprintedSales, 300);
+                $('#new_customer_code').on('keyup', function () {
+                    let customerCode = $(this).val().trim();
+                    debouncedFetchUnprintedSales(customerCode);
+                });
+            });
+
+
+            function resetForm() {
+                console.log("Resetting form...");
+                salesEntryForm.reset();
+                saleIdField.value = '';
+                newCustomerCodeField.readOnly = false;
+                $('#customer_code_select').val(null).trigger('change.select2');
+                $('#grn_select').val(null).trigger('change.select2');
+                grnDisplay.value = 'Select GRN Entry...';
+                supplierSelect.value = '';
+                supplierDisplaySelect.value = '';
+                itemSelect.value = '';
+                itemSelect.dispatchEvent(new Event('change'));
+                itemNameDisplayFromGrn.value = '';
+                itemNameField.value = '';
+                calculateTotal();
+
+
+                salesEntryForm.action = "{{ route('grn.store') }}";
+
+                addSalesEntryBtn.style.display = 'inline-block';
+                updateSalesEntryBtn.style.display = 'none';
+                deleteSalesEntryBtn.style.display = 'none';
+                cancelEntryBtn.style.display = 'none';
+
+                newCustomerCodeField.focus();
+                console.log("Form reset complete.");
+            }
+
+            document.getElementById('mainSalesTableBody').addEventListener('click', function (event) {
+                const clickedRow = event.target.closest('tr[data-sale-id]');
+                if (clickedRow) {
+                    const saleId = clickedRow.dataset.saleId;
+                    console.log("Row clicked, sale ID:", saleId);
+                    const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
+                    if (saleToEdit) {
+                        console.log("Sale found in currentDisplayedSalesData for ID:", saleId, saleToEdit);
+                        populateFormForEdit(saleToEdit);
+                    } else {
+                        console.warn("Sale NOT found in currentDisplayedSalesData for ID:", saleId);
+                        alert(
+                            "Could not find this record for editing. It might not be in the currently displayed sales list. Please try reloading the page if this persists."
+                        );
+                    }
+                }
+            });
+
+            // Get references
+            const salesEntryForm = document.getElementById('salesEntryForm');
+            const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
+            const saleIdField = document.getElementById('sale_id');
+
+            let originalFormData = {}; // To store the original values for comparison
+
+            // Helper function to get current form data as an object
+            function getCurrentFormData(form) {
+                const formData = new FormData(form);
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+                return data;
+            }
+
+            // Store original form data when a record is selected (you must call this manually when loading data)
+            function storeOriginalFormData() {
+                if (salesEntryForm) {
+                    originalFormData = getCurrentFormData(salesEntryForm);
+                }
+            }
+
+            // Compare current data with original to see if any changes were made
+            function isFormDataChanged(currentData) {
+                for (let key in currentData) {
+                    if (currentData[key] !== originalFormData[key]) {
+                        return true; // At least one field has changed
+                    }
+                }
+                return false;
+            }
+
+            if (salesEntryForm && updateSalesEntryBtn && saleIdField) {
+
+                // Enter keypress triggers update only if update button is visible
+                salesEntryForm.addEventListener('keypress', function (event) {
+                    if (event.key === 'Enter') {
+                        const style = window.getComputedStyle(updateSalesEntryBtn);
+                        const visible = style.display !== 'none' && style.visibility !== 'hidden';
+                        const rendered = updateSalesEntryBtn.offsetWidth > 0 || updateSalesEntryBtn.offsetHeight > 0;
+
+                        if (visible && rendered) {
+                            event.preventDefault();
+                            updateSalesEntryBtn.click();
+                        }
+                    }
+                });
+
+                // Click event for update button
+                updateSalesEntryBtn.addEventListener('click', function () {
+                    const saleId = saleIdField.value;
+                    if (!saleId) {
+                        alert('No record selected for update.');
+                        return;
+                    }
+
+                    let currentFormData = getCurrentFormData(salesEntryForm);
+
+                    // For updates, get the NEW values from the form fields
+                    if (updateSalesEntryBtn.style.display === 'inline-block') {
+                        // Get the NEW GRN code from the grn_display field (not the disabled select)
+                        const newGrnCode = grnDisplay.value.split('|')[0].trim(); // Extract code from display format
+
+                        // Update form data with NEW values from the form
+                        currentFormData['code'] = newGrnCode || '';
+                        currentFormData['grn_entry_code'] = newGrnCode || '';
+
+                        // Get other values from the form fields
+                        currentFormData['item_name'] = itemNameDisplayFromGrn.value || '';
+                        currentFormData['item_code'] = document.querySelector('input[name="item_code"]').value || '';
+                        currentFormData['supplier_code'] = supplierSelect.value || '';
+
+                        // Remove the grn_select field from the form data since it's disabled
+                        delete currentFormData['grn_select'];
+                    }
+
+                    if (!isFormDataChanged(currentFormData)) {
+                        alert('No changes detected. Update not required.');
+                        return;
+                    }
+
+                    // Add method and token
+                    currentFormData['_method'] = 'PUT';
+                    currentFormData['_token'] = '{{ csrf_token() }}';
+
+                    fetch(`http://127.0.0.1:8000/sales/update/${saleId}
+    `, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(currentFormData)
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(errorData => Promise.reject(errorData));
+                            }
+                            return response.json();
+                        })
+                        .then(result => {
+                            console.log("Server response:", result);
+                            console.log("Updated sale record received from server:", result.sale);
+
+                            if (result.success && result.sale) {
+                                const updatedSale = JSON.parse(JSON.stringify(result.sale));
+
+                                // 1️⃣ Update currentDisplayedSalesData
+                                const updatedIndex = currentDisplayedSalesData.findIndex(
+                                    sale => String(sale.id) === String(saleId)
+                                );
+                                if (updatedIndex !== -1) {
+                                    currentDisplayedSalesData[updatedIndex] = updatedSale;
+                                }
+
+                                // 2️⃣ Update allSalesData
+                                const allIndex = allSalesData.findIndex(
+                                    sale => String(sale.id) === String(saleId)
+                                );
+                                if (allIndex !== -1) {
+                                    allSalesData[allIndex] = updatedSale;
+                                }
+
+                                // 3️⃣ Update printed/unprinted arrays
+                                // First remove old record
+                                for (const arr of [printedSalesData, unprintedSalesData]) {
+                                    if (Array.isArray(arr)) {
+                                        const idx = arr.findIndex(sale => String(sale.id) === String(saleId));
+                                        if (idx !== -1) arr.splice(idx, 1);
+                                    } else {
+                                        // If keyed by customer_code
+                                        for (const key in arr) {
+                                            const idx = arr[key].findIndex(sale => String(sale.id) === String(saleId));
+                                            if (idx !== -1) arr[key].splice(idx, 1);
+                                        }
+                                    }
+                                }
+
+                                // Then push updated one into correct place
+                                if (updatedSale.bill_printed) {
+                                    if (Array.isArray(printedSalesData)) {
+                                        printedSalesData.push(updatedSale);
+                                    } else {
+                                        if (!printedSalesData[updatedSale.customer_code]) {
+                                            printedSalesData[updatedSale.customer_code] = [];
+                                        }
+                                        printedSalesData[updatedSale.customer_code].push(updatedSale);
+                                    }
+                                } else {
+                                    if (Array.isArray(unprintedSalesData)) {
+                                        unprintedSalesData.push(updatedSale);
+                                    } else {
+                                        if (!unprintedSalesData[updatedSale.customer_code]) {
+                                            unprintedSalesData[updatedSale.customer_code] = [];
+                                        }
+                                        unprintedSalesData[updatedSale.customer_code].push(updatedSale);
+                                    }
+                                }
+
+                                // 4️⃣ Re-render the table
+                                populateMainSalesTable(currentDisplayedSalesData);
+
+                                // 5️⃣ Reset form + preserve customer code
+                                document.getElementById('remaining_packs_display').innerText = "BP: 0";
+                                document.getElementById('remaining_weight_display').innerText = "BW: 0.00 kg";
+                                const preservedCustomerCode = newCustomerCodeField.value;
+                                resetForm();
+                                newCustomerCodeField.value = preservedCustomerCode;
+
+                                console.log("✅ Sale record successfully updated in ALL local arrays");
+                            } else {
+                                alert('Update failed: ' + result.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error updating sales entry:', error);
+                            let errorMessage = 'An error occurred during update.';
+                            if (error?.message) errorMessage += '\n' + error.message;
+                            if (error?.errors) {
+                                for (const key in error.errors) {
+                                    errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
+                                }
+                            }
+                            alert(errorMessage);
+                        });
+                });
+            }
+            deleteSalesEntryBtn.addEventListener('click', function () {
+                const saleId = saleIdField.value;
+                if (!saleId) {
+                    alert('No record selected for deletion.');
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to delete this sales record?')) {
+                    return;
+                }
+
+                fetch(`http://127.0.0.1:8000/sales/delete/${saleId}
+    `, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        _method: 'DELETE',
+                        _token: '{{ csrf_token() }}'
+                    })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errorData => Promise.reject(errorData));
+                        }
+                        return response.json();
+                    })
+                    .then(result => {
+                        if (result.success) {
+
+
+                            // ✅ Remove row from the table
+                            const rowToDelete = document.querySelector(`#mainSalesTableBody tr[data-id="${saleId}"]`);
+                            if (rowToDelete) {
+                                rowToDelete.remove();
+                                currentDisplayedSalesData = currentDisplayedSalesData.filter(sale => String(sale.id) !== String(saleId));
+                            }
+
+                            // ✅ Recalculate totals
+                            let totalSum = 0;
+                            document.querySelectorAll('#mainSalesTableBody tr').forEach(row => {
+                                const totalCell = row.querySelector('td:nth-child(5)'); // adjust column index if needed
+                                if (totalCell) {
+                                    totalSum += parseFloat(totalCell.textContent) || 0;
                                 }
                             });
 
-                            // The 'beforeunload' event fires for both refresh and closing.
-
-                        });
-
-                        // Store the PHP data in JavaScript variables for easier access
-                           // This is the initial data loaded from the server
-  window.allSalesData = @json($sales->toArray()) || [];
-    window.printedSalesData = @json($salesPrinted->toArray()) || [];
-    window.unprintedSalesData = @json($salesNotPrinted->toArray()) || [];
-
-    // Global variable for currently displayed sales
-    window.currentDisplayedSalesData = [];
-
-    // Function to populate table
-   window.populateMainSalesTable = function(salesArray) {
-    const mainSalesTableBodyElement = document.getElementById('mainSalesTableBody');
-    if (!mainSalesTableBodyElement) return;
-
-    mainSalesTableBodyElement.innerHTML = '';
-
-    let totalSalesValue = 0;
-    let totalPackCostValue = 0;
-
-    if (!salesArray || salesArray.length === 0) {
-        mainSalesTableBodyElement.innerHTML = '<tr><td colspan="8" class="text-center">No sales records found.</td></tr>';
-        window.currentDisplayedSalesData = [];
-        return;
-    }
-
-    // Keep global snapshot of what’s shown
-    window.currentDisplayedSalesData = JSON.parse(JSON.stringify(salesArray));
-
-    salesArray.forEach(sale => {
-        const code = sale.code || 'N/A';
-        const itemName = sale.item_name || 'N/A';
-        const weight = sale.weight ? parseFloat(sale.weight).toFixed(2) : '0.00';
-        const pricePerKg = sale.price_per_kg ? parseFloat(sale.price_per_kg).toFixed(2) : '0.00';
-        const packs = sale.packs ? parseInt(sale.packs) : 0;
-        const total = sale.total ? parseFloat(sale.total).toFixed(2) : (parseFloat(weight) * parseFloat(pricePerKg)).toFixed(2);
-        const packCost = sale.pack_due ? parseFloat(sale.pack_due) : 0;
-        const packCostValue = packs * packCost;
-
-        const newRow = document.createElement('tr');
-        newRow.dataset.saleId = sale.id;
-
-        newRow.innerHTML = `
-            <td>${code}</td>
-            <td>${itemName}</td>
-            <td>${weight}</td>
-            <td>${pricePerKg}</td>
-            <td>${total}</td>
-            <td>${packs}</td>
-            <td style="display:none;">${packCostValue.toFixed(2)}</td>
-        `;
-
-        mainSalesTableBodyElement.appendChild(newRow);
-
-        totalSalesValue += parseFloat(total);
-        totalPackCostValue += packCostValue;
-    });
-
-    // Combined totals
-    const combinedTotal = totalSalesValue + totalPackCostValue;
-    window.globalTotalPackCostValue = totalPackCostValue;
-
-    document.getElementById('mainTotalSalesValue').textContent = combinedTotal.toFixed(2);
-    document.getElementById('mainTotalSalesValueBottom').textContent = combinedTotal.toFixed(2);
-
-    console.log("populateMainSalesTable finished. Total sales value:", totalSalesValue.toFixed(2), "Total pack cost:", totalPackCostValue.toFixed(2), "Combined:", combinedTotal.toFixed(2));
-};
+                            // Update total fields
+                            document.getElementById('mainTotalSalesValue').textContent = totalSum.toFixed(2);
+                            document.getElementById('mainTotalSalesValueBottom').textContent = totalSum.toFixed(2);
 
 
-// ================= REMAINING STOCK CALCULATIONS =================
-let originalGrnPacks = 0;
-let originalGrnWeight = 0;
-let initialSalePacks = 0;
-let initialSaleWeight = 0;
 
-const remainingPacksDisplay = document.getElementById('remaining_packs_display');
-const remainingWeightDisplay = document.getElementById('remaining_weight_display');
-const packsField = document.getElementById('packs');
-const weightField = document.getElementById('weight');
+                            // 🔹 Reset BP and BW displays
+                            document.getElementById('remaining_packs_display').innerText = "BP: 0";
+                            document.getElementById('remaining_weight_display').innerText = "BW: 0.00 kg";
+                            const preservedCustomerCode = newCustomerCodeField.value;
+                            resetForm();
+                            newCustomerCodeField.value = preservedCustomerCode;
 
-function updateRemainingStock() {
-    if (updateSalesEntryBtn.style.display === 'inline-block') {
-        const currentPacks = parseInt(packsField.value) || 0;
-        const currentWeight = parseFloat(weightField.value) || 0;
-
-        const packsDifference = currentPacks - initialSalePacks;
-        const weightDifference = currentWeight - initialSaleWeight;
-
-        const finalRemainingPacks = originalGrnPacks - packsDifference;
-        const finalRemainingWeight = originalGrnWeight - weightDifference;
-
-        remainingPacksDisplay.textContent = `Remaining Packs: ${finalRemainingPacks}`;
-        remainingWeightDisplay.textContent = `Remaining: ${finalRemainingWeight.toFixed(2)} kg`;
-    }
-}
-
-packsField.addEventListener('input', updateRemainingStock);
-weightField.addEventListener('input', updateRemainingStock);
-
-// ================= POPULATE FORM FOR EDIT =================
-function populateFormForEdit(sale) {
-    console.log("Populating form for sale:", sale);
-
-    saleIdField.value = sale.id;
-    newCustomerCodeField.value = sale.customer_code || '';
-    customerNameField.value = sale.customer_name || '';
-    newCustomerCodeField.readOnly = true;
-
-    const grnDisplay = document.getElementById('grn_display');
-    const grnSelect = document.getElementById('grn_select');
-
-    grnDisplay.style.display = 'block';
-    grnDisplay.value = sale.code || '';
-
-    // HIDE the GRN select dropdown and make it read-only
-    $(grnSelect).next('.select2-container').hide();
-    grnSelect.disabled = true; // Prevent changes to GRN code
-
-    // Store original values for remaining stock calculation
-    initialSalePacks = parseInt(sale.packs || 0);
-    initialSaleWeight = parseFloat(sale.weight || 0);
-
-    weightField.value = initialSaleWeight.toFixed(2);
-    packsField.value = initialSalePacks;
-    pricePerKgField.value = parseFloat(sale.price_per_kg || 0).toFixed(2);
-    
-    calculateTotal();
-
-    // Fetch GRN data for remaining stock calculation
-    if (sale.code) {
-        fetch(`/api/grn-entry/${sale.code}`)
-            .then(response => response.json())
-            .then(grnData => {
-                originalGrnPacks = parseInt(grnData.packs || 0);
-                originalGrnWeight = parseFloat(grnData.weight || 0);
-                updateRemainingStock();
-            })
-            .catch(error => {
-                console.error('Error fetching GRN data:', error);
-                remainingPacksDisplay.textContent = 'Remaining Packs: N/A';
-                remainingWeightDisplay.textContent = 'Remaining: N/A kg';
-            });
-    } else {
-        updateRemainingStock();
-    }
-
-    supplierSelect.value = sale.supplier_code || '';
-    supplierDisplaySelect.value = sale.supplier_code || '';
-    itemSelect.value = sale.item_code || '';
-    
-    // Trigger change event after a short delay to ensure Select2 is updated
-    setTimeout(() => {
-        itemSelect.dispatchEvent(new Event('change'));
-    }, 100);
-
-    itemNameDisplayFromGrn.value = sale.item_name || '';
-    itemNameField.value = sale.item_name || '';
-
-    salesEntryForm.action = `sales/update/${sale.id}`;
-
-    addSalesEntryBtn.style.display = 'none';
-    updateSalesEntryBtn.style.display = 'inline-block';
-    deleteSalesEntryBtn.style.display = 'inline-block';
-    cancelEntryBtn.style.display = 'inline-block';
-
-    weightField.focus();
-    weightField.select();
-    
-    // Store original form data for change detection
-    storeOriginalFormData();
-    
-    console.log("Form populated with updated sale data");
-}
-
-// ================= RESET FORM =================
-function resetForm() {
-    console.log("Resetting form...");
-    salesEntryForm.reset();
-    saleIdField.value = '';
-   
-    $('#customer_code_select').val(null).trigger('change.select2');
-    
-    // Re-enable GRN select when resetting form
-    const grnSelect = document.getElementById('grn_select');
-    grnSelect.disabled = false;
-    $(grnSelect).next('.select2-container').show();
-    $('#grn_select').val(null).trigger('change.select2');
-    
-    grnDisplay.value = 'Select GRN Entry...';
-    supplierSelect.value = '';
-    supplierDisplaySelect.value = '';
-    itemSelect.value = '';
-    itemSelect.dispatchEvent(new Event('change'));
-    itemNameDisplayFromGrn.value = '';
-    itemNameField.value = '';
-    calculateTotal();
-
-    salesEntryForm.action = "{{ route('grn.store') }}";
-
-    addSalesEntryBtn.style.display = 'inline-block';
-    updateSalesEntryBtn.style.display = 'none';
-    deleteSalesEntryBtn.style.display = 'none';
-    cancelEntryBtn.style.display = 'none';
-
-    newCustomerCodeField.focus();
-}
-
-// ================= TABLE CLICK HANDLER =================
-document.getElementById('mainSalesTableBody').addEventListener('click', function (event) {
-    const clickedRow = event.target.closest('tr[data-sale-id]');
-    if (clickedRow) {
-        const saleId = clickedRow.dataset.saleId;
-        const saleToEdit = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
-        if (saleToEdit) {
-            populateFormForEdit(saleToEdit);
-        }
-    }
-});
-
-// ================= ENTER KEY NAVIGATION =================
-document.getElementById('weight').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        document.getElementById('price_per_kg').focus();
-        document.getElementById('price_per_kg').select();
-    }
-});
-
-document.getElementById('price_per_kg').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        document.getElementById('packs').focus();
-        document.getElementById('packs').select();
-    }
-});
-
-// ================= FETCH UNPRINTED SALES =================
-$(document).ready(function () {
-    function debounce(func, delay) {
-        let timeout;
-        return function (...args) {
-            const context = this;
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(context, args), delay);
-        };
-    }
-
-    function fetchUnprintedSales(customerCode) {
-        let tableBody = $('#mainSalesTableBody');
-        tableBody.empty();
-        $('#customer_name').val('');
-        $('#mainTotalSalesValue').text("0.00");
-        $('#mainTotalSalesValueBottom').text("0.00");
-
-        if (customerCode) {
-            $.ajax({
-                url: '/api/sales/unprinted/' + customerCode,
-                method: 'GET',
-                success: function (response) {
-                    if (response.length > 0) {
-                        populateMainSalesTable(response);
-                      
-                    } else {
-                        tableBody.html('');
-                    }
-                },
-                error: function (xhr) {
-                    console.error("AJAX Error fetching sales records:", xhr.responseText);
-                    tableBody.html('<tr><td colspan="7', ' class="text-center text-danger">Error fetching sales data. Please try again.</td></tr>');
-                }
-            });
-        } else {
-            tableBody.html('<tr><td colspan="7" class="text-center">Please enter a customer code to view records.</td></tr>');
-        }
-    }
-
-    const debouncedFetchUnprintedSales = debounce(fetchUnprintedSales, 300);
-    $('#new_customer_code').on('keyup', function () {
-        let customerCode = $(this).val().trim();
-        debouncedFetchUnprintedSales(customerCode);
-    });
-});
-
-// Get references
-const salesEntryForm = document.getElementById('salesEntryForm');
-const updateSalesEntryBtn = document.getElementById('updateSalesEntryBtn');
-const saleIdField = document.getElementById('sale_id');
-const grnSelect = document.getElementById('grn_select');
-const grnDisplay = document.getElementById('grn_display');
-
-let originalFormData = {}; // To store the original values for comparison
-
-// Helper function to get current form data as an object
-function getCurrentFormData(form) {
-    const formData = new FormData(form);
-    const data = {};
-    formData.forEach((value, key) => {
-        data[key] = value;
-    });
-    return data;
-}
-
-// Store original form data when a record is selected
-function storeOriginalFormData() {
-    if (salesEntryForm) {
-        originalFormData = getCurrentFormData(salesEntryForm);
-    }
-}
-
-// Compare current data with original to see if any changes were made
-function isFormDataChanged(currentData) {
-    for (let key in currentData) {
-        if (currentData[key] !== originalFormData[key]) {
-            return true; // At least one field has changed
-        }
-    }
-    return false;
-}
-
-// ================= UPDATE BUTTON CLICK HANDLER =================
-if (salesEntryForm && updateSalesEntryBtn && saleIdField) {
-    // Enter keypress triggers update only if update button is visible
-    salesEntryForm.addEventListener('keypress', function (event) {
-        if (event.key === 'Enter') {
-            const style = window.getComputedStyle(updateSalesEntryBtn);
-            const visible = style.display !== 'none' && style.visibility !== 'hidden';
-            const rendered = updateSalesEntryBtn.offsetWidth > 0 || updateSalesEntryBtn.offsetHeight > 0;
-
-            if (visible && rendered) {
-                event.preventDefault();
-                updateSalesEntryBtn.click();
-            }
-        }
-    });
-
-    // Click event for update button
-    updateSalesEntryBtn.addEventListener('click', function () {
-        const saleId = saleIdField.value;
-        if (!saleId) {
-            alert('No record selected for update.');
-            return;
-        }
-
-        let currentFormData = getCurrentFormData(salesEntryForm);
-        
-        // For updates, remove the GRN code field to prevent changes
-        if (updateSalesEntryBtn.style.display === 'inline-block') {
-            delete currentFormData['grn_select'];
-            
-            // Get the original sale data to include required fields that shouldn't change
-            const originalSale = currentDisplayedSalesData.find(sale => String(sale.id) === String(saleId));
-            if (originalSale) {
-                currentFormData['code'] = originalSale.code || '';
-                currentFormData['item_name'] = originalSale.item_name || '';
-                currentFormData['item_code'] = originalSale.item_code || '';
-                currentFormData['supplier_code'] = originalSale.supplier_code || '';
-            }
-        }
-
-        if (!isFormDataChanged(currentFormData)) {
-            alert('No changes detected. Update not required.');
-            return;
-        }
-
-        // Add method and token
-        currentFormData['_method'] = 'PUT';
-        currentFormData['_token'] = '{{ csrf_token() }}';
-
-        fetch(`sales/update/${saleId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify(currentFormData)
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(errorData => Promise.reject(errorData));
-            }
-            return response.json();
-        })
-        .then(result => {
-            console.log("Server response:", result);
-            console.log("Updated sale record received from server:", result.sale);
-            console.log("Weight:", result.sale.weight, "Packs:", result.sale.packs, "Price:", result.sale.price_per_kg, "Total:", result.sale.total);
-            
-            if (result.success && result.sale) {
-                // Create a DEEP copy of the array to ensure complete reactivity
-                const updatedSalesData = JSON.parse(JSON.stringify(currentDisplayedSalesData));
-                const updatedIndex = updatedSalesData.findIndex(
-                    sale => String(sale.id) === String(saleId)
-                );
-                console.log("Found index to update:", updatedIndex);
-
-                if (updatedIndex !== -1) {
-                    // COMPLETELY replace the object with all new data
-                    updatedSalesData[updatedIndex] = JSON.parse(JSON.stringify(result.sale));
-                    
-                    // Update the global reference
-                    currentDisplayedSalesData = updatedSalesData;
-                    
-                    // Force a complete re-render of the table
-                    populateMainSalesTable(currentDisplayedSalesData);
-                    
-                    // Update the form with the new data to keep everything in sync
-                    populateFormForEdit(result.sale);
-                    
-                    console.log("Sale record successfully updated in local data");
-                } else {
-                    console.warn("Record updated on server but not found in local data");
-                    // Refresh the entire table data
-                    fetchSalesData().then(() => {
-                        const refreshedSale = currentDisplayedSalesData.find(
-                            sale => String(sale.id) === String(saleId)
-                        );
-                        if (refreshedSale) {
-                            populateFormForEdit(refreshedSale);
+                            console.log("Form reset complete after deletion.");
+                        } else {
+                            alert('Delete failed: ' + result.message);
                         }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting sales entry:', error);
+                        let errorMessage = 'An error occurred during deletion.';
+                        if (error && error.message) {
+                            errorMessage += '\n' + error.message;
+                        }
+                        alert(errorMessage);
                     });
-                }
+            });
 
-                console.log("Update completed successfully.");
-            } else {
-                alert('Update failed: ' + result.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error updating sales entry:', error);
-            let errorMessage = 'An error occurred during update.';
-            if (error?.message) errorMessage += '\n' + error.message;
-            if (error?.errors) {
-                for (const key in error.errors) {
-                    errorMessage += `\n${key}: ${error.errors[key].join(', ')}`;
-                }
-            }
-            alert(errorMessage);
-        });
-    });
-}
 
-// Add this function to fetch sales data if needed
-function fetchSalesData() {
-    return fetch('/api/sales')
-        .then(response => response.json())
-        .then(data => {
-            currentDisplayedSalesData = data;
-            populateMainSalesTable(currentDisplayedSalesData);
-            return data;
-        })
-        .catch(error => {
-            console.error('Error fetching sales data:', error);
-            return [];
-        });
-}
+            cancelEntryBtn.addEventListener('click', resetForm);
 
-// ================= DELETE BUTTON CLICK HANDLER =================
-deleteSalesEntryBtn.addEventListener('click', function () {
-    const saleId = saleIdField.value;
-    if (!saleId) {
-        alert('No record selected for deletion.');
-        return;
-    }
-
-    if (!confirm('Are you sure you want to delete this sales record?')) {
-        return;
-    }
-
-    fetch(`sales/delete/${saleId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            _method: 'DELETE',
-            _token: '{{ csrf_token() }}'
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errorData => Promise.reject(errorData));
-        }
-        return response.json();
-    })
-    .then(result => {
-        if (result.success) {
-            alert(result.message);
-
-            // Remove from displayed data
-            currentDisplayedSalesData = currentDisplayedSalesData.filter(sale => String(sale.id) !== String(saleId));
-            
-            // Repopulate table
-            populateMainSalesTable(currentDisplayedSalesData);
-             const preservedCustomerCode = newCustomerCodeField.value;
-            
-            // Reset form
             resetForm();
-            
-            console.log("Record deleted successfully.");
-        } else {
-            alert('Delete failed: ' + result.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error deleting sales entry:', error);
-        let errorMessage = 'An error occurred during deletion.';
-        if (error && error.message) {
-            errorMessage += '\n' + error.message;
-        }
-        alert(errorMessage);
-    });
-});
-                      
 
-                        cancelEntryBtn.addEventListener('click', resetForm);
+            $('.customer-header').on('click', function () {
+                console.log("Customer header clicked!");
 
-                        resetForm();
+                const customerCode = $(this).data('customer-code');
+                const billType = $(this).data('bill-type');
+                const billNo = $(this).data('bill-no'); // This will now correctly have a value or ''
 
-                     $('.customer-header').on('click', function () {
-    console.log("Customer header clicked!");
+                console.log("Clicked Customer Code:", customerCode);
+                console.log("Clicked Bill Type:", billType);
+                console.log("Clicked Bill No:", billNo);
+                newCustomerCodeField.value = customerCode;
 
-    const customerCode = $(this).data('customer-code');
-    const billType = $(this).data('bill-type');
-    const billNo = $(this).data('bill-no');
+                let salesToDisplay = [];
 
-    console.log("Clicked Customer Code:", customerCode);
-    console.log("Clicked Bill Type:", billType);
-    console.log("Clicked Bill No:", billNo);
-
-    newCustomerCodeField.value = customerCode;
-
-    let salesToDisplay = [];
-
-    if (billType === 'printed') {
-        console.log("Attempting to filter PRINTED sales...");
-
-        if (Array.isArray(printedSalesData)) {
-            // printedSalesData is a flat array
-            salesToDisplay = printedSalesData.filter(sale =>
-                sale.customer_code === customerCode &&
-                String(sale.bill_no) === String(billNo)
-            );
-            console.log("Printed sales data (array) for customerCode:", salesToDisplay);
-        } else if (printedSalesData[customerCode] && Array.isArray(printedSalesData[customerCode])) {
-            // printedSalesData is an object keyed by customer_code
-            salesToDisplay = printedSalesData[customerCode].filter(sale =>
-                String(sale.bill_no) === String(billNo)
-            );
-            console.log("Printed sales data (object) for customerCode:", printedSalesData[customerCode]);
-        } else {
-            console.log("No printed sales data found for customerCode:", customerCode);
-        }
-
-    } else if (billType === 'unprinted') {
-        console.log("Attempting to filter UNPRINTED sales...");
-
-        if (Array.isArray(unprintedSalesData)) {
-            // unprintedSalesData is a flat array
-            salesToDisplay = unprintedSalesData.filter(sale =>
-                sale.customer_code === customerCode
-            );
-            console.log("Unprinted sales data (array) for customerCode:", salesToDisplay);
-        } else if (unprintedSalesData[customerCode] && Array.isArray(unprintedSalesData[customerCode])) {
-            // unprintedSalesData is an object keyed by customer_code
-            salesToDisplay = unprintedSalesData[customerCode];
-            console.log("Unprinted sales data (object) for customerCode:", unprintedSalesData[customerCode]);
-        } else {
-            console.log("No unprinted sales data found for customerCode:", customerCode);
-        }
-
-    } else {
-        console.log("Unknown billType:", billType);
-    }
-
-    console.log("Sales to Display after filter:", salesToDisplay);
-
-    // Populate the sales table
-    populateMainSalesTable(salesToDisplay);
-
-    // --- Focus GRN Select2 after populating table ---
-    function focusGrnSelect() {
-        $('#grn_select').off('select2:open').on('select2:open', function() {
-            const searchBox = document.querySelector('.select2-container--open .select2-search__field');
-            if (searchBox) {
-                searchBox.focus();
-                searchBox.setSelectionRange(searchBox.value.length, searchBox.value.length);
-            }
-        });
-        $('#grn_select').select2('open');
-    }
-
-    // Call the focus function
-    focusGrnSelect();
-});
-
-
-
-                        $(document).on('click', '.print-bill-btn', function () {
-                            var customerCode = $(this).data('customer-code');
-                            if (confirm('Are you sure you want to print the bill for ' + customerCode +
-                                '? This will mark all *unprinted* sales for this customer as printed and processed.')) {
-                                $.ajax({
-                                    url: '/sales/print-bill/' + customerCode,
-                                    type: 'POST',
-                                    data: {
-                                        _token: '{{ csrf_token() }}',
-                                        customer_code: customerCode
-                                    },
-                                    success: function (response) {
-                                        if (response.success) {
-                                            alert(response.message);
-                                            sessionStorage.setItem('focusOnCustomerSelect', 'true');
-                                            location.reload();
-                                        } else {
-                                            alert('Error: ' + response.message);
-                                        }
-                                    },
-                                    error: function (xhr) {
-                                        console.error("AJAX error:", xhr.responseText);
-                                        alert('An error occurred while trying to print the bill.');
-                                    }
-                                });
-                            }
+                if (billType === 'printed') {
+                    console.log("Attempting to filter PRINTED sales...");
+                    if (printedSalesData[customerCode] && Array.isArray(printedSalesData[customerCode])) {
+                        salesToDisplay = printedSalesData[customerCode].filter(sale => {
+                            // Ensure both are treated as strings for comparison
+                            return String(sale.bill_no) === String(billNo);
                         });
+                        console.log("Printed sales data for customerCode:", printedSalesData[customerCode]);
+                    } else {
+                        console.log("No printed sales data found or not an array for customerCode:",
+                            customerCode);
+                    }
+                } else if (billType === 'unprinted') {
+                    console.log("Attempting to filter UNPRINTED sales...");
+                    if (unprintedSalesData[customerCode] && Array.isArray(unprintedSalesData[customerCode])) {
+                        salesToDisplay = unprintedSalesData[customerCode];
+                        console.log("Unprinted sales data for customerCode:", unprintedSalesData[
+                            customerCode]);
+                    } else {
+                        console.log("No unprinted sales data found or not an array for customerCode:",
+                            customerCode);
+                    }
+                } else {
+                    console.log("Unknown billType:", billType);
+                }
 
-                        if (sessionStorage.getItem('focusOnCustomerSelect') === 'true') {
-                            $(document).on('select2:open', function () {
-                                document.querySelector('.select2-search__field').focus();
-                            });
-                            // Check if the element actually exists and is a select2 element
-                            if ($('#new_customer_code').data('select2')) {
-                                $('#new_customer_code').select2('open');
+                console.log("Sales to Display after filter:", salesToDisplay);
+                populateMainSalesTable(salesToDisplay);
+            });
+
+
+            $(document).on('click', '.print-bill-btn', function () {
+                var customerCode = $(this).data('customer-code');
+                if (confirm('Are you sure you want to print the bill for ' + customerCode +
+                    '? This will mark all *unprinted* sales for this customer as printed and processed.')) {
+                    $.ajax({
+                        url: '/sales/print-bill/' + customerCode,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            customer_code: customerCode
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                alert(response.message);
+                                sessionStorage.setItem('focusOnCustomerSelect', 'true');
+                                location.reload();
                             } else {
-                                // Fallback to focus the customer code text input if select2 not applied or is hidden
-                                newCustomerCodeField.focus();
+                                alert('Error: ' + response.message);
                             }
-                            sessionStorage.removeItem('focusOnCustomerSelect');
+                        },
+                        error: function (xhr) {
+                            console.error("AJAX error:", xhr.responseText);
+                            alert('An error occurred while trying to print the bill.');
                         }
                     });
-                </script>
-                {{-- typing customer code and fetching data from unprinted sales records them) --}}
+                }
+            });
 
-
-
+            if (sessionStorage.getItem('focusOnCustomerSelect') === 'true') {
+                $(document).on('select2:open', function () {
+                    document.querySelector('.select2-search__field').focus();
+                });
+                // Check if the element actually exists and is a select2 element
+                if ($('#new_customer_code').data('select2')) {
+                    $('#new_customer_code').select2('open');
+                } else {
+                    // Fallback to focus the customer code text input if select2 not applied or is hidden
+                    newCustomerCodeField.focus();
+                }
+                sessionStorage.removeItem('focusOnCustomerSelect');
+            }
+        });
+    </script>
 @endsection

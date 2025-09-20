@@ -31,7 +31,8 @@ class GrnEntry extends Model
         'wasted_weight',
         'total_wasted_weight',
          'show_status',
-         'grn_status',
+          'grn_status', 
+          'SalesKGPrice'
     ];
 
     // Optional: If you don't want timestamps (created_at, updated_at)

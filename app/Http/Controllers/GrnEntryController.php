@@ -9,8 +9,12 @@ use App\Models\Sale;
 use App\Models\SalesHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use App\Models\GrnEntry2;
+use Mpdf\Mpdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\GrnEntriesExport;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\QueryException;
 
 class GrnEntryController extends Controller
 {
@@ -25,45 +29,45 @@ class GrnEntryController extends Controller
         $items = Item::all();
         $suppliers = Supplier::all();
          $entries = GrnEntry::latest()->get();
-         $notChangingGRNs = GrnEntry::where('grn_status', 'Not Changing')->get();
-        return view('dashboard.grn.create', compact('items', 'suppliers','entries','notChangingGRNs'));
+        return view('dashboard.grn.create', compact('items', 'suppliers','entries'));
     }
-public function store(Request $request)
+ public function store(Request $request)
 {
-    // 1. Validate the incoming request (all fields optional, status required)
+    // 1. Validate the incoming request (all fields optional)
     $request->validate([
-        'item_code'     => 'nullable|string',
+        'item_code' => 'nullable|string',
         'supplier_name' => 'nullable|string|max:255',
-        'packs'         => 'nullable|integer',
-        'weight'        => 'nullable|numeric',
-        'txn_date'      => 'nullable|date',
-        'grn_no'        => 'nullable|string',
-        'warehouse_no'  => 'nullable|string',
-        'total_grn'     => 'nullable|numeric|min:0',
-        'per_kg_price'  => 'nullable|numeric|min:0',
+        'packs' => 'nullable|integer|min:1',
+        'weight' => 'nullable|numeric|min:0.01',
+        'txn_date' => 'nullable|date',
+        'grn_no' => 'nullable|string',
+        'warehouse_no' => 'nullable|string',
+        'total_grn' => 'nullable|numeric|min:0',
+        'per_kg_price' => 'nullable|numeric|min:0',
         'wasted_weight' => 'nullable|numeric|min:0',
-        'wasted_packs'  => 'nullable|numeric|min:0',
-        
+        'wasted_packs' => 'nullable|numeric|min:0',
     ]);
 
     // 2. Fetch item if provided
     $item = null;
+    $itemName = null;
     if ($request->filled('item_code')) {
         $item = Item::where('no', $request->item_code)->first();
         if (!$item) {
             return back()->withErrors(['item_code' => 'Invalid item selected.']);
         }
+        $itemName = $item->type;
     }
 
-    // 3. Find or create the supplier using the entered name as code & name
+    // 3. Find or create the supplier using the entered name as code
     $supplierName = $request->input('supplier_name', '');
     $supplier = Supplier::firstOrCreate(
         ['code' => $supplierName],
-        ['name' => $supplierName] // ✅ save supplier name too
+        ['name' => '']
     );
     $supplierCode = $supplier->code;
 
-    // 4. Auto generate auto_purchase_no (based on ID)
+    // 4. Auto generate auto_purchase_no
     $last = GrnEntry::latest()->first();
     $autoNo = $last ? $last->id + 1 : 1;
     $autoPurchaseNo = str_pad($autoNo, 4, '0', STR_PAD_LEFT);
@@ -76,72 +80,139 @@ public function store(Request $request)
     $itemCode = $item ? $item->no : 'ITEM';
     $code = strtoupper($itemCode . '-' . $supplierCode . '-' . $nextSequentialNumber);
 
-    // 7. Calculate total wasted weight value
+    // 7. Calculate total wasted weight
     $wastedWeight = $request->input('wasted_weight', 0);
     $perKgPrice = $request->input('per_kg_price', 0);
     $totalWastedWeightValue = $wastedWeight * $perKgPrice;
 
-    // 8. Create GRN entry
+    // 8. Determine grn_status based on item_name
+    $showstatus = 1; // default
+    if ($itemName && (str_contains($itemName, 'අල') || str_contains($itemName, 'ලුණු'))) {
+        $showstatus = 0;
+    }
+
+    // 9. Create GRN entry
     GrnEntry::create([
-        'auto_purchase_no'    => $autoPurchaseNo,
-        'code'                => $code,
-        'supplier_code'       => strtoupper($supplierCode),
-        'item_code'           => $request->input('item_code', null),
-        'item_name'           => $item ? $item->type : null,
-        'packs'               => $request->input('packs', null),
-        'weight'              => $request->input('weight', null),
-        'txn_date'            => $request->input('txn_date', null),
-        'grn_no'              => $request->input('grn_no', null),
-        'warehouse_no'        => $request->input('warehouse_no', null),
-        'original_packs'      => $request->input('packs', null),
-        'original_weight'     => $request->input('weight', null),
-        'sequence_no'         => $nextSequentialNumber,
-        'total_grn'           => $request->input('total_grn', null),
-        'per_kg_price'        => $perKgPrice,   // ✅ fixed column name
-        'wasted_packs'        => $request->input('wasted_packs', 0),
-        'wasted_weight'       => $wastedWeight,
+        'auto_purchase_no' => $autoPurchaseNo,
+        'code' => $code,
+        'supplier_code' => strtoupper($supplierCode),
+        'item_code' => $request->input('item_code', null),
+        'item_name' => $itemName,
+        'packs' => $request->input('packs', null),
+        'weight' => $request->input('weight', null),
+        'txn_date' => $request->input('txn_date', null),
+        'grn_no' => $request->input('grn_no', null),
+        'warehouse_no' => $request->input('warehouse_no', null),
+        'original_packs' => $request->input('packs', null),
+        'original_weight' => $request->input('weight', null),
+        'sequence_no' => $nextSequentialNumber,
+        'total_grn' => $request->input('total_grn', null),
+        'PerKGPrice' => $perKgPrice,
+        'wasted_packs' => $request->input('wasted_packs', 0),
+        'wasted_weight' => $wastedWeight,
         'total_wasted_weight' => $totalWastedWeightValue,
-       
+        'show_status' => $showstatus, // ✅ new column logic
     ]);
 
-    // 9. Redirect with success
+    // 10. Redirect with success
     return redirect()->route('grn.create')->with('success', 'GRN Entry added successfully.');
 }
+
+
+
 public function store2(Request $request)
 {
-    $validated = $request->validate([
-        'code' => 'required|exists:grn_entries,id',
-        'packs' => 'required|numeric|min:1',
-        'weight' => 'required|numeric|min:0.01',
-    ]);
+    Log::info('store2 method triggered. Request data:', $request->all());
 
-    // Find the existing GRN entry
-    $grn = GrnEntry::find($request->code);
+    try {
+        $validated = $request->validate([
+            'code' => 'required|exists:grn_entries,code',
+            'packs' => 'nullable|numeric',
+            'weight' => 'nullable|numeric',
+            'per_kg_price' => 'nullable|numeric',
+        ]);
+        Log::info('Validation passed.');
 
-    // Update GrnEntry by adding the new packs and weight
-    $grn->packs += $request->packs;
-    $grn->weight += $request->weight;
-    $grn->original_packs += $request->packs;
-    $grn->original_weight += $request->weight;
-    $grn->save();
+        // Find GRN entry
+        $grn = GrnEntry::where('code', $request->code)->first();
+        if (!$grn) {
+            Log::warning('GRN entry not found for code: ' . $request->code);
+            return response()->json(['success' => false, 'message' => 'GRN entry not found.'], 404);
+        }
+        Log::info('Found GRN entry:', $grn->toArray());
 
-    // Fetch the date from Setting
-    $settingDate = \App\Models\Setting::value('value');
-    $formattedDate = \Carbon\Carbon::parse($settingDate)->format('Y-m-d');
+        // Save old values
+        $oldPacks = $grn->packs;
+        $oldWeight = $grn->weight;
+        Log::info("Old values - Packs: {$oldPacks}, Weight: {$oldWeight}");
 
-    // Also insert into GrnEntry2 as backup / history
-    GrnEntry2::create([
-        'code' => $grn->code,
-        'supplier_code' => $grn->supplier_code,
-        'item_code' => $grn->item_code,
-        'item_name' => $grn->item_name,
-        'packs' => $request->packs,
-        'weight' => $request->weight,
-        'txn_date' => $formattedDate,  // <-- use setting date here
-        'grn_no' => $grn->grn_no,
-    ]);
+        // Update GRN entry
+        $grn->packs += (float)$request->packs;
+        $grn->weight += (float)$request->weight;
+        $grn->original_packs += (float)$request->packs;
+        $grn->original_weight += (float)$request->weight;
+        $grn->PerKGPrice = (float)$request->per_kg_price;
+        $grn->SalesKGPrice = (float)$request->per_kg_price;
 
-    return redirect()->back()->with('success', 'GRN updated successfully!');
+        if ($grn->save()) {
+            Log::info('GRN entry updated successfully.', $grn->toArray());
+        } else {
+            Log::error('GRN entry save failed.');
+            return response()->json(['success' => false, 'message' => 'Failed to update GRN entry.'], 500);
+        }
+
+        // Fetch date from setting
+        $settingDate = \App\Models\Setting::value('value');
+        $formattedDate = \Carbon\Carbon::parse($settingDate)->format('Y-m-d');
+        Log::info("Using Setting date: {$formattedDate}");
+
+        // Insert backup record
+        try {
+            $backup = GrnEntry2::create([
+                'code' => $grn->code,
+                'supplier_code' => $grn->supplier_code,
+                'item_code' => $grn->item_code,
+                'item_name' => $grn->item_name,
+                'packs' => (float)$request->packs,
+                'weight' => (float)$request->weight,
+                'per_kg_price' => (float)$request->per_kg_price,
+                'txn_date' => $formattedDate,
+                'grn_no' => $grn->grn_no,
+                'type' => 'added',
+            ]);
+            Log::info('Backup record inserted successfully.', $backup->toArray());
+        } catch (QueryException $e) {
+            Log::error('Failed to insert backup record into GrnEntry2: ' . $e->getMessage());
+        }
+
+        // Call updateGrnRemainingStock if old values were 0
+        if ($oldPacks == 0 && $oldWeight == 0) {
+            Log::info('Old packs & weight were 0, calling updateGrnRemainingStock.');
+            $this->updateGrnRemainingStock();
+        }
+
+        // ✅ Return JSON instead of redirect
+        return response()->json([
+            'success' => true,
+           
+            'entry' => [
+                'id' => $backup->id ?? null,
+                'code' => $grn->code,
+                'supplier_code' => $grn->supplier_code,
+                'item_code' => $grn->item_code,
+                'item_name' => $grn->item_name,
+                'packs' => (float)$request->packs,
+                'weight' => (float)$request->weight,
+                'per_kg_price' => (float)$request->per_kg_price,
+                'txn_date' => $formattedDate,
+                'grn_no' => $grn->grn_no,
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('store2 method failed: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => 'Something went wrong. Check logs.'], 500);
+    }
 }
 
     public function edit($id)
@@ -152,14 +223,15 @@ public function store2(Request $request)
 
         return view('dashboard.grn.edit', compact('entry', 'items', 'suppliers'));
     }
-  public function update(Request $request, $id)
+
+    public function update(Request $request, $id)
 {
     $request->validate([
         'item_code' => 'required',
         'item_name' => 'required|string',
         'supplier_code' => 'required',
-        'packs' => 'required|integer|min:1',
-        'weight' => 'required|numeric|min:0.01',
+        'packs' => 'nullable|integer|min:1',
+        'weight' => 'nullable|numeric|min:0.01',
         'txn_date' => 'required|date',
         'grn_no' => 'required|string',
         'warehouse_no' => 'required|string',
@@ -175,9 +247,9 @@ public function store2(Request $request)
         'supplier_code' => $request->supplier_code,
         'packs' => $request->packs,
         'weight' => $request->weight,
-        'original_packs' => $request->packs,
-        'original_weight' => $request->weight,
-        'sequence_no' => $request->sequence_no,
+        'original_packs' =>$request->packs,
+        'original_weight' =>$request->weight,
+        'sequence_no' =>$request->sequence_no,
         'txn_date' => $request->txn_date,
         'grn_no' => $request->grn_no,
         'warehouse_no' => $request->warehouse_no,
@@ -193,7 +265,7 @@ public function store2(Request $request)
 
     $entry->update($updateData);
 
-    // 🔹 Update matching Sale rows
+    // Update matching Sale rows
     if ($request->filled('per_kg_price') && !empty($entry->code)) {
         $newPerKgPrice = $request->per_kg_price;
 
@@ -204,12 +276,15 @@ public function store2(Request $request)
             $sale->save();
         });
     }
-
-    // 🔹 Call your stock recalculation method after update
+     // ðŸ”¹ Call your stock recalculation method after update
     $this->updateGrnRemainingStock();
+
 
     return redirect()->route('grn.create')->with('success', 'Entry updated successfully.');
 }
+
+
+
     public function destroy($id)
     {
         $entry = GrnEntry::findOrFail($id);
@@ -383,8 +458,6 @@ public function store2(Request $request)
 
     return response()->json(['success' => true]);
 }
-// GrnEntryController.php
-// GrnEntryController.php
 public function getGrnEntry($code)
 {
     $entry = GrnEntry::where('code', $code)->where('show_status', 1)->first();
@@ -397,7 +470,28 @@ public function getGrnEntry($code)
 
     return response()->json(['per_kg_price' => null]);
 }
- public function updateGrnRemainingStock(): void
+  public function getRemaining($code)
+    {
+        // Find the GRN entry by code
+        $grn = GrnEntry::where('code', $code)->first();
+
+        if (!$grn) {
+            return response()->json([
+                'error' => 'GRN not found'
+            ], 404);
+        }
+
+        // Calculate remaining packs and weight
+        // Assuming your table has 'total_packs', 'sold_packs', 'total_weight', 'sold_weight' columns
+        $remainingPacks = $grn->packs;
+        $remainingWeight = $grn->weight;
+
+        return response()->json([
+            'packs' => $remainingPacks,
+            'weight' => $remainingWeight
+        ]);
+    }
+     public function updateGrnRemainingStock(): void
     {
         // Fetch all GRN entries and group them by their unique 'code'
         $grnEntriesByCode = GrnEntry::all()->groupBy('code');
@@ -442,11 +536,127 @@ public function getGrnEntry($code)
             }
         }
     }
-       public function showupdateform() {
-        $notChangingGRNs = GrnEntry::all();
-        $grnEntries = GrnEntry2::all();
-        return view('dashboard.grn.updateform', compact('notChangingGRNs', 'grnEntries'));
+   public function showupdateform(Request $request) {
+    $notChangingGRNs = GrnEntry::all();
+    $grnEntries = GrnEntry2::all(); // This is for the table display
+
+    return view('dashboard.grn.updateform', compact('notChangingGRNs', 'grnEntries'));
+}
+public function getGrnDetails(Request $request) {
+    $code = $request->input('code');
+    $grnData = GrnEntry::where('code', $code)->first();
+
+    if ($grnData) {
+        return response()->json([
+            'success' => true,
+            'packs' => $grnData->packs,
+            'weight' => $grnData->weight,
+            'original_packs' => $grnData->original_packs,
+            'original_weight' => $grnData->original_weight
+        ]);
+    } else {
+        return response()->json(['success' => false, 'message' => 'GRN not found'], 404);
     }
+}
+public function exportUPDATEExcel(Request $request)
+    {
+        $entries = json_decode($request->entries, true);
+
+        return Excel::download(new GrnEntriesExport($entries), 'grn_entries.xlsx');
+    }
+
+    public function exportUPDATEPdf(Request $request)
+    {
+        $entries = json_decode($request->entries, true);
+
+        // Configure mPDF with Sinhala font
+        $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+        $fontDirs = $defaultConfig['fontDir'];
+
+        $fontData = (new \Mpdf\Config\FontVariables())->getDefaults()['fontdata'];
+
+        $mpdf = new Mpdf([
+            'fontDir' => array_merge($fontDirs, [public_path('fonts')]),
+            'fontdata' => $fontData + [
+                'notosanssinhala' => [
+                    'R' => 'NotoSansSinhala-Regular.ttf',
+                    'B' => 'NotoSansSinhala-Bold.ttf',
+                ]
+            ],
+            'default_font' => 'notosanssinhala',
+            'mode' => 'utf-8',
+            'format' => 'A4-P',
+            'margin_top' => 15,
+            'margin_bottom' => 15,
+            'margin_left' => 10,
+            'margin_right' => 10,
+        ]);
+
+        $html = view('dashboard.grn.pdf', compact('entries'))->render();
+        $mpdf->WriteHTML($html);
+
+        return $mpdf->Output('grn_entries.pdf', 'D');
+    }
+public function destroyupdate(Request $request)
+{
+    try {
+        // Get the ID from request
+        $id = $request->input('id');
+
+        if (!$id) {
+            return response()->json(['success' => false, 'message' => 'ID is required']);
+        }
+
+        // Find the specific update entry by ID
+        $updateEntry = GrnEntry2::find($id);
+
+        if (!$updateEntry) {
+            return response()->json(['success' => false, 'message' => 'Update entry not found']);
+        }
+
+        // Get the code, packs, and weight from this record
+        $code = $updateEntry->code;
+        $packsToSubtract = $updateEntry->packs;
+        $weightToSubtract = $updateEntry->weight;
+
+        // Find the original GRN entry by code
+        $originalGrn = GrnEntry::where('code', $code)->first();
+
+        if ($originalGrn) {
+            $originalGrn->packs -= $packsToSubtract;
+            $originalGrn->weight -= $weightToSubtract;
+            $originalGrn->original_packs -= $packsToSubtract;
+            $originalGrn->original_weight -= $weightToSubtract;
+
+            // Ensure values don't go negative
+            $originalGrn->packs = max($originalGrn->packs, 0);
+            $originalGrn->weight = max($originalGrn->weight, 0);
+            $originalGrn->original_packs = max($originalGrn->original_packs, 0);
+            $originalGrn->original_weight = max($originalGrn->original_weight, 0);
+
+            $originalGrn->save();
+        }
+
+        // Delete the specific update entry
+        $updateEntry->delete();
+
+        return response()->json(['success' => true, 'message' => 'Entry deleted successfully']);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => 'Error deleting entry: ' . $e->getMessage()]);
+    }
+}
+public function getBalance($code)
+{
+    $totals = DB::table('grn_entries')
+        ->where('code', $code)
+        ->selectRaw('SUM(packs) as total_packs, SUM(weight) as total_weight')
+        ->first();
+
+    return response()->json([
+        'total_packs' => $totals->total_packs ?? 0,
+        'total_weight' => $totals->total_weight ?? 0,
+    ]);
+}
 
 
 

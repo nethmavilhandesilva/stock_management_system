@@ -20,6 +20,8 @@ class GrnEntry2 extends Model
         'weight',
         'txn_date',
         'grn_no',
+        'per_kg_price',
+        'type',
     ];
 
     // Optional: If you don't want timestamps (created_at, updated_at)

@@ -164,9 +164,20 @@ Route::get('/get-user-ip/{user_id}', function ($user_id) {
         'ip_address' => $user?->ip_address ?? null,
     ]);
 })->name('get-user-ip');
+// Dedicated GRN delete route
+Route::delete('/grn/delete/{id}', [GrnEntryController::class, 'destroy'])->name('grn.delete');
 //new  GRN TABLE
 Route::post('/grn/store2', [GrnEntryController::class, 'store2'])->name('grn.store3');
 Route::get('/grn/update/form', [GrnEntryController::class, 'showupdateform'])->name('grn.updateform'); // page with form + table
-Route::get('/sales/data', [SalesEntryController::class, 'getSalesData'])
-    ->name('sales.data');
+//new  GRN PDFS FOR UPDATE GRN
+Route::post('grn/export/update/excel', [GrnEntryController::class, 'exportUPDATEExcel'])->name('grn.export.excel');
+Route::post('grn/export/update/pdf', [GrnEntryController::class, 'exportUPDATEPdf'])->name('grn.export.pdf');
+
+Route::delete('/grn/delete/update/{id}', [GrnEntryController::class, 'destroyupdate'])->name('grnupdate.delete');
+
+//new  Gettin te real time balances for update grn page
+Route::get('/grn/balance/{code}', [GrnEntryController::class, 'getBalance'])->name('grn.balance');
+
+
+
 require __DIR__.'/auth.php';
